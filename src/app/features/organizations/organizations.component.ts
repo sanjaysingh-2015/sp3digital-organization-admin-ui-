@@ -171,8 +171,9 @@ export class OrganizationsComponent implements OnInit {
       })
       .subscribe({
         next: (response) => {
-          this.rows = response?.data || [];
-          const pagination = response?.pagination;
+          console.log(" ==> ", response);
+          this.rows = response?.data || response?.organizations?.data || [];
+          const pagination = response?.organizations?.pagination;
           this.page = pagination?.page ?? this.page;
           this.limit = pagination?.limit ?? this.limit;
           this.totalItems = pagination?.totalItems ?? this.rows.length;
@@ -199,7 +200,9 @@ export class OrganizationsComponent implements OnInit {
 
   loadParentOptions(): void {
     this.api.get<any>("/organizations/list").subscribe({
-      next: (response) => (this.parentOptions = response?.data || []),
+      next: (response) => {
+        console.log("List");
+        (this.parentOptions = response?.data || [])},
       error: () => (this.parentOptions = []),
     });
   }
