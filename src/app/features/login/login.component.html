@@ -1,0 +1,470 @@
+<div class="login-page">
+
+    <div class="login-card" [class.login-card--wide]="mode === 'register'">
+
+        <div class="login-header">
+
+            <h1>SP3 Digital</h1>
+
+            <p>Organization Administration</p>
+
+        </div>
+
+
+        <!-- Mode tabs -->
+
+        <div class="mode-tabs">
+
+            <button type="button" class="mode-tab" [class.mode-tab--active]="mode === 'login'"
+                (click)="switchMode('login')">
+                Sign In
+            </button>
+
+            <button type="button" class="mode-tab" [class.mode-tab--active]="mode === 'register'"
+                (click)="switchMode('register')">
+                Create Organization
+            </button>
+
+        </div>
+
+
+        <!-- ===================== SIGN IN ===================== -->
+
+        @if (mode === 'login') {
+
+        <form [formGroup]="loginForm" (ngSubmit)="login()" autocomplete="off">
+
+            <!-- Username / Email -->
+
+            <div class="form-group">
+
+                <label for="usernameOrEmail">
+                    Username or Email
+                </label>
+
+                <input id="usernameOrEmail" type="text" formControlName="usernameOrEmail"
+                    placeholder="Enter username or email" />
+
+                @if (
+                loginForm.controls.usernameOrEmail.touched &&
+                loginForm.controls.usernameOrEmail.invalid
+                ) {
+                <div class="field-error">
+                    Username or email is required
+                </div>
+                }
+
+            </div>
+
+
+            <!-- Password -->
+
+            <div class="form-group">
+
+                <label for="password">
+                    Password
+                </label>
+
+                <input id="password" type="password" formControlName="password" placeholder="Enter password" />
+
+                @if (
+                loginForm.controls.password.touched &&
+                loginForm.controls.password.invalid
+                ) {
+                <div class="field-error">
+                    Password is required
+                </div>
+                }
+
+            </div>
+
+
+            <!-- Tenant -->
+
+            <div class="form-group tenant-group">
+
+                <label for="tenant">
+                    Tenant
+                </label>
+
+                <input id="tenant" type="text" formControlName="tenant" placeholder="Type at least 5 characters"
+                    autocomplete="off" />
+
+                @if (tenantLoading) {
+
+                <div class="tenant-loading">
+                    Searching...
+                </div>
+
+                }
+
+                @if (
+                !tenantLoading &&
+                showTenantList &&
+                tenants.length > 0
+                ) {
+
+                <div class="tenant-dropdown">
+
+                    @for (
+                    tenant of tenants;
+                    track tenant.tenantUuid
+                    ) {
+
+                    <div class="tenant-option" (click)="selectTenant(tenant)">
+
+                        <div class="tenant-name">
+                            {{ tenant.tenantName }}
+                        </div>
+
+                        <div class="tenant-code">
+                            {{ tenant.tenantCode }}
+                        </div>
+
+                    </div>
+
+                    }
+
+                </div>
+
+                }
+
+                @if (
+                !tenantLoading &&
+                tenants.length === 0 &&
+                (loginForm.controls.tenant.value?.trim().length ?? 0) >= 5
+                ) {
+
+                <div class="tenant-no-results">
+                    No tenants found
+                </div>
+
+                }
+
+            </div>
+
+
+            <!-- Error -->
+
+            @if (errorMessage) {
+
+            <div class="login-error">
+                {{ errorMessage }}
+            </div>
+
+            }
+
+
+            <!-- Login -->
+
+            <button type="submit" class="submit-btn" [disabled]="loading">
+
+                @if (loading) {
+                Signing in...
+                } @else {
+                Sign In
+                }
+
+            </button>
+
+
+            <p class="switch-hint">
+                New organization?
+                <a (click)="switchMode('register')">Create one</a>
+            </p>
+
+        </form>
+
+        }
+
+
+        <!-- ===================== CREATE ORGANIZATION ===================== -->
+
+        @if (mode === 'register') {
+
+        <form [formGroup]="registerForm" (ngSubmit)="register()" autocomplete="off" class="register-form">
+
+            @if (registerSuccess) {
+
+            <div class="login-success">
+                Your organization was created. Please sign in with the username and password you just set.
+            </div>
+
+            }
+
+            <!-- Organization details -->
+
+            <div class="form-section-title">
+                Organization Details
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="organizationName">
+                        Organization Name
+                    </label>
+
+                    <input id="organizationName" type="text" formControlName="organizationName"
+                        placeholder="e.g. NHM Uttar Pradesh" />
+
+                    @if (
+                    registerForm.controls.organizationName.touched &&
+                    registerForm.controls.organizationName.invalid
+                    ) {
+                    <div class="field-error">
+                        Organization name is required
+                    </div>
+                    }
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="organizationType">
+                        Organization Type
+                    </label>
+
+                    <select id="organizationType" formControlName="organizationType">
+
+                        <option value="" disabled selected>
+                            Select type
+                        </option>
+
+                        @for (type of organizationTypes; track type) {
+                        <option [value]="type">
+                            {{ type }}
+                        </option>
+                        }
+
+                    </select>
+
+                    @if (
+                    registerForm.controls.organizationType.touched &&
+                    registerForm.controls.organizationType.invalid
+                    ) {
+                    <div class="field-error">
+                        Organization type is required
+                    </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- User details -->
+
+            <div class="form-section-title">
+                Administrator Details
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="firstName">
+                        First Name
+                    </label>
+
+                    <input id="firstName" type="text" formControlName="firstName" placeholder="John" />
+
+                    @if (
+                    registerForm.controls.firstName.touched &&
+                    registerForm.controls.firstName.invalid
+                    ) {
+                    <div class="field-error">
+                        First name is required
+                    </div>
+                    }
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="lastName">
+                        Last Name
+                    </label>
+
+                    <input id="lastName" type="text" formControlName="lastName" placeholder="Doe" />
+
+                    @if (
+                    registerForm.controls.lastName.touched &&
+                    registerForm.controls.lastName.invalid
+                    ) {
+                    <div class="field-error">
+                        Last name is required
+                    </div>
+                    }
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="middleName">
+                        Middle Name <span class="optional-label">(optional)</span>
+                    </label>
+
+                    <input id="middleName" type="text" formControlName="middleName" />
+
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="username">
+                        Username
+                    </label>
+
+                    <input id="username" type="text" formControlName="username" placeholder="jdoe" />
+
+                    @if (
+                    registerForm.controls.username.touched &&
+                    registerForm.controls.username.invalid
+                    ) {
+                    <div class="field-error">
+                        Username must be at least 3 characters
+                    </div>
+                    }
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email
+                    </label>
+
+                    <input id="email" type="email" formControlName="email" placeholder="jdoe@example.com" />
+
+                    @if (
+                    registerForm.controls.email.touched &&
+                    registerForm.controls.email.invalid
+                    ) {
+                    <div class="field-error">
+                        A valid email is required
+                    </div>
+                    }
+
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group form-group--narrow">
+
+                    <label for="phoneCountryCode">
+                        Country Code
+                    </label>
+
+                    <input id="phoneCountryCode" type="text" formControlName="phoneCountryCode" placeholder="+91" />
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="phoneNumber">
+                        Phone Number
+                    </label>
+
+                    <input id="phoneNumber" type="text" formControlName="phoneNumber" placeholder="5551234567" />
+
+                    @if (
+                    registerForm.controls.phoneNumber.touched &&
+                    registerForm.controls.phoneNumber.invalid
+                    ) {
+                    <div class="field-error">
+                        Phone number is required
+                    </div>
+                    }
+
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="regPassword">
+                        Password
+                    </label>
+
+                    <input id="regPassword" type="password" formControlName="password"
+                        placeholder="At least 8 characters" />
+
+                    @if (
+                    registerForm.controls.password.touched &&
+                    registerForm.controls.password.invalid
+                    ) {
+                    <div class="field-error">
+                        Password must be at least 8 characters
+                    </div>
+                    }
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <input id="confirmPassword" type="password" formControlName="confirmPassword"
+                        placeholder="Re-enter password" />
+
+                    @if (
+                    registerForm.controls.confirmPassword.touched &&
+                    registerForm.errors?.['passwordMismatch']
+                    ) {
+                    <div class="field-error">
+                        Passwords do not match
+                    </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- Error -->
+
+            @if (registerError) {
+
+            <div class="login-error">
+                {{ registerError }}
+            </div>
+
+            }
+
+
+            <!-- Submit -->
+
+            <button type="submit" class="submit-btn" [disabled]="registerLoading">
+
+                @if (registerLoading) {
+                Creating organization...
+                } @else {
+                Create Organization
+                }
+
+            </button>
+
+
+            <p class="switch-hint">
+                Already have an organization?
+                <a (click)="switchMode('login')">Sign in</a>
+            </p>
+
+        </form>
+
+        }
+
+    </div>
+
+</div>

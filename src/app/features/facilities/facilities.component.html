@@ -1,0 +1,169 @@
+<app-page eyebrow="ORGANIZATION" title="Facilities" description="CHC / PHC / district hospitals / clinics belonging to an organization.">
+  <button actions type="button" class="primary" (click)="openCreate()">+ Create facility</button>
+</app-page>
+
+<div class="toolbar">
+  <input type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Search facility name" />
+  <select [(ngModel)]="organizationId" (change)="onFilterChange()">
+    <option value="">All organizations</option>
+    @for (org of organizationOptions; track org.organizationId) {
+      <option [value]="org.organizationId">{{ org.organizationName }}</option>
+    }
+  </select>
+  <select [(ngModel)]="facilityType" (change)="onFilterChange()">
+    <option value="">All types</option>
+    @for (type of facilityTypes; track type) { <option [value]="type">{{ type }}</option> }
+  </select>
+  <select [(ngModel)]="status" (change)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="INACTIVE">INACTIVE</option>
+    <option value="DISABLED">DISABLED</option>
+    <option value="DELETED">DELETED</option>
+  </select>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) { Loading... } @else { Refresh }
+  </button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="facilities-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No results }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+@if (formOpen) {
+<div class="modal-backdrop" (click)="closeCreate()">
+  <div class="modal wide" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>@if (editMode) { Edit facility } @else { Create facility }</h3>
+        <p>@if (editMode) { Update facility info. } @else { Register a new facility under an organization. }</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">×</button>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        <span>Organization <b>*</b></span>
+        <select [(ngModel)]="form.organizationId">
+          <option [ngValue]="null">— select —</option>
+          @for (org of organizationOptions; track org.organizationId) {
+            <option [ngValue]="org.organizationId">{{ org.organizationName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Facility name <b>*</b></span>
+        <input type="text" [(ngModel)]="form.facilityName" placeholder="e.g. CHC Lucknow North" autocomplete="off" />
+      </label>
+      <label>
+        <span>Facility type</span>
+        <select [(ngModel)]="form.facilityType">
+          <option [ngValue]="''">— none —</option>
+          @for (type of facilityTypes; track type) { <option [ngValue]="type">{{ type }}</option> }
+        </select>
+      </label>
+      <label>
+        <span>Phone number</span>
+        <input type="text" [(ngModel)]="form.phoneNumber" placeholder="e.g. +91 98765 43210" autocomplete="off" />
+      </label>
+      <label>
+        <span>Email</span>
+        <input type="email" [(ngModel)]="form.email" placeholder="facility@example.org" autocomplete="off" />
+      </label>
+      <label class="full-width">
+        <span>Address line 1</span>
+        <input type="text" [(ngModel)]="form.addressLine1" autocomplete="off" />
+      </label>
+      <label class="full-width">
+        <span>Address line 2</span>
+        <input type="text" [(ngModel)]="form.addressLine2" autocomplete="off" />
+      </label>
+      <label>
+        <span>City</span>
+        <input type="text" [(ngModel)]="form.city" autocomplete="off" />
+      </label>
+      <label>
+        <span>District</span>
+        <input type="text" [(ngModel)]="form.districtName" autocomplete="off" />
+      </label>
+      <label>
+        <span>State</span>
+        <input type="text" [(ngModel)]="form.stateName" autocomplete="off" />
+      </label>
+      <label>
+        <span>Postal code</span>
+        <input type="text" [(ngModel)]="form.postalCode" autocomplete="off" />
+      </label>
+      <label>
+        <span>Country</span>
+        <input type="text" [(ngModel)]="form.country" autocomplete="off" />
+      </label>
+      <label>
+        <span>Latitude</span>
+        <input type="number" [(ngModel)]="form.latitude" step="0.0000001" />
+      </label>
+      <label>
+        <span>Longitude</span>
+        <input type="number" [(ngModel)]="form.longitude" step="0.0000001" />
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreate()" [disabled]="saving">Cancel</button>
+      <button type="button" class="primary" (click)="save()" [disabled]="saving">
+        @if (saving) { @if (editMode) { Updating... } @else { Creating... } } @else { @if (editMode) { Update } @else { Create } }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- DETAILS MODAL -->
+@if (selected) {
+<div class="modal-backdrop" (click)="closeDetails()">
+  <div class="modal details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div><h3>Facility details</h3><p>{{ selected.facilityCode }}</p></div>
+      <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">×</button>
+    </div>
+
+    <div class="tenant-summary">
+      <div class="summary-item"><span>Facility Name</span><strong>{{ selected.facilityName || "—" }}</strong></div>
+      <div class="summary-item"><span>Type</span><strong>{{ selected.facilityType || "—" }}</strong></div>
+      <div class="summary-item"><span>City</span><strong>{{ selected.city || "—" }}</strong></div>
+      <div class="summary-item"><span>Organization ID</span><strong>{{ selected.organizationId || "—" }}</strong></div>
+      <div class="summary-item">
+        <span>Status</span>
+        <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'DISABLED'"
+          [class.danger]="selected.status === 'INACTIVE' || selected.status === 'DELETED'">{{ selected.status || "—" }}</span>
+      </div>
+    </div>
+
+    <details class="raw-details">
+      <summary>View raw response</summary>
+      <pre>{{ selected | json }}</pre>
+    </details>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onDeleteConfirmed()" (cancelled)="onDeleteCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

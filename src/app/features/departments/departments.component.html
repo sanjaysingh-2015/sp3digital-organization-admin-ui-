@@ -1,0 +1,120 @@
+<app-page eyebrow="ORGANIZATION" title="Departments" description="OPD, IPD, Lab, Pharmacy, Radiology and other departments within a facility.">
+  <button actions type="button" class="primary" (click)="openCreate()">+ Create department</button>
+</app-page>
+
+<div class="toolbar">
+  <input type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Search department name" />
+  <select [(ngModel)]="facilityId" (change)="onFilterChange()">
+    <option value="">All facilities</option>
+    @for (facility of facilityOptions; track facility.facilityId) {
+      <option [value]="facility.facilityId">{{ facility.facilityName }}</option>
+    }
+  </select>
+  <select [(ngModel)]="status" (change)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="INACTIVE">INACTIVE</option>
+    <option value="DISABLED">DISABLED</option>
+    <option value="DELETED">DELETED</option>
+  </select>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) { Loading... } @else { Refresh }
+  </button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="departments-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No results }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+@if (formOpen) {
+<div class="modal-backdrop" (click)="closeCreate()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>@if (editMode) { Edit department } @else { Create department }</h3>
+        <p>@if (editMode) { Update department info. } @else { Register a new department under a facility. }</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">×</button>
+    </div>
+
+    <div class="form-grid">
+      <label class="full-width">
+        <span>Facility <b>*</b></span>
+        <select [(ngModel)]="form.facilityId">
+          <option [ngValue]="null">— select —</option>
+          @for (facility of facilityOptions; track facility.facilityId) {
+            <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Department name <b>*</b></span>
+        <input type="text" [(ngModel)]="form.departmentName" placeholder="e.g. Outpatient Department" autocomplete="off" />
+      </label>
+      <label>
+        <span>Department type</span>
+        <select [(ngModel)]="form.departmentType">
+          <option [ngValue]="''">— none —</option>
+          @for (type of departmentTypes; track type) { <option [ngValue]="type">{{ type }}</option> }
+        </select>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreate()" [disabled]="saving">Cancel</button>
+      <button type="button" class="primary" (click)="save()" [disabled]="saving">
+        @if (saving) { @if (editMode) { Updating... } @else { Creating... } } @else { @if (editMode) { Update } @else { Create } }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- DETAILS MODAL -->
+@if (selected) {
+<div class="modal-backdrop" (click)="closeDetails()">
+  <div class="modal details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div><h3>Department details</h3><p>{{ selected.departmentCode }}</p></div>
+      <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">×</button>
+    </div>
+
+    <div class="tenant-summary">
+      <div class="summary-item"><span>Department Name</span><strong>{{ selected.departmentName || "—" }}</strong></div>
+      <div class="summary-item"><span>Type</span><strong>{{ selected.departmentType || "—" }}</strong></div>
+      <div class="summary-item"><span>Facility ID</span><strong>{{ selected.facilityId || "—" }}</strong></div>
+      <div class="summary-item">
+        <span>Status</span>
+        <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'DISABLED'"
+          [class.danger]="selected.status === 'INACTIVE' || selected.status === 'DELETED'">{{ selected.status || "—" }}</span>
+      </div>
+    </div>
+
+    <details class="raw-details">
+      <summary>View raw response</summary>
+      <pre>{{ selected | json }}</pre>
+    </details>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onDeleteConfirmed()" (cancelled)="onDeleteCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

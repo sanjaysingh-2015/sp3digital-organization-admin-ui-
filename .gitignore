@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.angular/
+*.log
+.DS_Store
+
+# N-Mod EXT ignore file
+.nmodignore

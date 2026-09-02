@@ -1,0 +1,1623 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* =========================================================
+   SP3 DIGITAL ORGANIZATION ADMIN
+   GLOBAL STYLES
+   Typography aligned with AG Grid Quartz
+========================================================= */
+
+/* =========================================================
+   ROOT DESIGN TOKENS
+========================================================= */
+
+:root {
+  /* =====================================================
+     Typography
+     ===================================================== */
+
+  --font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;
+
+  --font-family-mono:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    Menlo,
+    monospace;
+
+  --font-size-base: 14px;
+  --font-size-small: 12px;
+  --font-size-tiny: 11px;
+
+  /* =====================================================
+     Colors
+     ===================================================== */
+
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+
+  --ink: #111827;
+  --muted: #667085;
+
+  --line: #e5e7eb;
+
+  --nav: #0b1220;
+  --nav2: #111b2e;
+
+  --accent: #5b5cf0;
+  --accent2: #4547d8;
+
+  --good: #087443;
+  --goodbg: #e8f7ef;
+
+  --warn: #a15c00;
+  --warnbg: #fff4e5;
+
+  --danger: #b42318;
+  --dangerbg: #fef3f2;
+
+  --white: #ffffff;
+
+  /* =====================================================
+     Layout
+     ===================================================== */
+
+  --sidebar-width: 258px;
+
+  /* =====================================================
+     Border Radius
+     ===================================================== */
+
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  /* =====================================================
+     Shadows
+     ===================================================== */
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.03);
+  --shadow-md: 0 8px 25px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  line-height: 1.5;
+
+  background: var(--bg);
+  color: var(--ink);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   GLOBAL TYPOGRAPHY
+========================================================= */
+
+body,
+button,
+input,
+textarea,
+select,
+option,
+table,
+thead,
+tbody,
+tr,
+th,
+td,
+label {
+  font-family: var(--font-family);
+}
+
+button,
+input,
+textarea,
+select {
+  font-size: inherit;
+}
+
+.readonly-input {
+  background-color: #e9ecef;
+  color: #495057;
+  border: 1px solid #ced4da;
+  cursor: default;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family);
+  color: var(--ink);
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+small {
+  font-family: var(--font-family);
+}
+
+/* =========================================================
+   AG GRID - GLOBAL FONT
+========================================================= */
+
+/*
+ * AG Grid Quartz uses Inter.
+ *
+ * Explicitly configure AG Grid so that its font cannot
+ * diverge from the rest of the application.
+ */
+
+.ag-theme-quartz,
+.ag-theme-quartz-dark,
+.ag-theme-alpine,
+.ag-theme-alpine-dark {
+  font-family: var(--font-family);
+}
+
+/* AG Grid CSS variables */
+
+.ag-theme-quartz {
+  --ag-font-family: var(--font-family);
+  --ag-font-size: 13px;
+
+  --ag-header-font-family: var(--font-family);
+  --ag-header-font-size: 11px;
+
+  --ag-cell-font-family: var(--font-family);
+}
+
+/*
+ * Cover AG Grid internal elements as well.
+ */
+
+.ag-root-wrapper,
+.ag-root,
+.ag-body,
+.ag-body-viewport,
+.ag-center-cols-container,
+.ag-center-cols-viewport,
+.ag-header,
+.ag-header-container,
+.ag-header-cell,
+.ag-header-cell-label,
+.ag-header-cell-text,
+.ag-row,
+.ag-cell,
+.ag-cell-value,
+.ag-paging-panel,
+.ag-menu,
+.ag-popup,
+.ag-tooltip,
+.ag-select-list,
+.ag-picker-field,
+.ag-input-field,
+.ag-input-field-input,
+.ag-checkbox-input-wrapper {
+  font-family: var(--font-family);
+}
+
+/* =========================================================
+   APPLICATION SHELL
+========================================================= */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+  width: var(--sidebar-width);
+
+  background: linear-gradient(
+    180deg,
+    var(--nav),
+    #0d1728
+  );
+
+  color: #cbd5e1;
+
+  padding: 22px 14px;
+
+  position: fixed;
+
+  inset: 0 auto 0 0;
+
+  z-index: 10;
+}
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 4px 10px 25px;
+
+  color: #ffffff;
+}
+
+.brand b {
+  display: block;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.brand small {
+  display: block;
+
+  color: #91a0b8;
+
+  margin-top: 3px;
+
+  font-size: 11px;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+
+  border-radius: 10px;
+
+  background: linear-gradient(
+    135deg,
+    #6d6ff7,
+    #4547d8
+  );
+
+  display: grid;
+  place-items: center;
+
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+nav a {
+  display: flex;
+
+  gap: 12px;
+
+  align-items: center;
+
+  color: #aebbd0;
+
+  text-decoration: none;
+
+  padding: 10px 12px;
+
+  border-radius: 8px;
+
+  margin: 2px 0;
+
+  font-family: var(--font-family);
+  font-size: 13px;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+nav a:hover,
+nav a.active {
+  background: #18243a;
+  color: #ffffff;
+}
+
+nav a.active {
+  box-shadow: inset 3px 0 0 #7476ff;
+}
+
+.nav-label {
+  font-family: var(--font-family);
+
+  font-size: 11px;
+
+  letter-spacing: 0.12em;
+
+  color: #61718c;
+
+  padding: 19px 12px 6px;
+
+  font-weight: 600;
+}
+
+.sidebar-foot {
+  position: absolute;
+
+  bottom: 20px;
+
+  left: 24px;
+  right: 20px;
+
+  border-top: 1px solid #1e2a3f;
+
+  padding-top: 14px;
+
+  font-size: 11px;
+
+  color: #72819a;
+}
+
+.sidebar-foot strong {
+  color: #d7deea;
+
+  display: block;
+
+  margin-top: 4px;
+
+  word-break: break-all;
+
+  font-weight: 600;
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+  margin-left: var(--sidebar-width);
+
+  width: calc(100% - var(--sidebar-width));
+
+  min-height: 100vh;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topbar {
+  height: 82px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid var(--line);
+
+  padding: 18px 32px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+}
+
+.eyebrow {
+  font-family: var(--font-family);
+
+  font-size: 10px;
+
+  letter-spacing: 0.13em;
+
+  font-weight: 700;
+
+  color: #7378e9;
+}
+
+.topbar h1 {
+  font-family: var(--font-family);
+
+  font-size: 17px;
+
+  font-weight: 600;
+
+  margin: 5px 0 0;
+}
+
+.top-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  color: #667085;
+
+  font-size: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #20a464;
+}
+
+.avatar {
+  border: 0;
+
+  border-radius: 50%;
+
+  width: 34px;
+  height: 34px;
+
+  background: #eef0ff;
+
+  color: #4547d8;
+
+  font-weight: 600;
+
+  margin-left: 8px;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.content {
+  padding: 30px 34px 50px;
+}
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.page-head {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  margin-bottom: 24px;
+}
+
+.page-head h2 {
+  font-family: var(--font-family);
+
+  font-size: 26px;
+
+  font-weight: 600;
+
+  margin: 5px 0 7px;
+
+  letter-spacing: -0.03em;
+}
+
+.page-head p {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 14px;
+}
+
+.page-actions {
+  padding-top: 8px;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+button.primary {
+  background: var(--accent);
+
+  border: 0;
+
+  color: #ffffff;
+
+  padding: 10px 15px;
+
+  border-radius: var(--radius-sm);
+
+  font-family: var(--font-family);
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent2);
+}
+
+button.primary:disabled {
+  opacity: 0.5;
+}
+
+button.secondary {
+  background: #ffffff;
+
+  border: 1px solid var(--line);
+
+  color: #344054;
+
+  padding: 9px 14px;
+
+  border-radius: var(--radius-sm);
+
+  font-family: var(--font-family);
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+button.link {
+  background: none;
+
+  border: 0;
+
+  color: #4d50d7;
+
+  font-family: var(--font-family);
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  padding: 4px 6px;
+}
+
+button.link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.wide {
+  width: 100%;
+
+  margin-top: 14px;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.panel {
+  background: var(--panel);
+
+  border: 1px solid var(--line);
+
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-title {
+  padding: 18px 20px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-title h3 {
+  margin: 0;
+
+  font-family: var(--font-family);
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+.stat-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 16px;
+
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  background: #ffffff;
+
+  border: 1px solid var(--line);
+
+  border-radius: var(--radius-md);
+
+  padding: 18px;
+
+  display: flex;
+
+  gap: 14px;
+
+  align-items: center;
+}
+
+.stat-card > span {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 9px;
+
+  background: #eff0ff;
+
+  color: #5558df;
+
+  display: grid;
+
+  place-items: center;
+
+  font-size: 18px;
+}
+
+.stat-card small,
+.stat-card em {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 11px;
+
+  font-style: normal;
+}
+
+.stat-card strong {
+  display: block;
+
+  font-size: 23px;
+
+  font-weight: 600;
+
+  margin: 2px 0;
+}
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.grid-2 {
+  display: grid;
+
+  grid-template-columns: 1.35fr 1fr;
+
+  gap: 20px;
+}
+
+.quick-grid {
+  padding: 8px;
+}
+
+.quick {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 14px 12px;
+
+  border-radius: 8px;
+
+  text-decoration: none;
+
+  color: var(--ink);
+}
+
+.quick:hover {
+  background: #f7f8fc;
+}
+
+.quick > b {
+  width: 36px;
+  height: 36px;
+
+  background: #f0f1ff;
+
+  color: #5558df;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 8px;
+}
+
+.quick span {
+  flex: 1;
+}
+
+.quick strong,
+.quick small {
+  display: block;
+}
+
+.quick small {
+  color: var(--muted);
+
+  margin-top: 3px;
+}
+
+.quick i {
+  color: #98a2b3;
+}
+
+/* =========================================================
+   CLAIMS
+========================================================= */
+
+.claims {
+  padding: 20px;
+}
+
+.claims div {
+  padding: 10px 0;
+
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.claims small {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.claims strong {
+  display: block;
+
+  margin-top: 3px;
+
+  word-break: break-all;
+}
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.toolbar {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 15px;
+
+  flex-wrap: wrap;
+}
+
+.toolbar input,
+.toolbar select {
+  flex: 1;
+
+  max-width: 460px;
+}
+
+.toolbar select {
+  max-width: 180px;
+}
+
+.toolbar button {
+  flex: 0 0 auto;
+}
+
+/* =========================================================
+   FORM CONTROLS
+========================================================= */
+
+input,
+textarea,
+select {
+  border: 1px solid #d0d5dd;
+
+  border-radius: var(--radius-sm);
+
+  padding: 9px 11px;
+
+  background: #ffffff;
+
+  color: #101828;
+
+  outline: none;
+
+  font-family: var(--font-family);
+
+  font-size: 14px;
+
+  font-weight: 400;
+
+  line-height: 1.4;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #98a2b3;
+
+  font-family: var(--font-family);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #7779ef;
+
+  box-shadow: 0 0 0 3px #7779ef18;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: #f2f4f7;
+
+  color: #98a2b3;
+
+  cursor: not-allowed;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* =========================================================
+   LABELS
+========================================================= */
+
+label {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+
+  font-family: var(--font-family);
+
+  font-weight: 500;
+
+  font-size: 13px;
+
+  color: #344054;
+
+  margin-bottom: 13px;
+}
+
+label input,
+label textarea,
+label select {
+  font-family: var(--font-family);
+
+  font-weight: 400;
+}
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  font-family: var(--font-family);
+}
+
+th,
+td {
+  text-align: left;
+
+  padding: 13px 16px;
+
+  border-bottom: 1px solid #eef0f3;
+
+  white-space: nowrap;
+
+  font-family: var(--font-family);
+}
+
+th {
+  font-size: 11px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.07em;
+
+  color: #667085;
+
+  background: #fafbfc;
+
+  font-weight: 600;
+}
+
+td {
+  font-size: 13px;
+
+  color: #344054;
+
+  font-weight: 400;
+}
+
+td strong {
+  color: var(--ink);
+
+  font-weight: 600;
+}
+
+td small {
+  display: block;
+
+  color: var(--muted);
+
+  margin-top: 3px;
+
+  font-size: 12px;
+}
+
+tbody tr:hover {
+  background: #fafbfc;
+}
+
+/* =========================================================
+   TABLE ACTIONS
+========================================================= */
+
+.table-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+.edit-link {
+  color: #4d50d7 !important;
+}
+
+.delete-link {
+  color: #b42318 !important;
+}
+
+.delete-link:hover {
+  color: #912018 !important;
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 20px;
+
+  padding: 4px 8px;
+
+  background: #f2f4f7;
+
+  color: #475467;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  line-height: 1.2;
+
+  font-family: var(--font-family);
+}
+
+.badge.good {
+  background: var(--goodbg);
+
+  color: var(--good);
+}
+
+.badge.warning {
+  background: var(--warnbg);
+
+  color: var(--warn);
+}
+
+.badge.danger {
+  background: var(--dangerbg);
+
+  color: var(--danger);
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(16, 24, 40, 0.5);
+
+  display: grid;
+
+  place-items: center;
+
+  z-index: 20;
+
+  padding: 20px;
+}
+
+.modal {
+  background: #ffffff;
+
+  width: min(620px, 92vw);
+
+  max-height: 88vh;
+
+  overflow: auto;
+
+  border-radius: var(--radius-lg);
+
+  padding: 24px;
+
+  box-shadow: var(--shadow-lg);
+
+  font-family: var(--font-family);
+}
+
+.modal h3 {
+  margin: 0 0 20px;
+
+  font-size: 18px;
+
+  font-weight: 600;
+}
+
+.modal-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 20px;
+
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  margin: 0 0 5px;
+}
+
+.modal-header p {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.modal-close {
+  border: 0;
+
+  background: transparent;
+
+  color: #667085;
+
+  font-family: var(--font-family);
+
+  font-size: 24px;
+
+  line-height: 1;
+
+  padding: 2px 6px;
+
+  border-radius: 6px;
+}
+
+.modal-close:hover {
+  background: #f2f4f7;
+
+  color: #101828;
+}
+
+/* =========================================================
+   FORM GRID
+========================================================= */
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 2px 16px;
+}
+
+.form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.form-panel {
+  padding: 24px;
+}
+
+.policy {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.check {
+  flex-direction: row;
+
+  align-items: center;
+
+  font-weight: 500;
+}
+
+.check input {
+  width: auto;
+}
+
+/* =========================================================
+   MODAL ACTIONS
+========================================================= */
+
+.modal-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 20px;
+
+  padding-top: 18px;
+
+  border-top: 1px solid #eef0f3;
+}
+
+/* =========================================================
+   USER DETAILS
+========================================================= */
+
+.user-summary {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 14px 20px;
+
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  padding: 12px;
+
+  background: #f8f9fb;
+
+  border: 1px solid #eef0f3;
+
+  border-radius: 8px;
+}
+
+.summary-item > span:first-child {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 11px;
+
+  margin-bottom: 4px;
+}
+
+.summary-item strong {
+  display: block;
+
+  color: var(--ink);
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  word-break: break-word;
+}
+
+/* =========================================================
+   RAW RESPONSE
+========================================================= */
+
+.raw-details {
+  margin-top: 20px;
+
+  border: 1px solid #eef0f3;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+}
+
+.raw-details summary {
+  cursor: pointer;
+
+  padding: 11px 13px;
+
+  background: #f8f9fb;
+
+  color: #344054;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.raw-details pre {
+  margin: 0;
+
+  border-radius: 0;
+}
+
+/* =========================================================
+   CODE / PRE
+========================================================= */
+
+pre {
+  background: #0b1220;
+
+  color: #d6deea;
+
+  padding: 16px;
+
+  border-radius: 8px;
+
+  overflow: auto;
+
+  font-family: var(--font-family-mono);
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+code {
+  font-family: var(--font-family-mono);
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.toast {
+  position: fixed;
+
+  right: 30px;
+
+  top: 95px;
+
+  background: #101828;
+
+  color: #ffffff;
+
+  padding: 12px 16px;
+
+  border-radius: 8px;
+
+  z-index: 50;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+
+  font-family: var(--font-family);
+
+  font-size: 13px;
+}
+
+/* =========================================================
+   LOGIN PAGE
+========================================================= */
+
+.login-page {
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      #262e62,
+      #0b1220 55%
+    );
+
+  display: grid;
+
+  place-items: center;
+
+  padding: 20px;
+
+  font-family: var(--font-family);
+}
+
+.login-card {
+  background: #ffffff;
+
+  width: min(480px, 94vw);
+
+  border-radius: 14px;
+
+  padding: 34px;
+
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.38);
+
+  font-family: var(--font-family);
+}
+
+.login-brand {
+  padding: 0 0 25px;
+}
+
+.login-card h2 {
+  font-size: 25px;
+
+  font-weight: 600;
+
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: var(--muted);
+
+  line-height: 1.6;
+}
+
+.login-card textarea {
+  width: 100%;
+
+  resize: vertical;
+
+  margin-top: 8px;
+}
+
+.login-note {
+  margin-top: 18px;
+
+  font-size: 11px;
+
+  color: #98a2b3;
+}
+
+.login-note code {
+  font-size: 10px;
+}
+
+/* =========================================================
+   AG GRID APPLICATION OVERRIDES
+========================================================= */
+
+.ag-theme-quartz {
+  /*
+   * Typography
+   */
+
+  --ag-font-family: Inter, sans-serif;
+  --ag-font-size: 13px;
+
+  /*
+   * Header
+   */
+
+  --ag-header-font-family: Inter, sans-serif;
+  --ag-header-font-size: 11px;
+
+  /*
+   * Cell
+   */
+
+  --ag-cell-font-family: Inter, sans-serif;
+}
+
+/*
+ * Explicitly force the font on AG Grid rendered elements.
+ */
+
+.ag-theme-quartz,
+.ag-theme-quartz * {
+  font-family: Inter, sans-serif;
+}
+
+/*
+ * Preserve icon fonts if AG Grid uses them.
+ *
+ * Do NOT apply Inter to AG Grid icon elements.
+ */
+
+.ag-theme-quartz .ag-icon {
+  font-family: agGridAlpine, sans-serif;
+}
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .main {
+    margin-left: 220px;
+
+    width: calc(100% - 220px);
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+
+    width: 100%;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .topbar {
+    padding: 15px 20px;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid .full-width {
+    grid-column: auto;
+  }
+
+  .page-head {
+    gap: 15px;
+
+    flex-direction: column;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .toolbar input {
+    max-width: none;
+  }
+
+  .toolbar select {
+    max-width: none;
+  }
+
+  .user-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    width: 96vw;
+
+    max-height: 92vh;
+
+    padding: 20px;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+
+  .topbar {
+    height: 70px;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .page-head h2 {
+    font-size: 22px;
+  }
+
+  .modal {
+    padding: 18px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,569 @@
+/* =========================================================
+   BACKDROP
+========================================================= */
+
+.notification-modal-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.55);
+
+  z-index: 10000;
+
+  box-sizing: border-box;
+
+  animation: notificationFadeIn 0.15s ease-out;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.notification-modal {
+  width: 650px;
+
+  max-width: 100%;
+  max-height: calc(100vh - 40px);
+
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.25),
+    0 5px 15px rgba(0, 0, 0, 0.15);
+
+  overflow: hidden;
+
+  box-sizing: border-box;
+
+  animation: notificationSlideIn 0.2s ease-out;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.notification-modal-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 64px;
+
+  padding: 14px 20px;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.notification-title-container {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.notification-title-container h3 {
+  margin: 0;
+
+  font-size: 18px;
+
+  font-weight: 600;
+
+  line-height: 1.4;
+
+  color: #1f2937;
+
+  word-break: break-word;
+}
+
+
+/* =========================================================
+   ICON
+========================================================= */
+
+.notification-icon {
+  width: 34px;
+  height: 34px;
+
+  min-width: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 18px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.type-success .notification-icon {
+  background: #dcfce7;
+
+  color: #15803d;
+}
+
+.type-success .notification-modal-header {
+  border-bottom-color: #bbf7d0;
+}
+
+.type-success .notification-ok-button {
+  background: #16a34a;
+
+  border-color: #16a34a;
+}
+
+.type-success .notification-ok-button:hover {
+  background: #15803d;
+
+  border-color: #15803d;
+}
+
+
+/* =========================================================
+   WARNING
+========================================================= */
+
+.type-warning .notification-icon {
+  background: #fef3c7;
+
+  color: #b45309;
+}
+
+.type-warning .notification-modal-header {
+  border-bottom-color: #fde68a;
+}
+
+.type-warning .notification-ok-button {
+  background: #d97706;
+
+  border-color: #d97706;
+}
+
+.type-warning .notification-ok-button:hover {
+  background: #b45309;
+
+  border-color: #b45309;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.type-error .notification-icon {
+  background: #fee2e2;
+
+  color: #dc2626;
+}
+
+.type-error .notification-modal-header {
+  border-bottom-color: #fecaca;
+}
+
+.type-error .notification-ok-button {
+  background: #dc2626;
+
+  border-color: #dc2626;
+}
+
+.type-error .notification-ok-button:hover {
+  background: #b91c1c;
+
+  border-color: #b91c1c;
+}
+
+
+/* =========================================================
+   INFORMATION
+========================================================= */
+
+.type-information .notification-icon {
+  background: #dbeafe;
+
+  color: #2563eb;
+}
+
+.type-information .notification-modal-header {
+  border-bottom-color: #bfdbfe;
+}
+
+.type-information .notification-ok-button {
+  background: #2563eb;
+
+  border-color: #2563eb;
+}
+
+.type-information .notification-ok-button:hover {
+  background: #1d4ed8;
+
+  border-color: #1d4ed8;
+}
+
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+.notification-close-button {
+  width: 32px;
+  height: 32px;
+
+  min-width: 32px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #6b7280;
+
+  font-size: 24px;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.notification-close-button:hover {
+  background: #f3f4f6;
+
+  color: #111827;
+}
+
+.notification-close-button:focus-visible {
+  outline: 2px solid #2563eb;
+
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.notification-modal-body {
+  padding: 22px 20px;
+
+  background: #ffffff;
+
+  overflow: auto;
+
+  flex: 1;
+
+  min-height: 0;
+}
+
+
+/* =========================================================
+   TEXT CONTENT
+========================================================= */
+
+.notification-text {
+  margin: 0;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+
+  /*
+   * Preserve:
+   * \n = new line
+   * \t = tab
+   * Multiple spaces
+   */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-family: inherit;
+}
+
+:host ::ng-deep .notification-detail {
+  margin-left: 10px;
+}
+
+:host ::ng-deep .notification-errcode {
+  font-weight: bold;
+  font-size: 15px;
+  text-decoration: underline #4b5563 solid;
+}
+/* =========================================================
+   JSON TABLE CONTAINER
+========================================================= */
+
+.notification-table-container {
+  width: 100%;
+
+  overflow-x: auto;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 6px;
+}
+
+
+/* =========================================================
+   JSON TABLE
+========================================================= */
+
+.notification-table {
+  width: 100%;
+
+  min-width: 500px;
+
+  border-collapse: collapse;
+
+  font-size: 14px;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
+.notification-table thead th {
+  padding: 11px 12px;
+
+  background: #f3f4f6;
+
+  color: #374151;
+
+  border-bottom: 1px solid #d1d5db;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   TABLE BODY
+========================================================= */
+
+.notification-table tbody td {
+  padding: 10px 12px;
+
+  color: #4b5563;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  vertical-align: top;
+
+  white-space: pre-wrap;
+
+  word-break: break-word;
+}
+
+.notification-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.notification-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.notification-modal-footer {
+  display: flex;
+
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 14px 20px;
+
+  background: #f9fafb;
+
+  border-top: 1px solid #e5e7eb;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   OK BUTTON
+========================================================= */
+
+.notification-ok-button {
+  min-width: 90px;
+
+  height: 38px;
+
+  padding: 0 18px;
+
+  border-radius: 6px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.05s ease;
+}
+
+.notification-ok-button:active {
+  transform: translateY(1px);
+}
+
+.notification-ok-button:focus-visible {
+  outline: 2px solid #2563eb;
+
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes notificationFadeIn {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+
+}
+
+
+@keyframes notificationSlideIn {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-12px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .notification-modal-backdrop {
+    padding: 16px;
+  }
+
+  .notification-modal {
+    width: 100%;
+
+    max-height: calc(100vh - 32px);
+
+    border-radius: 8px;
+  }
+
+  .notification-modal-header {
+    padding: 14px 16px;
+  }
+
+  .notification-modal-body {
+    padding: 18px 16px;
+  }
+
+  .notification-modal-footer {
+    padding: 14px 16px;
+  }
+
+  .notification-table {
+    min-width: 450px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .notification-modal-backdrop,
+  .notification-modal {
+    animation: none;
+  }
+
+  .notification-close-button,
+  .notification-ok-button {
+    transition: none;
+  }
+
+}

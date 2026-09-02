@@ -1,0 +1,51 @@
+<app-page eyebrow="ORGANIZATION PLATFORM" title="Dashboard" description="Overview of your organization's structure."></app-page>
+
+@if (hasNoOrganizations) {
+  <div class="panel quick" style="margin-bottom: 20px; display:block; padding: 24px;">
+    <b>Get started</b>
+    <p style="margin: 6px 0 16px; color: var(--muted);">
+      You don't have an organization registered yet. Self-register your organization and first facility to start using the platform.
+    </p>
+    <a routerLink="/onboarding" class="primary" style="display:inline-block; text-decoration:none; padding: 10px 18px; border-radius: 8px;">
+      Register your organization →
+    </a>
+  </div>
+}
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <span>Organizations</span>
+    <strong>{{ loading ? '—' : organizationCount }}</strong>
+  </div>
+  <div class="stat-card">
+    <span>Facilities</span>
+    <strong>{{ loading ? '—' : facilityCount }}</strong>
+  </div>
+  <div class="stat-card">
+    <span>Departments</span>
+    <strong>{{ loading ? '—' : departmentCount }}</strong>
+  </div>
+  <div class="stat-card">
+    <span>Facility Services</span>
+    <strong>{{ loading ? '—' : serviceCount }}</strong>
+  </div>
+</div>
+
+<div class="quick-grid" style="margin-top: 24px;">
+  <a routerLink="/organizations" class="quick">
+    <b>◉</b>
+    <span><strong>Organizations</strong><small>Manage health networks &amp; authorities</small></span>
+  </a>
+  <a routerLink="/facilities" class="quick">
+    <b>◈</b>
+    <span><strong>Facilities</strong><small>CHC / PHC / hospitals / clinics</small></span>
+  </a>
+  <a routerLink="/departments" class="quick">
+    <b>◆</b>
+    <span><strong>Departments</strong><small>OPD / IPD / Lab / Pharmacy</small></span>
+  </a>
+  <a routerLink="/facility-services" class="quick">
+    <b>◇</b>
+    <span><strong>Facility Services</strong><small>Teleconsultation, Immunization, and more</small></span>
+  </a>
+</div>

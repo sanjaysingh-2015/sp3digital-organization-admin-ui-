@@ -1,0 +1,92 @@
+<app-page eyebrow="GET STARTED" title="Self Registration" description="Register your organization and first facility to start using the platform.">
+</app-page>
+
+<div class="panel wide">
+  <!-- STEP INDICATOR -->
+  <div class="onboarding-steps">
+    <div class="onboarding-step" [class.active]="step === 1" [class.done]="step > 1">
+      <span class="onboarding-step-number">1</span>
+      <span>Organization</span>
+    </div>
+    <div class="onboarding-step" [class.active]="step === 2" [class.done]="step > 2">
+      <span class="onboarding-step-number">2</span>
+      <span>First facility</span>
+    </div>
+    <div class="onboarding-step" [class.active]="step === 3">
+      <span class="onboarding-step-number">3</span>
+      <span>Done</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: ORGANIZATION -->
+  @if (step === 1) {
+    <div class="form-grid">
+      <label class="full-width">
+        <span>Organization name <b>*</b></span>
+        <input type="text" [(ngModel)]="orgForm.organizationName" placeholder="e.g. NHM Uttar Pradesh" autocomplete="off" />
+      </label>
+      <label class="full-width">
+        <span>Organization type</span>
+        <select [(ngModel)]="orgForm.organizationType">
+          <option [ngValue]="''">— none —</option>
+          @for (type of organizationTypes; track type) { <option [ngValue]="type">{{ type }}</option> }
+        </select>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="primary" (click)="submitOrganization()" [disabled]="submitting">
+        @if (submitting) { Registering... } @else { Continue }
+      </button>
+    </div>
+  }
+
+  <!-- STEP 2: FIRST FACILITY -->
+  @if (step === 2) {
+    <p class="onboarding-lead">
+      <strong>{{ createdOrganizationName }}</strong> is registered. Now add your first facility
+      (CHC, PHC, hospital, or clinic) — you can add more later.
+    </p>
+    <div class="form-grid">
+      <label class="full-width">
+        <span>Facility name <b>*</b></span>
+        <input type="text" [(ngModel)]="facilityForm.facilityName" placeholder="e.g. CHC Lucknow North" autocomplete="off" />
+      </label>
+      <label>
+        <span>Facility type</span>
+        <select [(ngModel)]="facilityForm.facilityType">
+          <option [ngValue]="''">— none —</option>
+          @for (type of facilityTypes; track type) { <option [ngValue]="type">{{ type }}</option> }
+        </select>
+      </label>
+      <label>
+        <span>City</span>
+        <input type="text" [(ngModel)]="facilityForm.city" autocomplete="off" />
+      </label>
+      <label>
+        <span>State</span>
+        <input type="text" [(ngModel)]="facilityForm.stateName" autocomplete="off" />
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="skipFacility()" [disabled]="submitting">Skip for now</button>
+      <button type="button" class="primary" (click)="submitFacility()" [disabled]="submitting">
+        @if (submitting) { Registering... } @else { Finish }
+      </button>
+    </div>
+  }
+
+  <!-- STEP 3: DONE -->
+  @if (step === 3) {
+    <div class="onboarding-done">
+      <div class="onboarding-done-icon">✓</div>
+      <h3>You're all set</h3>
+      <p><strong>{{ createdOrganizationName }}</strong> has been registered on the platform.</p>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="goToFacilities()">View facilities</button>
+        <button type="button" class="primary" (click)="goToOrganizations()">Go to organizations</button>
+      </div>
+    </div>
+  }
+</div>
+
+<app-notification-modal #notificationModal></app-notification-modal>

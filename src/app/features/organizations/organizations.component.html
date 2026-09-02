@@ -1,0 +1,124 @@
+<app-page eyebrow="ORGANIZATION" title="Organizations" description="Health networks, authorities and other organizations in the platform hierarchy.">
+  <button actions type="button" class="primary" (click)="openCreate()">+ Create organization</button>
+</app-page>
+
+<div class="toolbar">
+  <input type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Search organization name" />
+  <select [(ngModel)]="organizationType" (change)="onFilterChange()">
+    <option value="">All types</option>
+    @for (type of organizationTypes; track type) {
+      <option [value]="type">{{ type }}</option>
+    }
+  </select>
+  <select [(ngModel)]="status" (change)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="INACTIVE">INACTIVE</option>
+    <option value="DISABLED">DISABLED</option>
+    <option value="DELETED">DELETED</option>
+  </select>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) { Loading... } @else { Refresh }
+  </button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="organizations-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No results }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+@if (formOpen) {
+<div class="modal-backdrop" (click)="closeCreate()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>@if (editMode) { Edit organization } @else { Create organization }</h3>
+        <p>@if (editMode) { Update organization info. } @else { Register a new organization (health network / authority). }</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">×</button>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        <span>Organization name <b>*</b></span>
+        <input type="text" [(ngModel)]="form.organizationName" placeholder="e.g. NHM Uttar Pradesh" autocomplete="off" />
+      </label>
+      <label>
+        <span>Organization type</span>
+        <select [(ngModel)]="form.organizationType">
+          <option [ngValue]="''">— none —</option>
+          @for (type of organizationTypes; track type) {
+            <option [ngValue]="type">{{ type }}</option>
+          }
+        </select>
+      </label>
+      <label class="full-width">
+        <span>Parent organization</span>
+        <select [(ngModel)]="form.parentOrganizationId">
+          <option [ngValue]="null">— none (top level) —</option>
+          @for (parent of parentOptions; track parent.organizationId) {
+            @if (!editMode || parent.organizationId !== form.organizationId) {
+              <option [ngValue]="parent.organizationId">{{ parent.organizationName }}</option>
+            }
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreate()" [disabled]="saving">Cancel</button>
+      <button type="button" class="primary" (click)="save()" [disabled]="saving">
+        @if (saving) { @if (editMode) { Updating... } @else { Creating... } } @else { @if (editMode) { Update } @else { Create } }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- DETAILS MODAL -->
+@if (selected) {
+<div class="modal-backdrop" (click)="closeDetails()">
+  <div class="modal details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div><h3>Organization details</h3><p>{{ selected.organizationCode }}</p></div>
+      <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">×</button>
+    </div>
+
+    <div class="tenant-summary">
+      <div class="summary-item"><span>Organization Name</span><strong>{{ selected.organizationName || "—" }}</strong></div>
+      <div class="summary-item"><span>Type</span><strong>{{ selected.organizationType || "—" }}</strong></div>
+      <div class="summary-item"><span>Parent Organization ID</span><strong>{{ selected.parentOrganizationId || "—" }}</strong></div>
+      <div class="summary-item">
+        <span>Status</span>
+        <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'DISABLED'"
+          [class.danger]="selected.status === 'INACTIVE' || selected.status === 'DELETED'">{{ selected.status || "—" }}</span>
+      </div>
+    </div>
+
+    <details class="raw-details">
+      <summary>View raw response</summary>
+      <pre>{{ selected | json }}</pre>
+    </details>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onDeleteConfirmed()" (cancelled)="onDeleteCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>
