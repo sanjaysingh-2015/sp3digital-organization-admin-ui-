@@ -14,6 +14,7 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'onboarding', loadComponent: () => import('./features/onboarding/onboarding.component').then(m => m.OnboardingComponent) },
       { path: 'organizations', loadComponent: () => import('./features/organizations/organizations.component').then(m => m.OrganizationsComponent) },
+      { path: 'users', loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent) },
       { path: 'facilities', loadComponent: () => import('./features/facilities/facilities.component').then(m => m.FacilitiesComponent) },
       { path: 'departments', loadComponent: () => import('./features/departments/departments.component').then(m => m.DepartmentsComponent) },
       { path: 'facility-services', loadComponent: () => import('./features/facility-services/facility-services.component').then(m => m.FacilityServicesComponent) },

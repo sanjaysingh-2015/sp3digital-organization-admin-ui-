@@ -1,0 +1,129 @@
+@if (visible) {
+  <div
+    class="modal-backdrop"
+    (click)="close()"
+  >
+    <div
+      class="assign-modal"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Header -->
+      <div class="modal-header">
+        <div>
+          <h3>Assign roles</h3>
+          <p>{{ getUserLabel() }}</p>
+        </div>
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Close"
+          [disabled]="saving"
+          (click)="close()"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="modal-search">
+        <input
+          type="text"
+          [(ngModel)]="search"
+          placeholder="Search roles by name or type"
+        />
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        @if (loading) {
+          <div class="empty-state">Loading roles...</div>
+        } @else if (!filteredRoles.length) {
+          <div class="empty-state">No roles found.</div>
+        } @else {
+          <ul class="assign-list">
+            @for (role of filteredRoles; track (role.role_id || role.roleId)) {
+              <li
+                class="assign-row"
+                [class.row-added]="rowState(role) === 'added'"
+                [class.row-removed]="rowState(role) === 'removed'"
+                (click)="toggleSelection(role)"
+              >
+                <label class="assign-row-checkbox" (click)="$event.stopPropagation()">
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(role)"
+                    [disabled]="saving"
+                    (change)="toggleSelection(role)"
+                  />
+                </label>
+
+                <div class="assign-row-info">
+                  <strong>{{ getRoleName(role) }}</strong>
+                  <span class="assign-row-type">
+                    {{ formatRoleType(role.role_type || role.roleType) }}
+                  </span>
+                </div>
+
+                <span class="row-status">
+                  @if (rowState(role) === 'added') {
+                    Will assign
+                  } @else if (rowState(role) === 'removed') {
+                    Will remove
+                  } @else if (isSelected(role)) {
+                    Assigned
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <span class="changes-summary">
+          @if (hasChanges) {
+            @if (pendingAddCount) {
+              <span class="added">+{{ pendingAddCount }}</span>
+            }
+            @if (pendingRemoveCount) {
+              <span class="removed">-{{ pendingRemoveCount }}</span>
+            }
+          }
+        </span>
+
+        <div class="footer-actions">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="saving"
+            (click)="close()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="primary"
+            [disabled]="!hasChanges || saving"
+            (click)="save()"
+          >
+            @if (saving) {
+              Saving...
+            } @else {
+              Save changes
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- =========================================================
+     NOTIFICATION MODAL
+========================================================= -->
+<app-notification-modal
+  #notificationModal>
+</app-notification-modal>

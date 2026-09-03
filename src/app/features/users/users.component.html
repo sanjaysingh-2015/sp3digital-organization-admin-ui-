@@ -1,0 +1,365 @@
+<app-page eyebrow="IDENTITY" title="Users" description="Manage administrator-visible users and their role assignments.">
+  <button actions type="button" class="primary" (click)="openCreate()">
+    + Create user
+  </button>
+</app-page>
+
+<!-- =========================================================
+     SEARCH / FILTER TOOLBAR
+========================================================= -->
+
+<div class="toolbar">
+  <input type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Search username, name or email" />
+  <select [(ngModel)]="tenantUuid" (change)="onFilterChange()">
+    <option value="">All tenants</option>
+    @for (tenant of tenants; track tenant.tenantUuid) {
+    <option [value]="tenant.tenantUuid">{{ tenant.tenantName }}</option>
+    }
+  </select>
+  <select [(ngModel)]="status" (change)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="INACTIVE">INACTIVE</option>
+    <option value="SUSPENDED">SUSPENDED</option>
+    <option value="DELETED">DELETED</option>
+  </select>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) {
+    Loading...
+    } @else {
+    Refresh
+    }
+  </button>
+</div>
+
+<!-- =========================================================
+     AG GRID
+========================================================= -->
+<div class="panel grid-panel">
+  <ag-grid-angular class="users-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <!-- =========================================================
+       PAGER (server-side — one API page loaded per navigation)
+  ========================================================= -->
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) {
+      Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
+      } @else {
+      No results
+      }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">
+        Previous
+      </button>
+      <span class="pager-page">
+        Page {{ page }} of {{ totalPages }}
+      </span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     CREATE / EDIT USER MODAL
+========================================================= -->
+
+@if (formOpen) {
+<div class="modal-backdrop" (click)="closeCreate()">
+  <div class="modal user-form-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>
+          @if (editMode) {
+          Edit user
+          } @else {
+          Create user
+          }
+        </h3>
+        <p>
+          @if (editMode) {
+          Update identity and account information.
+          } @else {
+          Create a new identity user.
+          }
+        </p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">
+        ×
+      </button>
+    </div>
+
+    <!-- ===================================================
+           USER FORM
+      ==================================================== -->
+    <div class="form-grid">
+      <!-- Tenant -->
+      <label>
+        <span>
+          Tenant <b>*</b>
+        </span>
+        <select [(ngModel)]="form.tenantUuid" [disabled]="editMode">
+          <option value="" disabled>Select a tenant</option>
+          @for (tenant of tenants; track tenant.tenantUuid) {
+          <option [value]="tenant.tenantUuid">{{ tenant.tenantName }}</option>
+          }
+        </select>
+      </label>
+      <!-- Username -->
+      <label>
+        <span>
+          Username <b>*</b>
+        </span>
+        <input type="text" [(ngModel)]="form.username" placeholder="Enter username" autocomplete="off" />
+      </label>
+      <!-- Email -->
+      <label>
+        <span>
+          Email <b>*</b>
+        </span>
+        <input type="email" [(ngModel)]="form.email" placeholder="Enter email" autocomplete="off" />
+      </label>
+      <!-- First Name -->
+      <label>
+        <span>
+          First name <b>*</b>
+        </span>
+        <input type="text" [(ngModel)]="form.firstName" placeholder="Enter first name" />
+      </label>
+      <!-- Middle Name -->
+      <label>
+        <span>
+          Middle name
+        </span>
+        <input type="text" [(ngModel)]="form.middleName" placeholder="Enter middle name" />
+      </label>
+      <!-- Last Name -->
+      <label>
+        <span>
+          Last name <b>*</b>
+        </span>
+        <input type="text" [(ngModel)]="form.lastName" placeholder="Enter last name" />
+      </label>
+      <!-- Display Name -->
+      <label>
+        <span>
+          Display name
+        </span>
+        <input type="text" [(ngModel)]="form.displayName" placeholder="Enter display name" />
+      </label>
+      <!-- Phone Country Code -->
+      <label>
+        <span>
+          Phone country code
+        </span>
+        <input type="text" [(ngModel)]="form.phoneCountryCode" placeholder="e.g. +91" maxlength="8" />
+      </label>
+      <!-- Phone Number -->
+      <label>
+        <span>
+          Phone number
+        </span>
+        <input type="tel" [(ngModel)]="form.phoneNumber" placeholder="Enter phone number" />
+      </label>
+      <!-- User Type -->
+      <label>
+        <span>
+          User type <b>*</b>
+        </span>
+        <select [(ngModel)]="form.userType">
+          @for (
+          userType of userTypes;
+          track userType
+          ) {
+          <option [value]="userType">
+            {{ userType }}
+          </option>
+          }
+        </select>
+      </label>
+    </div>
+    <!-- Actions -->
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreate()" [disabled]="saving">
+        Cancel
+      </button>
+      <button type="button" class="primary" (click)="save()" [disabled]="saving">
+        @if (saving) {
+        @if (editMode) {
+        Updating...
+        } @else {
+        Creating...
+        }
+        } @else {
+        @if (editMode) {
+        Update
+        } @else {
+        Create
+        }
+        }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- =========================================================
+     USER DETAILS MODAL
+========================================================= -->
+@if (selected) {
+<div class="modal-backdrop" (click)="closeDetails()">
+  <div class="modal details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>
+          User details
+        </h3>
+        <p>
+          Identity and account information.
+        </p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">
+        ×
+      </button>
+    </div>
+
+    <!-- User summary -->
+    <div class="user-summary">
+      <div class="summary-item">
+        <span>Tenant UUID</span>
+        <strong>
+          {{
+          selected.tenant_uuid ||
+          selected.tenantUuid ||
+          "—"
+          }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>Display Name</span>
+        <strong>
+          {{
+          selected.display_name ||
+          selected.displayName ||
+          "—"
+          }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>Username</span>
+        <strong>
+          {{ selected.username || "—" }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>Email</span>
+        <strong>
+          {{ selected.email || "—" }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>First Name</span>
+        <strong>
+          {{
+          selected.first_name ||
+          selected.firstName ||
+          "—"
+          }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>Middle Name</span>
+        <strong>
+          {{
+          selected.middle_name ||
+          selected.middleName ||
+          "—"
+          }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>Last Name</span>
+        <strong>
+          {{
+          selected.last_name ||
+          selected.lastName ||
+          "—"
+          }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>
+          Phone
+        </span>
+        <strong>
+          {{
+          selected.phone_country_code ||
+          selected.phoneCountryCode ||
+          ""
+          }}
+          {{
+          selected.phone_number ||
+          selected.phoneNumber ||
+          "—"
+          }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>
+          User Type
+        </span>
+        <strong>
+          {{ getUserType(selected) }}
+        </strong>
+      </div>
+      <div class="summary-item">
+        <span>
+          Status
+        </span>
+        <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.danger]="selected.status === 'DELETED'">
+          {{ selected.status }}
+        </span>
+      </div>
+    </div>
+    <!-- Raw response -->
+    <details class="raw-details">
+      <summary>
+        View raw response
+      </summary>
+      <pre>{{ selected | json }}</pre>
+    </details>
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeDetails()">
+        Close
+      </button>
+      <button type="button" class="primary" (click)="openAssignRoles(selected)">
+        Assigned roles to user
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+
+<!-- =========================================================
+     CONFIRM MODAL
+========================================================= -->
+<app-confirm-modal #confirmModal (confirmed)="onDeleteUserConfirmed()"
+  (cancelled)="onDeleteUserCancelled()"></app-confirm-modal>
+
+<!-- =========================================================
+     NOTIFICATION MODAL
+========================================================= -->
+<app-notification-modal #notificationModal>
+</app-notification-modal>
+
+<!-- =========================================================
+     ASSIGN ROLES MODAL
+========================================================= -->
+<app-assign-roles-modal #assignRolesModal>
+</app-assign-roles-modal>
