@@ -157,6 +157,34 @@ export class OrganizationsComponent implements OnInit {
     this.gridApi.sizeColumnsToFit();
   }
 
+  /**
+   * Every other list page (departments, facilities, facility-services)
+   * expects a flat `{ data: [...], pagination: {...} }` response. This
+   * handles that shape first, falls back to a response nested one level
+   * under an "organizations" key in case the API wraps it that way, and
+   * warns loudly instead of silently rendering an empty grid if neither
+   * shape matches — that silent-empty-grid failure mode is what caused
+   * this page to appear broken while the network tab showed data.
+   */
+  private normalizeListResponse(response: any): { rows: any[]; pagination: any } {
+    const candidates = [response, response?.organizations];
+
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      const rows = candidate.data ?? candidate.items ?? candidate.rows;
+      if (Array.isArray(rows)) {
+        return { rows, pagination: candidate.pagination };
+      }
+    }
+
+    if (Array.isArray(response)) {
+      return { rows: response, pagination: undefined };
+    }
+
+    console.warn("Unrecognized /organizations response shape:", response);
+    return { rows: [], pagination: undefined };
+  }
+
   load(page: number = this.page): void {
     this.loading = true;
     this.page = page;
@@ -171,9 +199,8 @@ export class OrganizationsComponent implements OnInit {
       })
       .subscribe({
         next: (response) => {
-          console.log(" ==> ", response);
-          this.rows = response?.data || response?.organizations?.data || [];
-          const pagination = response?.organizations?.pagination;
+          const { rows, pagination } = this.normalizeListResponse(response);
+          this.rows = rows;
           this.page = pagination?.page ?? this.page;
           this.limit = pagination?.limit ?? this.limit;
           this.totalItems = pagination?.totalItems ?? this.rows.length;
