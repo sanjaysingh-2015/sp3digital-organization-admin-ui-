@@ -18,6 +18,23 @@ export interface LoginResponse {
   expiresIn: number;
 }
 
+export interface JwtResponse {
+  amr?: string[];
+  aud?: string;
+  email?: string;
+  exp?: number;
+  family_name?: string;
+  given_name?: string;
+  iat?: number;
+  iss?: string;
+  preferred_username?: string;
+  sub?: string;
+  tenant_name?: string;
+  tenant_uuid?: string;
+  token_use?: string;
+  user_id?: number;
+}
+
 export interface Tenant {
   tenantUuid: string;
   tenantCode: string;
@@ -66,17 +83,25 @@ export interface RegisterOrganizationResponse {
  * (features/login/login.component.ts) that authenticates directly against
  * sp3digital-identity-admin-service, the same backend identity-admin-ui
  * uses. Both apps store the issued JWT under the same localStorage key
- * (`sp3_identity_admin_token`), so a token from either app's login is
+ * (`sp3_organization_token`), so a token from either app's login is
  * treated identically here: claims, tenant scoping, and the Authorization
  * header all work exactly as they do in identity-admin-ui.
  */
 @Injectable({ providedIn: "root" })
 export class AuthService {
-  private readonly key = "sp3_identity_admin_token";
+  private readonly key = "sp3_organization_token";
+  private readonly idTokenKey = "sp3_organization_id_token";
+  private readonly refreshTokenkey = "sp3_organization_refresh_token";
 
   private readonly identityApiBaseUrl = environment.identityApiBaseUrl;
 
   readonly token = signal<string | null>(localStorage.getItem(this.key));
+  readonly idToken = signal<string | null>(
+    localStorage.getItem(this.idTokenKey),
+  );
+  readonly refreshToken = signal<string | null>(
+    localStorage.getItem(this.idTokenKey),
+  );
 
   constructor(
     private router: Router,
@@ -140,6 +165,23 @@ export class AuthService {
     this.token.set(cleanToken);
   }
 
+  /** Store id token */
+  setIdToken(token: string) {
+    const cleanToken = token.trim();
+
+    localStorage.setItem(this.idTokenKey, cleanToken);
+
+    this.idToken.set(cleanToken);
+  }
+
+  /** Store access token */
+  setRefreshToken(token: string) {
+    const cleanToken = token.trim();
+
+    localStorage.setItem(this.refreshTokenkey, cleanToken);
+
+    this.refreshToken.set(cleanToken);
+  }
   /** Clear authentication and return to this app's own login screen. */
   clear(queryParams?: Record<string, unknown>) {
     localStorage.removeItem(this.key);
@@ -182,5 +224,49 @@ export class AuthService {
     const c = this.claims();
 
     return String(c["user_id"] ?? c["userId"] ?? c["sub"] ?? "");
+  }
+
+  private getAccessTokenPayload(): JwtResponse | null {
+    const token = localStorage.getItem(this.idTokenKey);
+
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payload = token.split(".")[1];
+
+      if (!payload) {
+        return null;
+      }
+
+      // JWT payload is Base64URL encoded
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+
+      const padded = base64.padEnd(
+        base64.length + ((4 - (base64.length % 4)) % 4),
+        "=",
+      );
+
+      const decodedPayload = atob(padded);
+
+      return JSON.parse(decodedPayload) as JwtResponse;
+    } catch (error) {
+      console.error("Unable to decode ID token", error);
+      return null;
+    }
+  }
+
+  userName(): string {
+    console.log("Test UserName");
+    const payload = this.getAccessTokenPayload();
+
+    return String(payload?.given_name + ", " + payload?.family_name);
+  }
+
+  tenantName(): string {
+    const payload = this.getAccessTokenPayload();
+
+    return String(payload?.tenant_name ?? "");
   }
 }

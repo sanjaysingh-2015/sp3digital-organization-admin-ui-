@@ -1,0 +1,96 @@
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">SP3</div>
+
+      <div class="brand-copy">
+        <strong>SP3 Digital</strong>
+        <small>Organization Admin</small>
+      </div>
+    </div>
+
+    <nav class="navigation">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <span class="nav-icon" aria-hidden="true">▦</span>
+        <span>Dashboard</span>
+      </a>
+
+      <a routerLink="/onboarding" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">✦</span>
+        <span>Get Started</span>
+      </a>
+
+      <div class="nav-label">ORGANIZATION</div>
+
+      <a routerLink="/users" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">♙</span>
+        <span>Users</span>
+      </a>
+
+      <a routerLink="/organizations" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">◉</span>
+        <span>Organizations</span>
+      </a>
+
+      <a routerLink="/facilities" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">◈</span>
+        <span>Facilities</span>
+      </a>
+
+      <a routerLink="/departments" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">◆</span>
+        <span>Departments</span>
+      </a>
+
+      <a routerLink="/facility-services" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">◇</span>
+        <span>Facility Services</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span>Tenant</span>
+      <strong>{{ auth.tenantUuid() || 'JWT tenant claim' }}</strong>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="page-heading">
+        <span class="eyebrow">ORGANIZATION PLATFORM</span>
+        <h1>Administration Console</h1>
+      </div>
+
+      <div class="top-actions">
+        <span class="connection-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Connected</span>
+        </span>
+
+        <button
+          type="button"
+          class="avatar"
+          title="Sign out"
+          aria-label="Sign out"
+          (click)="auth.clear()"
+        >
+          {{ auth.userName() }}
+        </button>
+      </div>
+    </header>
+
+    @if (ui.toast()) {
+      <div class="toast" role="status" aria-live="polite">
+        {{ ui.toast() }}
+      </div>
+    }
+
+    <section class="content">
+      <router-outlet />
+    </section>
+  </main>
+</div>

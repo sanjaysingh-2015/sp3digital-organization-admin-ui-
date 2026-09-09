@@ -166,7 +166,8 @@ export class LoginComponent implements OnInit {
         next: (response) => {
           localStorage.setItem("tenantUuid", tenantUuid!)
           this.authService.setToken(response.accessToken);
-
+          this.authService.setIdToken(response.idToken || "");
+          this.authService.setRefreshToken(response.refreshToken || "");
           this.router.navigate(['/dashboard']);
         },
 

@@ -14,7 +14,7 @@ Authentication is entirely owned by **identity-admin-ui**. This app:
 
 - Never collects a username/password.
 - Reads the access token from the **same localStorage key**
-  (`sp3_identity_admin_token`) identity-admin-ui uses — if both consoles
+  (`sp3_organization_token`) identity-admin-ui uses — if both consoles
   are deployed under one origin (e.g. `/identity/*` and `/organization/*`
   behind a shared reverse proxy), signing in once on either side is enough.
 - If deployed on a **different origin** (separate ports/subdomains,

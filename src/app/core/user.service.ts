@@ -105,13 +105,13 @@ export interface RegisterOrganizationResponse {
  * (features/login/login.component.ts) that authenticates directly against
  * sp3digital-identity-admin-service, the same backend identity-admin-ui
  * uses. Both apps store the issued JWT under the same localStorage key
- * (`sp3_identity_admin_token`), so a token from either app's login is
+ * (`sp3_organization_token`), so a token from either app's login is
  * treated identically here: claims, tenant scoping, and the Authorization
  * header all work exactly as they do in identity-admin-ui.
  */
 @Injectable({ providedIn: "root" })
 export class UserService {
-  private readonly key = "sp3_identity_admin_token";
+  private readonly key = "sp3_organization_token";
 
   private readonly identityApiBaseUrl = environment.identityApiBaseUrl;
 
