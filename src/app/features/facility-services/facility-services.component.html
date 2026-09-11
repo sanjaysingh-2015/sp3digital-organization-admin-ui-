@@ -10,9 +10,11 @@
       <option [value]="facility.facilityId">{{ facility.facilityName }}</option>
     }
   </select>
-  <select [(ngModel)]="serviceCategory" (change)="onFilterChange()">
+  <select [(ngModel)]="serviceCategoryId" (change)="onFilterChange()">
     <option value="">All categories</option>
-    @for (category of serviceCategories; track category) { <option [value]="category">{{ category }}</option> }
+    @for (category of formServiceCategoryOptions; track category.serviceCategoryId) {
+      <option [value]="category.serviceCategoryId">{{ category.serviceCategoryName }}</option>
+    }
   </select>
   <select [(ngModel)]="status" (change)="onFilterChange()">
     <option value="">All statuses</option>
@@ -115,9 +117,9 @@
 
     <div class="tenant-summary">
       <div class="summary-item"><span>Service Name</span><strong>{{ selected.serviceName || "—" }}</strong></div>
-      <div class="summary-item"><span>Category</span><strong>{{ selected.serviceCategory || "—" }}</strong></div>
-      <div class="summary-item"><span>Facility ID</span><strong>{{ selected.facilityId || "—" }}</strong></div>
-      <div class="summary-item"><span>Department ID</span><strong>{{ selected.departmentId || "—" }}</strong></div>
+      <div class="summary-item"><span>Category</span><strong>{{ selected.serviceCategoryName || "—" }}</strong></div>
+      <div class="summary-item"><span>Facility</span><strong>{{ selected.facilityName || "—" }}</strong></div>
+      <div class="summary-item"><span>Department</span><strong>{{ selected.departmentName || "—" }}</strong></div>
       <div class="summary-item">
         <span>Status</span>
         <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'DISABLED'"
