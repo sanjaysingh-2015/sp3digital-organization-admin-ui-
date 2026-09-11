@@ -67,22 +67,29 @@
       </label>
       <label>
         <span>Department (optional)</span>
-        <select [(ngModel)]="form.departmentId" [disabled]="!form.facilityId">
+        <select [(ngModel)]="form.departmentId">
           <option [ngValue]="null">— none —</option>
           @for (dept of formDepartmentOptions; track dept.departmentId) {
             <option [ngValue]="dept.departmentId">{{ dept.departmentName }}</option>
           }
         </select>
       </label>
-      <label class="full-width">
-        <span>Service name <b>*</b></span>
-        <input type="text" [(ngModel)]="form.serviceName" placeholder="e.g. Teleconsultation" autocomplete="off" />
+      <label>
+        <span>Service Category</span>
+        <select [(ngModel)]="form.serviceCategoryId">
+          <option [ngValue]="null">— none —</option>
+          @for (srvCat of formServiceCategoryOptions; track srvCat.serviceCategoryId) {
+            <option [ngValue]="srvCat.serviceCategoryId">{{ srvCat.serviceCategoryName }}</option>
+          }
+        </select>
       </label>
       <label>
-        <span>Service category</span>
-        <select [(ngModel)]="form.serviceCategory">
-          <option [ngValue]="''">— none —</option>
-          @for (category of serviceCategories; track category) { <option [ngValue]="category">{{ category }}</option> }
+        <span>Service</span>
+        <select [(ngModel)]="form.serviceId">
+          <option [ngValue]="null">— none —</option>
+          @for (srv of formServiceOptions; track srv.serviceId) {
+            <option [ngValue]="srv.serviceId">{{ srv.serviceName }}</option>
+          }
         </select>
       </label>
     </div>

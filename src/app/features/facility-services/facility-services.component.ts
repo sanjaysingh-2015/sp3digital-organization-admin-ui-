@@ -44,6 +44,8 @@ export class FacilityServicesComponent implements OnInit {
   rows: any[] = [];
   facilityOptions: any[] = [];
   formDepartmentOptions: any[] = [];
+  formServiceCategoryOptions: any[] = [];
+  formServiceOptions: any[] = [];
 
   search = "";
   status = "";
@@ -73,8 +75,8 @@ export class FacilityServicesComponent implements OnInit {
     facilityServiceId: null as number | null,
     facilityId: null as number | null,
     departmentId: null as number | null,
-    serviceName: "",
-    serviceCategory: "" as string,
+    serviceId: null as number | null,
+    serviceCategoryId: null as number | null,
   };
 
   private gridApi!: GridApi;
@@ -144,6 +146,8 @@ export class FacilityServicesComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.loadFacilityOptions();
+    this.loadServiceCategoryOptions();
+    this.loadServiceOptions();
   }
 
   onGridReady(event: GridReadyEvent): void {
@@ -193,6 +197,20 @@ export class FacilityServicesComponent implements OnInit {
     });
   }
 
+  loadServiceCategoryOptions(): void {
+    this.api.get<any>("/service-categories/list").subscribe({
+      next: (response) => (this.formServiceCategoryOptions = response?.data || []),
+      error: () => (this.formServiceCategoryOptions = []),
+    });
+  }
+
+  loadServiceOptions(): void {
+    this.api.get<any>("/services/list").subscribe({
+      next: (response) => (this.formServiceOptions = response?.data || []),
+      error: () => (this.formServiceOptions = []),
+    });
+  }
+
   /** Called when the facility select changes inside the create/edit form. */
   onFormFacilityChange(): void {
     this.form.departmentId = null;
@@ -233,8 +251,8 @@ export class FacilityServicesComponent implements OnInit {
       facilityServiceId: svc.facilityServiceId,
       facilityId: svc.facilityId ?? null,
       departmentId: svc.departmentId ?? null,
-      serviceName: svc.serviceName || "",
-      serviceCategory: svc.serviceCategory || "",
+      serviceId: svc.serviceId || null,
+      serviceCategoryId: svc.serviceCategoryId || null,
     };
     this.formOpen = true;
 
@@ -260,8 +278,8 @@ export class FacilityServicesComponent implements OnInit {
     const request: any = {
       facilityId: this.form.facilityId,
       departmentId: this.form.departmentId || null,
-      serviceName: this.form.serviceName.trim(),
-      serviceCategory: this.form.serviceCategory || null,
+      serviceId: this.form.serviceId,
+      serviceCategoryId: this.form.serviceCategoryId,
     };
 
     if (this.editMode) {
@@ -302,7 +320,7 @@ export class FacilityServicesComponent implements OnInit {
     this.pendingDelete = svc;
     this.confirmModal.open({
       title: "Delete facility service",
-      message: `Are you sure you want to delete "${svc.serviceName}"?\n\nThe service will be marked as DELETED and will not be physically removed.`,
+      message: `Are you sure you want to delete "${svc.serviceId}"?\n\nThe service will be marked as DELETED and will not be physically removed.`,
       confirmText: "Delete",
       cancelText: "Cancel",
     });
@@ -355,15 +373,19 @@ export class FacilityServicesComponent implements OnInit {
       this.ui.show("Facility is required");
       return false;
     }
-    if (!this.form.serviceName.trim()) {
-      this.ui.show("Service name is required");
+    if (!this.form.serviceId) {
+      this.ui.show("Service is required");
+      return false;
+    }
+    if (!this.form.serviceCategoryId) {
+      this.ui.show("Service Category is required");
       return false;
     }
     return true;
   }
 
   resetForm(): void {
-    this.form = { facilityServiceId: null, facilityId: null, departmentId: null, serviceName: "", serviceCategory: "" };
+    this.form = { facilityServiceId: null, facilityId: null, departmentId: null, serviceId: null, serviceCategoryId: null };
     this.formDepartmentOptions = [];
   }
 

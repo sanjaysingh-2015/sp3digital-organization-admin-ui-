@@ -10,51 +10,26 @@
     </div>
 
     <nav class="navigation">
-      <a
-        routerLink="/dashboard"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <span class="nav-icon" aria-hidden="true">▦</span>
         <span>Dashboard</span>
       </a>
-
       <a routerLink="/onboarding" routerLinkActive="active">
         <span class="nav-icon" aria-hidden="true">✦</span>
         <span>Get Started</span>
       </a>
-
       <div class="nav-label">ORGANIZATION</div>
-
-      <a routerLink="/users" routerLinkActive="active">
-        <span class="nav-icon" aria-hidden="true">♙</span>
-        <span>Users</span>
-      </a>
-
-      <a routerLink="/organizations" routerLinkActive="active">
-        <span class="nav-icon" aria-hidden="true">◉</span>
-        <span>Organizations</span>
-      </a>
-
-      <a routerLink="/facilities" routerLinkActive="active">
-        <span class="nav-icon" aria-hidden="true">◈</span>
-        <span>Facilities</span>
-      </a>
-
-      <a routerLink="/departments" routerLinkActive="active">
-        <span class="nav-icon" aria-hidden="true">◆</span>
-        <span>Departments</span>
-      </a>
-
-      <a routerLink="/facility-services" routerLinkActive="active">
-        <span class="nav-icon" aria-hidden="true">◇</span>
-        <span>Facility Services</span>
-      </a>
+      <a routerLink="/users" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">♙</span><span>Users</span></a>
+      <a routerLink="/organizations" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◉</span><span>Organizations</span></a>
+      <a routerLink="/facilities" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◈</span><span>Facilities</span></a>
+      <a routerLink="/departments" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◆</span><span>Departments</span></a>
+      <!-- <a routerLink="/service-categories" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◇</span><span>Service Category</span></a> -->
+      <a routerLink="/facility-services" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◇</span><span>Facility Services</span></a>
     </nav>
 
     <div class="sidebar-foot">
       <span>Tenant</span>
-      <strong>{{ auth.tenantUuid() || 'JWT tenant claim' }}</strong>
+      <strong>{{ auth.tenantName() || 'JWT tenant claim' }}</strong>
     </div>
   </aside>
 
@@ -71,22 +46,26 @@
           <span>Connected</span>
         </span>
 
-        <button
-          type="button"
-          class="avatar"
-          title="Sign out"
-          aria-label="Sign out"
-          (click)="auth.clear()"
-        >
-          {{ auth.userName() }}
-        </button>
+        <div class="user-profile">
+          <div class="user-profile__avatar" aria-hidden="true">{{ initials }}</div>
+          <div class="user-profile__details">
+            <span class="user-profile__name">{{ displayName }}</span>
+          </div>
+          <button
+            type="button"
+            class="user-profile__logout"
+            title="Sign out"
+            aria-label="Sign out"
+            (click)="auth.clear()"
+          >
+            <span aria-hidden="true">⋮</span>
+          </button>
+        </div>
       </div>
     </header>
 
     @if (ui.toast()) {
-      <div class="toast" role="status" aria-live="polite">
-        {{ ui.toast() }}
-      </div>
+      <div class="toast" role="status" aria-live="polite">{{ ui.toast() }}</div>
     }
 
     <section class="content">

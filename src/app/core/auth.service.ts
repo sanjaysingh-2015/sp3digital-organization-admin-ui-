@@ -261,12 +261,24 @@ export class AuthService {
     console.log("Test UserName");
     const payload = this.getAccessTokenPayload();
 
-    return String(payload?.given_name + ", " + payload?.family_name);
+    return String(payload?.preferred_username);
   }
 
   tenantName(): string {
     const payload = this.getAccessTokenPayload();
 
     return String(payload?.tenant_name ?? "");
+  }
+
+  givenName(): string {
+    const payload = this.getAccessTokenPayload();
+
+    return String(payload?.given_name ?? "");
+  }
+
+  familyName(): string {
+    const payload = this.getAccessTokenPayload();
+
+    return String(payload?.family_name ?? "");
   }
 }
