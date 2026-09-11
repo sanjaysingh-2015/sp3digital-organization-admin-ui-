@@ -20,17 +20,6 @@ import { NotificationModalComponent } from "../../shared/components/notification
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-export const SERVICE_CATEGORIES = [
-  "OUTPATIENT",
-  "INPATIENT",
-  "DIAGNOSTIC",
-  "IMMUNIZATION",
-  "MATERNAL_HEALTH",
-  "TELECONSULTATION",
-  "EMERGENCY",
-  "OTHER",
-];
-
 @Component({
   selector: "app-facility-services",
   standalone: true,
@@ -39,8 +28,6 @@ export const SERVICE_CATEGORIES = [
   styleUrls: ["./facility-services.component.scss"],
 })
 export class FacilityServicesComponent implements OnInit {
-  serviceCategories = SERVICE_CATEGORIES;
-
   rows: any[] = [];
   facilityOptions: any[] = [];
   formDepartmentOptions: any[] = [];
@@ -50,7 +37,11 @@ export class FacilityServicesComponent implements OnInit {
   search = "";
   status = "";
   facilityId = "";
-  serviceCategory = "";
+  // Was bound to a hardcoded enum unrelated to the real ServiceCategory
+  // master data, so the backend (which now filters on serviceCategoryId,
+  // not a free-text serviceCategory string) silently ignored it. Now
+  // reuses the same formServiceCategoryOptions the create/edit form loads.
+  serviceCategoryId = "";
 
   page = 1;
   limit = 20;
@@ -89,12 +80,14 @@ export class FacilityServicesComponent implements OnInit {
       minWidth: 220,
       cellRenderer: (params: ICellRendererParams) => {
         const svc = params.data;
-        return `<div class="ag-tenant-cell"><strong>${this.escapeHtml(svc?.serviceName)}</strong><br><small>${this.escapeHtml(svc?.serviceCode)}</small></div>`;
+        const name = svc?.serviceName || "—";
+        const code = svc?.serviceCode ? `<br><small>${this.escapeHtml(svc.serviceCode)}</small>` : "";
+        return `<div class="ag-tenant-cell"><strong>${this.escapeHtml(name)}</strong>${code}</div>`;
       },
     },
-    { headerName: "Category", field: "serviceCategory", flex: 1, minWidth: 160 },
-    { headerName: "Facility ID", field: "facilityId", flex: 0.8, minWidth: 120 },
-    { headerName: "Department ID", field: "departmentId", flex: 0.8, minWidth: 130 },
+    { headerName: "Category", field: "serviceCategoryName", flex: 1, minWidth: 160, valueFormatter: (p) => p.value || "—" },
+    { headerName: "Facility", field: "facilityName", flex: 1, minWidth: 160, valueFormatter: (p) => p.value || "—" },
+    { headerName: "Department", field: "departmentName", flex: 1, minWidth: 160, valueFormatter: (p) => p.value || "—" },
     {
       headerName: "Status",
       field: "status",
@@ -166,7 +159,7 @@ export class FacilityServicesComponent implements OnInit {
         search: this.search,
         status: this.status,
         facilityId: this.facilityId,
-        serviceCategory: this.serviceCategory,
+        serviceCategoryId: this.serviceCategoryId,
       })
       .subscribe({
         next: (response) => {
@@ -320,7 +313,7 @@ export class FacilityServicesComponent implements OnInit {
     this.pendingDelete = svc;
     this.confirmModal.open({
       title: "Delete facility service",
-      message: `Are you sure you want to delete "${svc.serviceId}"?\n\nThe service will be marked as DELETED and will not be physically removed.`,
+      message: `Are you sure you want to delete "${svc.serviceName || svc.serviceId}"?\n\nThe service will be marked as DELETED and will not be physically removed.`,
       confirmText: "Delete",
       cancelText: "Cancel",
     });
