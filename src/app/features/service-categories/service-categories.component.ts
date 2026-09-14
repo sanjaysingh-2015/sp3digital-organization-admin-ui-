@@ -21,30 +21,19 @@ import { NotificationModalComponent } from "../../shared/components/notification
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 @Component({
-  selector: "app-facility-services",
+  selector: "app-service-categories",
   standalone: true,
   imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent],
-  templateUrl: "./facility-services.component.html",
-  styleUrls: ["./facility-services.component.scss"],
+  templateUrl: "./service-categories.component.html",
+  styleUrls: ["./service-categories.component.scss"],
 })
-export class FacilityServicesComponent implements OnInit {
+export class ServiceCategoriesComponent implements OnInit {
   rows: any[] = [];
-  facilityOptions: any[] = [];
-  formDepartmentOptions: any[] = [];
-  formServiceCategoryOptions: any[] = [];
-  formServiceOptions: any[] = [];
+  organizationOptions: any[] = [];
 
   search = "";
   status = "";
-  facilityId = "";
-  // Was bound to a hardcoded enum unrelated to the real ServiceCategory
-  // master data, so the backend (which now filters on serviceCategoryId,
-  // not a free-text serviceCategory string) silently ignored it. Now
-  // reuses the same formServiceCategoryOptions the create/edit form loads.
-  serviceCategoryId = "";
-  // Reuses formServiceOptions (already loaded for the create/edit form)
-  // as the filter bar's service list too.
-  serviceId = "";
+  organizationId = "";
 
   page = 1;
   limit = 20;
@@ -66,31 +55,42 @@ export class FacilityServicesComponent implements OnInit {
   editMode = false;
 
   form = {
-    facilityServiceId: null as number | null,
-    facilityId: null as number | null,
-    departmentId: null as number | null,
-    serviceId: null as number | null,
     serviceCategoryId: null as number | null,
+    organizationId: null as number | null,
+    serviceCategoryName: "",
+    description: "",
   };
 
   private gridApi!: GridApi;
 
+  // /service-categories doesn't join and return organizationName, only
+  // organizationId — resolve the name client-side from the same
+  // organizationOptions dropdown the create/edit form already loads,
+  // rather than showing a raw id in the grid.
+  private organizationNameOf(organizationId: any): string {
+    const match = this.organizationOptions.find((org) => org.organizationId === organizationId);
+    return match?.organizationName || "—";
+  }
+
   columnDefs: ColDef[] = [
     {
-      headerName: "Service",
-      field: "serviceName",
+      headerName: "Service Category",
+      field: "serviceCategoryName",
       flex: 1.6,
       minWidth: 220,
       cellRenderer: (params: ICellRendererParams) => {
-        const svc = params.data;
-        const name = svc?.serviceName || "—";
-        const code = svc?.serviceCode ? `<br><small>${this.escapeHtml(svc.serviceCode)}</small>` : "";
-        return `<div class="ag-tenant-cell"><strong>${this.escapeHtml(name)}</strong>${code}</div>`;
+        const cat = params.data;
+        return `<div class="ag-tenant-cell"><strong>${this.escapeHtml(cat?.serviceCategoryName)}</strong><br><small>${this.escapeHtml(cat?.serviceCategoryCode)}</small></div>`;
       },
     },
-    { headerName: "Category", field: "serviceCategoryName", flex: 1, minWidth: 160, valueFormatter: (p) => p.value || "—" },
-    { headerName: "Facility", field: "facilityName", flex: 1, minWidth: 160, valueFormatter: (p) => p.value || "—" },
-    { headerName: "Department", field: "departmentName", flex: 1, minWidth: 160, valueFormatter: (p) => p.value || "—" },
+    {
+      headerName: "Organization",
+      field: "organizationId",
+      flex: 1.2,
+      minWidth: 180,
+      valueGetter: (params) => this.organizationNameOf(params.data?.organizationId),
+    },
+    { headerName: "Description", field: "description", flex: 1.4, minWidth: 200, valueFormatter: (p) => p.value || "—" },
     {
       headerName: "Status",
       field: "status",
@@ -112,9 +112,9 @@ export class FacilityServicesComponent implements OnInit {
       sortable: false,
       filter: false,
       cellRenderer: (params: ICellRendererParams) => {
-        const svc = params.data;
-        if (!svc?.facilityServiceId) return "";
-        if (svc.status === "DELETED") {
+        const cat = params.data;
+        if (!cat?.serviceCategoryId) return "";
+        if (cat.status === "DELETED") {
           return `<div class="ag-table-actions"><button type="button" class="ag-action-btn view" data-action="view">View</button></div>`;
         }
         return `
@@ -141,9 +141,7 @@ export class FacilityServicesComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.loadFacilityOptions();
-    this.loadServiceCategoryOptions();
-    this.loadServiceOptions();
+    this.loadOrganizationOptions();
   }
 
   onGridReady(event: GridReadyEvent): void {
@@ -156,14 +154,12 @@ export class FacilityServicesComponent implements OnInit {
     this.page = page;
 
     this.api
-      .get<any>("/facility-services", {
+      .get<any>("/service-categories", {
         page: this.page,
         limit: this.limit,
         search: this.search,
         status: this.status,
-        facilityId: this.facilityId,
-        serviceCategoryId: this.serviceCategoryId,
-        serviceId: this.serviceId,
+        organizationId: this.organizationId,
       })
       .subscribe({
         next: (response) => {
@@ -182,42 +178,20 @@ export class FacilityServicesComponent implements OnInit {
         },
         error: (error) => {
           this.loading = false;
-          this.notificationModal.open({ type: "ERROR", title: "Failed to load facility services", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+          this.notificationModal.open({ type: "ERROR", title: "Failed to load service categories", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
         },
       });
   }
 
-  loadFacilityOptions(): void {
-    this.api.get<any>("/facilities/list").subscribe({
-      next: (response) => (this.facilityOptions = response?.data || []),
-      error: () => (this.facilityOptions = []),
-    });
-  }
-
-  loadServiceCategoryOptions(): void {
-    this.api.get<any>("/service-categories/list").subscribe({
-      next: (response) => (this.formServiceCategoryOptions = response?.data || []),
-      error: () => (this.formServiceCategoryOptions = []),
-    });
-  }
-
-  loadServiceOptions(): void {
-    this.api.get<any>("/services/list").subscribe({
-      next: (response) => (this.formServiceOptions = response?.data || []),
-      error: () => (this.formServiceOptions = []),
-    });
-  }
-
-  /** Called when the facility select changes inside the create/edit form. */
-  onFormFacilityChange(): void {
-    this.form.departmentId = null;
-    this.formDepartmentOptions = [];
-
-    if (!this.form.facilityId) return;
-
-    this.api.get<any>("/departments/list", { facilityId: this.form.facilityId }).subscribe({
-      next: (response) => (this.formDepartmentOptions = response?.data || []),
-      error: () => (this.formDepartmentOptions = []),
+  loadOrganizationOptions(): void {
+    this.api.get<any>("/organizations/list").subscribe({
+      next: (response) => {
+        this.organizationOptions = response?.data || [];
+        // Organization names for already-rendered rows resolve lazily
+        // once options arrive, so refresh the grid's cells.
+        if (this.gridApi) this.gridApi.refreshCells({ force: true });
+      },
+      error: () => (this.organizationOptions = []),
     });
   }
 
@@ -241,24 +215,16 @@ export class FacilityServicesComponent implements OnInit {
     this.formOpen = true;
   }
 
-  openEdit(svc: any): void {
-    if (!svc?.facilityServiceId) return;
+  openEdit(cat: any): void {
+    if (!cat?.serviceCategoryId) return;
     this.editMode = true;
     this.form = {
-      facilityServiceId: svc.facilityServiceId,
-      facilityId: svc.facilityId ?? null,
-      departmentId: svc.departmentId ?? null,
-      serviceId: svc.serviceId || null,
-      serviceCategoryId: svc.serviceCategoryId || null,
+      serviceCategoryId: cat.serviceCategoryId,
+      organizationId: cat.organizationId ?? null,
+      serviceCategoryName: cat.serviceCategoryName || "",
+      description: cat.description || "",
     };
     this.formOpen = true;
-
-    if (this.form.facilityId) {
-      this.api.get<any>("/departments/list", { facilityId: this.form.facilityId }).subscribe({
-        next: (response) => (this.formDepartmentOptions = response?.data || []),
-        error: () => (this.formDepartmentOptions = []),
-      });
-    }
   }
 
   closeCreate(): void {
@@ -273,71 +239,70 @@ export class FacilityServicesComponent implements OnInit {
     this.saving = true;
 
     const request: any = {
-      facilityId: this.form.facilityId,
-      departmentId: this.form.departmentId || null,
-      serviceId: this.form.serviceId,
-      serviceCategoryId: this.form.serviceCategoryId,
+      organizationId: this.form.organizationId,
+      serviceCategoryName: this.form.serviceCategoryName.trim(),
+      description: this.form.description.trim() || null,
     };
 
     if (this.editMode) {
-      this.api.put<any>(`/facility-services/${this.form.facilityServiceId}`, request).subscribe({
+      this.api.put<any>(`/service-categories/${this.form.serviceCategoryId}`, request).subscribe({
         next: () => {
           this.saving = false;
           this.formOpen = false;
           this.editMode = false;
           this.resetForm();
-          this.notificationModal.open({ type: "SUCCESS", title: "Facility service updated", message: "Facility service updated successfully", contentType: "TEXT", autoCloseAfter: 2500 });
+          this.notificationModal.open({ type: "SUCCESS", title: "Service category updated", message: "Service category updated successfully", contentType: "TEXT", autoCloseAfter: 2500 });
           this.load();
         },
         error: (error) => {
           this.saving = false;
-          this.notificationModal.open({ type: "ERROR", title: "Failed to update facility service", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+          this.notificationModal.open({ type: "ERROR", title: "Failed to update service category", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
         },
       });
       return;
     }
 
-    this.api.post<any>("/facility-services", request).subscribe({
+    this.api.post<any>("/service-categories", request).subscribe({
       next: () => {
         this.saving = false;
         this.formOpen = false;
         this.resetForm();
-        this.notificationModal.open({ type: "SUCCESS", title: "Facility service created", message: "Facility service created successfully", contentType: "TEXT", autoCloseAfter: 2500 });
+        this.notificationModal.open({ type: "SUCCESS", title: "Service category created", message: "Service category created successfully", contentType: "TEXT", autoCloseAfter: 2500 });
         this.load();
       },
       error: (error) => {
         this.saving = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to create facility service", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+        this.notificationModal.open({ type: "ERROR", title: "Failed to create service category", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
       },
     });
   }
 
-  deleteRow(svc: any): void {
-    if (!svc?.facilityServiceId) return;
-    this.pendingDelete = svc;
+  deleteRow(cat: any): void {
+    if (!cat?.serviceCategoryId) return;
+    this.pendingDelete = cat;
     this.confirmModal.open({
-      title: "Delete facility service",
-      message: `Are you sure you want to delete "${svc.serviceName || svc.serviceId}"?\n\nThe service will be marked as DELETED and will not be physically removed.`,
+      title: "Delete service category",
+      message: `Are you sure you want to delete "${cat.serviceCategoryName}"?\n\nThe service category will be marked as DELETED and will not be physically removed.`,
       confirmText: "Delete",
       cancelText: "Cancel",
     });
   }
 
   onDeleteConfirmed(): void {
-    const svc = this.pendingDelete;
+    const cat = this.pendingDelete;
     this.pendingDelete = null;
-    if (!svc?.facilityServiceId) return;
+    if (!cat?.serviceCategoryId) return;
 
     this.deleting = true;
-    this.api.patch<any>(`/facility-services/${svc.facilityServiceId}/status`, { status: "DELETED" }).subscribe({
+    this.api.patch<any>(`/service-categories/${cat.serviceCategoryId}/status`, { status: "DELETED" }).subscribe({
       next: () => {
         this.deleting = false;
-        this.notificationModal.open({ type: "SUCCESS", title: "Facility service deleted", message: "Facility service deleted successfully", contentType: "TEXT", autoCloseAfter: 2500 });
+        this.notificationModal.open({ type: "SUCCESS", title: "Service category deleted", message: "Service category deleted successfully", contentType: "TEXT", autoCloseAfter: 2500 });
         this.load();
       },
       error: (error) => {
         this.deleting = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to delete facility service", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+        this.notificationModal.open({ type: "ERROR", title: "Failed to delete service category", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
       },
     });
   }
@@ -346,17 +311,17 @@ export class FacilityServicesComponent implements OnInit {
     this.pendingDelete = null;
   }
 
-  select(svc: any): void {
-    if (!svc?.facilityServiceId) return;
+  select(cat: any): void {
+    if (!cat?.serviceCategoryId) return;
     this.loading = true;
-    this.api.get<any>(`/facility-services/${svc.facilityServiceId}`).subscribe({
+    this.api.get<any>(`/service-categories/${cat.serviceCategoryId}`).subscribe({
       next: (response) => {
         this.selected = response;
         this.loading = false;
       },
       error: (error) => {
         this.loading = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to load facility service", message: error, contentType: "TEXT", autoCloseAfter: 3000 });
+        this.notificationModal.open({ type: "ERROR", title: "Failed to load service category", message: error, contentType: "TEXT", autoCloseAfter: 3000 });
       },
     });
   }
@@ -365,25 +330,24 @@ export class FacilityServicesComponent implements OnInit {
     this.selected = null;
   }
 
+  get selectedOrganizationName(): string {
+    return this.organizationNameOf(this.selected?.organizationId);
+  }
+
   validateForm(): boolean {
-    if (!this.form.facilityId) {
-      this.ui.show("Facility is required");
+    if (!this.form.organizationId) {
+      this.ui.show("Organization is required");
       return false;
     }
-    if (!this.form.serviceId) {
-      this.ui.show("Service is required");
-      return false;
-    }
-    if (!this.form.serviceCategoryId) {
-      this.ui.show("Service Category is required");
+    if (!this.form.serviceCategoryName.trim()) {
+      this.ui.show("Service category name is required");
       return false;
     }
     return true;
   }
 
   resetForm(): void {
-    this.form = { facilityServiceId: null, facilityId: null, departmentId: null, serviceId: null, serviceCategoryId: null };
-    this.formDepartmentOptions = [];
+    this.form = { serviceCategoryId: null, organizationId: null, serviceCategoryName: "", description: "" };
   }
 
   private escapeHtml(value: any): string {

@@ -1,25 +1,19 @@
-<app-page eyebrow="ORGANIZATION" title="Facility Services" description="Services offered at a facility — Teleconsultation, Immunization, Diagnostic, Maternal Health, and more.">
+<app-page eyebrow="ORGANIZATION" title="Services" description="The catalog of services an organization can offer, each under one service category, e.g. Blood Test under Diagnostics.">
   <button actions type="button" class="primary" (click)="openCreate()">+ Create service</button>
 </app-page>
 
 <div class="toolbar">
   <input type="text" [(ngModel)]="search" (keyup.enter)="onFilterChange()" placeholder="Search service name" />
-  <select [(ngModel)]="facilityId" (change)="onFilterChange()">
-    <option value="">All facilities</option>
-    @for (facility of facilityOptions; track facility.facilityId) {
-      <option [value]="facility.facilityId">{{ facility.facilityName }}</option>
+  <select [(ngModel)]="organizationId" (change)="onOrganizationFilterChange()">
+    <option value="">All organizations</option>
+    @for (organization of organizationOptions; track organization.organizationId) {
+      <option [value]="organization.organizationId">{{ organization.organizationName }}</option>
     }
   </select>
   <select [(ngModel)]="serviceCategoryId" (change)="onFilterChange()">
     <option value="">All categories</option>
-    @for (category of formServiceCategoryOptions; track category.serviceCategoryId) {
+    @for (category of filterServiceCategoryOptions; track category.serviceCategoryId) {
       <option [value]="category.serviceCategoryId">{{ category.serviceCategoryName }}</option>
-    }
-  </select>
-  <select [(ngModel)]="serviceId" (change)="onFilterChange()">
-    <option value="">All services</option>
-    @for (service of formServiceOptions; track service.serviceId) {
-      <option [value]="service.serviceId">{{ service.serviceName }}</option>
     }
   </select>
   <select [(ngModel)]="status" (change)="onFilterChange()">
@@ -35,7 +29,7 @@
 </div>
 
 <div class="panel grid-panel">
-  <ag-grid-angular class="facility-services-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+  <ag-grid-angular class="services-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
     [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
   </ag-grid-angular>
 
@@ -57,48 +51,40 @@
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div>
-        <h3>@if (editMode) { Edit facility service } @else { Create facility service }</h3>
-        <p>@if (editMode) { Update service info. } @else { Register a new service at a facility. }</p>
+        <h3>@if (editMode) { Edit service } @else { Create service }</h3>
+        <p>@if (editMode) { Update service info. } @else { Register a new service under an organization and category. }</p>
       </div>
       <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">×</button>
     </div>
 
     <div class="form-grid">
-      <label>
-        <span>Facility <b>*</b></span>
-        <select [(ngModel)]="form.facilityId" (change)="onFormFacilityChange()">
+      <label class="full-width">
+        <span>Organization <b>*</b></span>
+        <select [(ngModel)]="form.organizationId" (change)="onFormOrganizationChange()">
           <option [ngValue]="null">— select —</option>
-          @for (facility of facilityOptions; track facility.facilityId) {
-            <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
+          @for (organization of organizationOptions; track organization.organizationId) {
+            <option [ngValue]="organization.organizationId">{{ organization.organizationName }}</option>
+          }
+        </select>
+      </label>
+      <label class="full-width">
+        <span>Service category <b>*</b></span>
+        <select [(ngModel)]="form.serviceCategoryId" [disabled]="!form.organizationId">
+          <option [ngValue]="null">
+            @if (form.organizationId) { — select — } @else { — select an organization first — }
+          </option>
+          @for (category of formServiceCategoryOptions; track category.serviceCategoryId) {
+            <option [ngValue]="category.serviceCategoryId">{{ category.serviceCategoryName }}</option>
           }
         </select>
       </label>
       <label>
-        <span>Department (optional)</span>
-        <select [(ngModel)]="form.departmentId">
-          <option [ngValue]="null">— none —</option>
-          @for (dept of formDepartmentOptions; track dept.departmentId) {
-            <option [ngValue]="dept.departmentId">{{ dept.departmentName }}</option>
-          }
-        </select>
+        <span>Service name <b>*</b></span>
+        <input type="text" [(ngModel)]="form.serviceName" placeholder="e.g. Blood Test" autocomplete="off" />
       </label>
-      <label>
-        <span>Service Category</span>
-        <select [(ngModel)]="form.serviceCategoryId">
-          <option [ngValue]="null">— none —</option>
-          @for (srvCat of formServiceCategoryOptions; track srvCat.serviceCategoryId) {
-            <option [ngValue]="srvCat.serviceCategoryId">{{ srvCat.serviceCategoryName }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        <span>Service</span>
-        <select [(ngModel)]="form.serviceId">
-          <option [ngValue]="null">— none —</option>
-          @for (srv of formServiceOptions; track srv.serviceId) {
-            <option [ngValue]="srv.serviceId">{{ srv.serviceName }}</option>
-          }
-        </select>
+      <label class="full-width">
+        <span>Description</span>
+        <textarea [(ngModel)]="form.description" rows="3" placeholder="Optional description"></textarea>
       </label>
     </div>
 
@@ -117,15 +103,15 @@
 <div class="modal-backdrop" (click)="closeDetails()">
   <div class="modal details-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <div><h3>Facility service details</h3><p>{{ selected.serviceCode }}</p></div>
+      <div><h3>Service details</h3><p>{{ selected.serviceCode }}</p></div>
       <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">×</button>
     </div>
 
     <div class="tenant-summary">
       <div class="summary-item"><span>Service Name</span><strong>{{ selected.serviceName || "—" }}</strong></div>
-      <div class="summary-item"><span>Category</span><strong>{{ selected.serviceCategoryName || "—" }}</strong></div>
-      <div class="summary-item"><span>Facility</span><strong>{{ selected.facilityName || "—" }}</strong></div>
-      <div class="summary-item"><span>Department</span><strong>{{ selected.departmentName || "—" }}</strong></div>
+      <div class="summary-item"><span>Category</span><strong>{{ selectedServiceCategoryName }}</strong></div>
+      <div class="summary-item"><span>Organization</span><strong>{{ selectedOrganizationName }}</strong></div>
+      <div class="summary-item"><span>Description</span><strong>{{ selected.description || "—" }}</strong></div>
       <div class="summary-item">
         <span>Status</span>
         <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'DISABLED'"
