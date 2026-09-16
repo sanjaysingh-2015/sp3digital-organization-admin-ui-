@@ -1,5 +1,22 @@
-.address-picker {
+/*
+ * IMPORTANT: this component is dropped directly into a host page's
+ * `.form-grid` (2-column CSS grid) as `<app-address-picker>`. The grid
+ * item that layout actually sees is the *host element*, not the `.address-picker`
+ * div below (that div is just this component's own template root, one level
+ * further in). Putting `grid-column: 1 / -1` only on `.address-picker` doesn't
+ * reach the outer grid at all -- the host still defaults to a single grid cell,
+ * so whatever field comes right after `<app-address-picker>` in the host's
+ * template (e.g. "City") gets auto-placed into the *other* column of that same
+ * row instead of on its own row below. That's the "Quick fill" panel and the
+ * unrelated "City" field appearing side-by-side bug. Spanning both columns has
+ * to happen on `:host` itself.
+ */
+:host {
+  display: block;
   grid-column: 1 / -1;
+}
+
+.address-picker {
   border: 1px dashed var(--line);
   border-radius: var(--radius-md);
   padding: 14px;

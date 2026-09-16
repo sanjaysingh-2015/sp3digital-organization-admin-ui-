@@ -17,6 +17,7 @@ import { UiService } from "../../core/ui.service";
 import { PageComponent } from "../../shared/page.component";
 import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
 import { NotificationModalComponent } from "../../shared/components/notification-modal/notification-modal";
+import { AddressPickerComponent, PickedAddress } from "../../shared/components/address-picker/address-picker.component";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -40,6 +41,7 @@ export const ORGANIZATION_TYPES = [
     AgGridAngular,
     ConfirmModalComponent,
     NotificationModalComponent,
+    AddressPickerComponent,
   ],
   templateUrl: "./organizations.component.html",
   styleUrls: ["./organizations.component.scss"],
@@ -82,6 +84,16 @@ export class OrganizationsComponent implements OnInit {
     organizationName: "",
     organizationType: "" as string,
     parentOrganizationId: null as number | null,
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    subDistrictName: "",
+    districtName: "",
+    stateName: "",
+    country: "India",
+    postalCode: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
   };
 
   private gridApi!: GridApi;
@@ -265,6 +277,16 @@ export class OrganizationsComponent implements OnInit {
       organizationName: org.organizationName || "",
       organizationType: org.organizationType || "",
       parentOrganizationId: org.parentOrganizationId ?? null,
+      addressLine1: org.addressLine1 || "",
+      addressLine2: org.addressLine2 || "",
+      city: org.city || "",
+      subDistrictName: org.subDistrictName || "",
+      districtName: org.districtName || "",
+      stateName: org.stateName || "",
+      country: org.country || "India",
+      postalCode: org.postalCode || "",
+      latitude: org.latitude ?? null,
+      longitude: org.longitude ?? null,
     };
     this.formOpen = true;
   }
@@ -284,6 +306,16 @@ export class OrganizationsComponent implements OnInit {
       organizationName: this.form.organizationName.trim(),
       organizationType: this.form.organizationType || null,
       parentOrganizationId: this.form.parentOrganizationId || null,
+      addressLine1: this.form.addressLine1 || null,
+      addressLine2: this.form.addressLine2 || null,
+      city: this.form.city || null,
+      subDistrictName: this.form.subDistrictName || null,
+      districtName: this.form.districtName || null,
+      stateName: this.form.stateName || null,
+      country: this.form.country || null,
+      postalCode: this.form.postalCode || null,
+      latitude: this.form.latitude,
+      longitude: this.form.longitude,
     };
 
     if (this.editMode) {
@@ -387,8 +419,36 @@ export class OrganizationsComponent implements OnInit {
     return true;
   }
 
+  // Facility-style assistive fill: address-picker resolves country/state/
+  // district/sub-district/city/postalCode from either the cascading
+  // dropdowns or a pincode search, and this just copies over whichever of
+  // those it resolved (see address-picker.component.ts's header comment).
+  onAddressPicked(address: PickedAddress): void {
+    if (address.country) this.form.country = address.country;
+    if (address.stateName) this.form.stateName = address.stateName;
+    if (address.districtName) this.form.districtName = address.districtName;
+    if (address.subDistrictName) this.form.subDistrictName = address.subDistrictName;
+    if (address.city) this.form.city = address.city;
+    if (address.postalCode) this.form.postalCode = address.postalCode;
+  }
+
   resetForm(): void {
-    this.form = { organizationId: null, organizationName: "", organizationType: "", parentOrganizationId: null };
+    this.form = {
+      organizationId: null,
+      organizationName: "",
+      organizationType: "",
+      parentOrganizationId: null,
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      subDistrictName: "",
+      districtName: "",
+      stateName: "",
+      country: "India",
+      postalCode: "",
+      latitude: null,
+      longitude: null,
+    };
   }
 
   private escapeHtml(value: any): string {

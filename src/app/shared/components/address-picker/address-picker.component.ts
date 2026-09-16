@@ -8,6 +8,7 @@ export interface PickedAddress {
   country: string | null;
   stateName: string | null;
   districtName: string | null;
+  subDistrictName: string | null;
   city: string | null;
   postalCode: string | null;
 }
@@ -141,6 +142,7 @@ export class AddressPickerComponent implements OnInit {
 
   onSubDistrictChange(): void {
     this.resetFrom('city');
+    this.emitCurrentSelection();
     if (!this.selectedSubDistrictId) return;
     this.loadingCities = true;
     this.geo.getCities(this.selectedSubDistrictId).subscribe({
@@ -215,6 +217,7 @@ export class AddressPickerComponent implements OnInit {
       country: result.countryName || null,
       stateName: result.stateName || null,
       districtName: result.districtName || null,
+      subDistrictName: result.subDistrictName || null,
       city: result.cityName || null,
       postalCode: result.code || null,
     });
@@ -247,6 +250,7 @@ export class AddressPickerComponent implements OnInit {
     const country = this.countryOptions.find((c) => c.countryId === this.selectedCountryId);
     const state = this.stateOptions.find((s) => s.stateId === this.selectedStateId);
     const district = this.districtOptions.find((d) => d.districtId === this.selectedDistrictId);
+    const subDistrict = this.subDistrictOptions.find((s) => s.subDistrictId === this.selectedSubDistrictId);
     const city = this.cityOptions.find((c) => c.cityId === this.selectedCityId);
 
     // Only emit once there's at least a state selected -- a bare country
@@ -257,6 +261,7 @@ export class AddressPickerComponent implements OnInit {
       country: country?.name || null,
       stateName: state?.name || null,
       districtName: district?.name || null,
+      subDistrictName: subDistrict?.name || null,
       city: city?.name || null,
       postalCode: this.selectedPostalCode || null,
     });

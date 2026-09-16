@@ -68,8 +68,9 @@ export class FacilitiesComponent implements OnInit {
     addressLine1: "",
     addressLine2: "",
     city: "",
-    stateName: "",
+    subDistrictName: "",
     districtName: "",
+    stateName: "",
     postalCode: "",
     country: "India",
     latitude: null as number | null,
@@ -225,8 +226,9 @@ export class FacilitiesComponent implements OnInit {
       addressLine1: facility.addressLine1 || "",
       addressLine2: facility.addressLine2 || "",
       city: facility.city || "",
-      stateName: facility.stateName || "",
+      subDistrictName: facility.subDistrictName || "",
       districtName: facility.districtName || "",
+      stateName: facility.stateName || "",
       postalCode: facility.postalCode || "",
       country: facility.country || "India",
       latitude: facility.latitude ?? null,
@@ -255,8 +257,9 @@ export class FacilitiesComponent implements OnInit {
       addressLine1: this.form.addressLine1 || null,
       addressLine2: this.form.addressLine2 || null,
       city: this.form.city || null,
-      stateName: this.form.stateName || null,
+      subDistrictName: this.form.subDistrictName || null,
       districtName: this.form.districtName || null,
+      stateName: this.form.stateName || null,
       postalCode: this.form.postalCode || null,
       country: this.form.country || null,
       latitude: this.form.latitude,
@@ -374,6 +377,7 @@ export class FacilitiesComponent implements OnInit {
     if (address.country) this.form.country = address.country;
     if (address.stateName) this.form.stateName = address.stateName;
     if (address.districtName) this.form.districtName = address.districtName;
+    if (address.subDistrictName) this.form.subDistrictName = address.subDistrictName;
     if (address.city) this.form.city = address.city;
     if (address.postalCode) this.form.postalCode = address.postalCode;
   }
@@ -387,8 +391,9 @@ export class FacilitiesComponent implements OnInit {
       addressLine1: "",
       addressLine2: "",
       city: "",
-      stateName: "",
+      subDistrictName: "",
       districtName: "",
+      stateName: "",
       postalCode: "",
       country: "India",
       latitude: null,

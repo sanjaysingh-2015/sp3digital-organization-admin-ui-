@@ -76,6 +76,47 @@
           }
         </select>
       </label>
+      <label class="full-width">
+        <span>Address line 1</span>
+        <input type="text" [(ngModel)]="form.addressLine1" autocomplete="off" />
+      </label>
+      <label class="full-width">
+        <span>Address line 2</span>
+        <input type="text" [(ngModel)]="form.addressLine2" autocomplete="off" />
+      </label>
+      <app-address-picker (picked)="onAddressPicked($event)"></app-address-picker>
+      <label>
+        <span>City</span>
+        <input type="text" [(ngModel)]="form.city" autocomplete="off" />
+      </label>
+      <label>
+        <span>Sub-district / Taluk</span>
+        <input type="text" [(ngModel)]="form.subDistrictName" autocomplete="off" />
+      </label>
+      <label>
+        <span>District</span>
+        <input type="text" [(ngModel)]="form.districtName" autocomplete="off" />
+      </label>
+      <label>
+        <span>State</span>
+        <input type="text" [(ngModel)]="form.stateName" autocomplete="off" />
+      </label>
+      <label>
+        <span>Country</span>
+        <input type="text" [(ngModel)]="form.country" autocomplete="off" />
+      </label>
+      <label>
+        <span>Postal code</span>
+        <input type="text" [(ngModel)]="form.postalCode" autocomplete="off" />
+      </label>
+      <label>
+        <span>Latitude</span>
+        <input type="number" [(ngModel)]="form.latitude" step="0.0000001" />
+      </label>
+      <label>
+        <span>Longitude</span>
+        <input type="number" [(ngModel)]="form.longitude" step="0.0000001" />
+      </label>
     </div>
 
     <div class="modal-actions">
@@ -100,6 +141,7 @@
     <div class="tenant-summary">
       <div class="summary-item"><span>Organization Name</span><strong>{{ selected.organizationName || "—" }}</strong></div>
       <div class="summary-item"><span>Type</span><strong>{{ selected.organizationType || "—" }}</strong></div>
+      <div class="summary-item"><span>City</span><strong>{{ selected.city || "—" }}</strong></div>
       <div class="summary-item"><span>Parent Organization ID</span><strong>{{ selected.parentOrganizationId || "—" }}</strong></div>
       <div class="summary-item">
         <span>Status</span>
