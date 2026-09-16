@@ -1,0 +1,102 @@
+<div class="address-picker">
+  <div class="address-picker-section">
+    <div class="address-picker-label">Quick fill by pincode</div>
+    <div class="pincode-search-row">
+      <input
+        type="text"
+        [(ngModel)]="pincodeQuery"
+        (keyup.enter)="searchPincode()"
+        placeholder="Type at least 3 digits, e.g. 400"
+        maxlength="10"
+        autocomplete="off"
+      />
+      <button type="button" class="secondary" (click)="searchPincode()" [disabled]="pincodeSearching">
+        @if (pincodeSearching) { Searching... } @else { Search }
+      </button>
+    </div>
+    @if (pincodeSearchError) {
+      <div class="address-picker-error">{{ pincodeSearchError }}</div>
+    }
+    @if (pincodeResults.length > 0) {
+      <ul class="pincode-results">
+        @for (result of pincodeResults; track result.postalCodeId) {
+          <li>
+            <button type="button" (click)="pickPincodeResult(result)">
+              <strong>{{ result.code }}</strong>
+              <span>{{ result.cityName }}, {{ result.districtName }}, {{ result.stateName }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div class="address-picker-divider">or pick step by step</div>
+
+  <div class="address-picker-cascade">
+    <label>
+      <span>Country</span>
+      <select [(ngModel)]="selectedCountryId" (change)="onCountryChange()">
+        <option [ngValue]="null">— select —</option>
+        @for (country of countryOptions; track country.countryId) {
+          <option [ngValue]="country.countryId">{{ country.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>State</span>
+      <select [(ngModel)]="selectedStateId" (change)="onStateChange()" [disabled]="!selectedCountryId || loadingStates">
+        <option [ngValue]="null">@if (loadingStates) { Loading... } @else { — select — }</option>
+        @for (state of stateOptions; track state.stateId) {
+          <option [ngValue]="state.stateId">{{ state.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>District</span>
+      <select [(ngModel)]="selectedDistrictId" (change)="onDistrictChange()" [disabled]="!selectedStateId || loadingDistricts">
+        <option [ngValue]="null">@if (loadingDistricts) { Loading... } @else { — select — }</option>
+        @for (district of districtOptions; track district.districtId) {
+          <option [ngValue]="district.districtId">{{ district.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Sub-district / Taluk</span>
+      <select [(ngModel)]="selectedSubDistrictId" (change)="onSubDistrictChange()" [disabled]="!selectedDistrictId || loadingSubDistricts">
+        <option [ngValue]="null">@if (loadingSubDistricts) { Loading... } @else { — select — }</option>
+        @for (subDistrict of subDistrictOptions; track subDistrict.subDistrictId) {
+          <option [ngValue]="subDistrict.subDistrictId">{{ subDistrict.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>City / Village</span>
+      <select [(ngModel)]="selectedCityId" (change)="onCityChange()" [disabled]="!selectedSubDistrictId || loadingCities">
+        <option [ngValue]="null">@if (loadingCities) { Loading... } @else { — select — }</option>
+        @for (city of cityOptions; track city.cityId) {
+          <option [ngValue]="city.cityId">{{ city.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Postal code</span>
+      <select
+        [(ngModel)]="selectedPostalCode"
+        (change)="onPostalCodeChange()"
+        [disabled]="!selectedCityId || loadingPostalCodes || postalCodeOptions.length === 0"
+      >
+        <option [ngValue]="null">
+          @if (loadingPostalCodes) { Loading... } @else if (postalCodeOptions.length === 0) { — none for this city — } @else { — select — }
+        </option>
+        @for (pc of postalCodeOptions; track pc.postalCodeId) {
+          <option [ngValue]="pc.code">{{ pc.code }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <p class="address-picker-hint">
+    Picking from above fills in the address fields below — you can still edit them directly afterwards.
+  </p>
+</div>

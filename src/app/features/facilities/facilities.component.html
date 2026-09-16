@@ -92,6 +92,7 @@
         <span>Address line 2</span>
         <input type="text" [(ngModel)]="form.addressLine2" autocomplete="off" />
       </label>
+      <app-address-picker (picked)="onAddressPicked($event)"></app-address-picker>
       <label>
         <span>City</span>
         <input type="text" [(ngModel)]="form.city" autocomplete="off" />
