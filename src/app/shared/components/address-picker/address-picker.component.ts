@@ -34,6 +34,17 @@ export interface PickedAddress {
  *  2. Reverse pincode search: type 3+ digits of a pincode, pick a
  *     match, and country/state/district/city/postalCode are all filled
  *     at once from that one result — skips the cascade entirely.
+ *
+ * NOT CURRENTLY USED ANYWHERE IN THIS APP. /geography/* now requires the
+ * shared INTERNAL_SERVICE_TOKEN (authenticated the same way as /internal --
+ * see organization-admin-service's geographyRoutes.js), which a browser
+ * can't safely hold, so every call this component makes gets a 403. It was
+ * previously wired into the Facilities and Organizations forms; both now
+ * use their plain manual address text inputs only. Left here in case a
+ * future server-side proxy (something that holds the internal token and
+ * re-exposes these lookups to authenticated end users) makes it usable
+ * again -- re-add `<app-address-picker (picked)="onAddressPicked($event)">`
+ * to a form and point GeographyService at that proxy instead.
  */
 @Component({
   selector: 'app-address-picker',

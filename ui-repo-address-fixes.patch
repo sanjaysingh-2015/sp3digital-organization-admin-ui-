@@ -1,0 +1,133 @@
+diff --git a/src/app/features/facilities/facilities.component.html b/src/app/features/facilities/facilities.component.html
+index 17bc11e..7f751f6 100644
+--- a/src/app/features/facilities/facilities.component.html
++++ b/src/app/features/facilities/facilities.component.html
+@@ -92,7 +92,6 @@
+         <span>Address line 2</span>
+         <input type="text" [(ngModel)]="form.addressLine2" autocomplete="off" />
+       </label>
+-      <app-address-picker (picked)="onAddressPicked($event)"></app-address-picker>
+       <label>
+         <span>City</span>
+         <input type="text" [(ngModel)]="form.city" autocomplete="off" />
+diff --git a/src/app/features/facilities/facilities.component.ts b/src/app/features/facilities/facilities.component.ts
+index df78d25..f78fb40 100644
+--- a/src/app/features/facilities/facilities.component.ts
++++ b/src/app/features/facilities/facilities.component.ts
+@@ -17,7 +17,6 @@ import { UiService } from "../../core/ui.service";
+ import { PageComponent } from "../../shared/page.component";
+ import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
+ import { NotificationModalComponent } from "../../shared/components/notification-modal/notification-modal";
+-import { AddressPickerComponent, PickedAddress } from "../../shared/components/address-picker/address-picker.component";
+ 
+ ModuleRegistry.registerModules([AllCommunityModule]);
+ 
+@@ -26,7 +25,7 @@ export const FACILITY_TYPES = ["CHC", "PHC", "SUB_CENTER", "DISTRICT_HOSPITAL",
+ @Component({
+   selector: "app-facilities",
+   standalone: true,
+-  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent, AddressPickerComponent],
++  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent],
+   templateUrl: "./facilities.component.html",
+   styleUrls: ["./facilities.component.scss"],
+ })
+@@ -369,18 +368,10 @@ export class FacilitiesComponent implements OnInit {
+   // Facility still stores address as plain text columns (city/stateName/
+   // districtName/postalCode/country) rather than FK'ing into the geography
+   // tables -- see address-picker.component.ts's header comment for why.
+-  // This just fills in whichever of those fields the picker resolved;
+-  // anything it left null (e.g. a pincode search matched country/state/
+-  // district/city but the API returned no postal code) is left as
+-  // whatever the user already had typed there.
+-  onAddressPicked(address: PickedAddress): void {
+-    if (address.country) this.form.country = address.country;
+-    if (address.stateName) this.form.stateName = address.stateName;
+-    if (address.districtName) this.form.districtName = address.districtName;
+-    if (address.subDistrictName) this.form.subDistrictName = address.subDistrictName;
+-    if (address.city) this.form.city = address.city;
+-    if (address.postalCode) this.form.postalCode = address.postalCode;
+-  }
++  // onAddressPicked()/<app-address-picker> used to sit here to help fill
++  // these in from a pincode lookup, but /geography/* now requires the
++  // internal-service token (see that component's header comment for why),
++  // so this form went back to plain manual text inputs for all of them.
+ 
+   resetForm(): void {
+     this.form = {
+diff --git a/src/app/features/organizations/organizations.component.html b/src/app/features/organizations/organizations.component.html
+index e853fb8..758dae2 100644
+--- a/src/app/features/organizations/organizations.component.html
++++ b/src/app/features/organizations/organizations.component.html
+@@ -84,7 +84,6 @@
+         <span>Address line 2</span>
+         <input type="text" [(ngModel)]="form.addressLine2" autocomplete="off" />
+       </label>
+-      <app-address-picker (picked)="onAddressPicked($event)"></app-address-picker>
+       <label>
+         <span>City</span>
+         <input type="text" [(ngModel)]="form.city" autocomplete="off" />
+diff --git a/src/app/features/organizations/organizations.component.ts b/src/app/features/organizations/organizations.component.ts
+index 27dcfaa..211f075 100644
+--- a/src/app/features/organizations/organizations.component.ts
++++ b/src/app/features/organizations/organizations.component.ts
+@@ -17,7 +17,6 @@ import { UiService } from "../../core/ui.service";
+ import { PageComponent } from "../../shared/page.component";
+ import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
+ import { NotificationModalComponent } from "../../shared/components/notification-modal/notification-modal";
+-import { AddressPickerComponent, PickedAddress } from "../../shared/components/address-picker/address-picker.component";
+ 
+ ModuleRegistry.registerModules([AllCommunityModule]);
+ 
+@@ -41,7 +40,6 @@ export const ORGANIZATION_TYPES = [
+     AgGridAngular,
+     ConfirmModalComponent,
+     NotificationModalComponent,
+-    AddressPickerComponent,
+   ],
+   templateUrl: "./organizations.component.html",
+   styleUrls: ["./organizations.component.scss"],
+@@ -419,18 +417,10 @@ export class OrganizationsComponent implements OnInit {
+     return true;
+   }
+ 
+-  // Facility-style assistive fill: address-picker resolves country/state/
+-  // district/sub-district/city/postalCode from either the cascading
+-  // dropdowns or a pincode search, and this just copies over whichever of
+-  // those it resolved (see address-picker.component.ts's header comment).
+-  onAddressPicked(address: PickedAddress): void {
+-    if (address.country) this.form.country = address.country;
+-    if (address.stateName) this.form.stateName = address.stateName;
+-    if (address.districtName) this.form.districtName = address.districtName;
+-    if (address.subDistrictName) this.form.subDistrictName = address.subDistrictName;
+-    if (address.city) this.form.city = address.city;
+-    if (address.postalCode) this.form.postalCode = address.postalCode;
+-  }
++  // Address fields (below) are plain manual text inputs -- an
++  // <app-address-picker>-assisted fill used to sit here too, but
++  // /geography/* now requires the internal-service token (see that
++  // component's header comment for why), so this form dropped it.
+ 
+   resetForm(): void {
+     this.form = {
+diff --git a/src/app/shared/components/address-picker/address-picker.component.ts b/src/app/shared/components/address-picker/address-picker.component.ts
+index 28b1641..e1eaeb0 100644
+--- a/src/app/shared/components/address-picker/address-picker.component.ts
++++ b/src/app/shared/components/address-picker/address-picker.component.ts
+@@ -34,6 +34,17 @@ export interface PickedAddress {
+  *  2. Reverse pincode search: type 3+ digits of a pincode, pick a
+  *     match, and country/state/district/city/postalCode are all filled
+  *     at once from that one result — skips the cascade entirely.
++ *
++ * NOT CURRENTLY USED ANYWHERE IN THIS APP. /geography/* now requires the
++ * shared INTERNAL_SERVICE_TOKEN (authenticated the same way as /internal --
++ * see organization-admin-service's geographyRoutes.js), which a browser
++ * can't safely hold, so every call this component makes gets a 403. It was
++ * previously wired into the Facilities and Organizations forms; both now
++ * use their plain manual address text inputs only. Left here in case a
++ * future server-side proxy (something that holds the internal token and
++ * re-exposes these lookups to authenticated end users) makes it usable
++ * again -- re-add `<app-address-picker (picked)="onAddressPicked($event)">`
++ * to a form and point GeographyService at that proxy instead.
+  */
+ @Component({
+   selector: 'app-address-picker',

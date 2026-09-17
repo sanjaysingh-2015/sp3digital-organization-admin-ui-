@@ -17,7 +17,6 @@ import { UiService } from "../../core/ui.service";
 import { PageComponent } from "../../shared/page.component";
 import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
 import { NotificationModalComponent } from "../../shared/components/notification-modal/notification-modal";
-import { AddressPickerComponent, PickedAddress } from "../../shared/components/address-picker/address-picker.component";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -41,7 +40,6 @@ export const ORGANIZATION_TYPES = [
     AgGridAngular,
     ConfirmModalComponent,
     NotificationModalComponent,
-    AddressPickerComponent,
   ],
   templateUrl: "./organizations.component.html",
   styleUrls: ["./organizations.component.scss"],
@@ -419,18 +417,10 @@ export class OrganizationsComponent implements OnInit {
     return true;
   }
 
-  // Facility-style assistive fill: address-picker resolves country/state/
-  // district/sub-district/city/postalCode from either the cascading
-  // dropdowns or a pincode search, and this just copies over whichever of
-  // those it resolved (see address-picker.component.ts's header comment).
-  onAddressPicked(address: PickedAddress): void {
-    if (address.country) this.form.country = address.country;
-    if (address.stateName) this.form.stateName = address.stateName;
-    if (address.districtName) this.form.districtName = address.districtName;
-    if (address.subDistrictName) this.form.subDistrictName = address.subDistrictName;
-    if (address.city) this.form.city = address.city;
-    if (address.postalCode) this.form.postalCode = address.postalCode;
-  }
+  // Address fields (below) are plain manual text inputs -- an
+  // <app-address-picker>-assisted fill used to sit here too, but
+  // /geography/* now requires the internal-service token (see that
+  // component's header comment for why), so this form dropped it.
 
   resetForm(): void {
     this.form = {

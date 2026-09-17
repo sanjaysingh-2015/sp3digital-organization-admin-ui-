@@ -17,7 +17,6 @@ import { UiService } from "../../core/ui.service";
 import { PageComponent } from "../../shared/page.component";
 import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
 import { NotificationModalComponent } from "../../shared/components/notification-modal/notification-modal";
-import { AddressPickerComponent, PickedAddress } from "../../shared/components/address-picker/address-picker.component";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -26,7 +25,7 @@ export const FACILITY_TYPES = ["CHC", "PHC", "SUB_CENTER", "DISTRICT_HOSPITAL", 
 @Component({
   selector: "app-facilities",
   standalone: true,
-  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent, AddressPickerComponent],
+  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent],
   templateUrl: "./facilities.component.html",
   styleUrls: ["./facilities.component.scss"],
 })
@@ -369,18 +368,10 @@ export class FacilitiesComponent implements OnInit {
   // Facility still stores address as plain text columns (city/stateName/
   // districtName/postalCode/country) rather than FK'ing into the geography
   // tables -- see address-picker.component.ts's header comment for why.
-  // This just fills in whichever of those fields the picker resolved;
-  // anything it left null (e.g. a pincode search matched country/state/
-  // district/city but the API returned no postal code) is left as
-  // whatever the user already had typed there.
-  onAddressPicked(address: PickedAddress): void {
-    if (address.country) this.form.country = address.country;
-    if (address.stateName) this.form.stateName = address.stateName;
-    if (address.districtName) this.form.districtName = address.districtName;
-    if (address.subDistrictName) this.form.subDistrictName = address.subDistrictName;
-    if (address.city) this.form.city = address.city;
-    if (address.postalCode) this.form.postalCode = address.postalCode;
-  }
+  // onAddressPicked()/<app-address-picker> used to sit here to help fill
+  // these in from a pincode lookup, but /geography/* now requires the
+  // internal-service token (see that component's header comment for why),
+  // so this form went back to plain manual text inputs for all of them.
 
   resetForm(): void {
     this.form = {
