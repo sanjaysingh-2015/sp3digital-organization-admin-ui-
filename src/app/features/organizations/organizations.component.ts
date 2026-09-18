@@ -20,6 +20,49 @@ import { NotificationModalComponent } from "../../shared/components/notification
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+export interface Country {
+  countryId: number;
+  isoAlpha2?: string;
+  isoAlpha3?: string;
+  name?: string;
+  status?: string;
+}
+
+export interface State {
+  countryId: number;
+  stateId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface District {
+  districtId: number;
+  stateId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface SubDistrict {
+  districtId: number;
+  subDistrictId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface City {
+  cityId: number;
+  subDistrictId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface PostalCode {
+  postalCodeId: number;
+  subDistrictId: number;
+  code?: string;
+  status?: string;
+}
+
 export const ORGANIZATION_TYPES = [
   "STATE_HEALTH_DEPT",
   "DISTRICT_HEALTH_AUTHORITY",
@@ -69,8 +112,23 @@ export class OrganizationsComponent implements OnInit {
 
   selected: any = null;
 
+  countries: Country[] = [];
+  states: State[] = [];
+  districts: District[] = [];
+  subDistricts: SubDistrict[] = [];
+  cities: City[] = [];
+  postalCodes: PostalCode[] = [];
+
+  loadingCountries = false;
+  loadingStates = false;
+  loadingDistricts = false;
+  loadingSubDistricts = false;
+  loadingCities = false;
+  loadingPostalCodes = false;
+
   @ViewChild("confirmModal") confirmModal!: ConfirmModalComponent;
-  @ViewChild("notificationModal") notificationModal!: NotificationModalComponent;
+  @ViewChild("notificationModal")
+  notificationModal!: NotificationModalComponent;
 
   private pendingDelete: any = null;
 
@@ -84,12 +142,12 @@ export class OrganizationsComponent implements OnInit {
     parentOrganizationId: null as number | null,
     addressLine1: "",
     addressLine2: "",
-    city: "",
-    subDistrictName: "",
-    districtName: "",
-    stateName: "",
-    country: "India",
-    postalCode: "",
+    cityId: null as number | null,
+    subDistrictId: null as number | null,
+    districtId: null as number | null,
+    stateId: null as number | null,
+    postalCodeId: null as number | null,
+    countryId: -1,
     latitude: null as number | null,
     longitude: null as number | null,
   };
@@ -118,7 +176,8 @@ export class OrganizationsComponent implements OnInit {
         let className = "ag-status-badge";
         if (status === "ACTIVE") className += " good";
         else if (status === "DISABLED") className += " warning";
-        else if (status === "INACTIVE" || status === "DELETED") className += " danger";
+        else if (status === "INACTIVE" || status === "DELETED")
+          className += " danger";
         return `<span class="${className}">${this.escapeHtml(status)}</span>`;
       },
     },
@@ -143,7 +202,9 @@ export class OrganizationsComponent implements OnInit {
           </div>`;
       },
       onCellClicked: (params) => {
-        const action = (params.event?.target as HTMLElement)?.getAttribute("data-action");
+        const action = (params.event?.target as HTMLElement)?.getAttribute(
+          "data-action",
+        );
         if (!action) return;
         if (action === "view") this.select(params.data);
         if (action === "edit") this.openEdit(params.data);
@@ -153,9 +214,17 @@ export class OrganizationsComponent implements OnInit {
   ];
 
   defaultColDef: ColDef = { resizable: true, sortable: true, filter: true };
-  gridOptions = { rowHeight: 64, headerHeight: 44, suppressCellFocus: true, animateRows: true };
+  gridOptions = {
+    rowHeight: 64,
+    headerHeight: 44,
+    suppressCellFocus: true,
+    animateRows: true,
+  };
 
-  constructor(private api: ApiService, private ui: UiService) {}
+  constructor(
+    private api: ApiService,
+    private ui: UiService,
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -176,7 +245,10 @@ export class OrganizationsComponent implements OnInit {
    * shape matches — that silent-empty-grid failure mode is what caused
    * this page to appear broken while the network tab showed data.
    */
-  private normalizeListResponse(response: any): { rows: any[]; pagination: any } {
+  private normalizeListResponse(response: any): {
+    rows: any[];
+    pagination: any;
+  } {
     const candidates = [response, response?.organizations];
 
     for (const candidate of candidates) {
@@ -239,7 +311,8 @@ export class OrganizationsComponent implements OnInit {
     this.api.get<any>("/organizations/list").subscribe({
       next: (response) => {
         console.log("List");
-        (this.parentOptions = response?.data || [])},
+        this.parentOptions = response?.data || [];
+      },
       error: () => (this.parentOptions = []),
     });
   }
@@ -249,14 +322,28 @@ export class OrganizationsComponent implements OnInit {
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages || page === this.page || this.loading) return;
+    if (
+      page < 1 ||
+      page > this.totalPages ||
+      page === this.page ||
+      this.loading
+    )
+      return;
     this.load(page);
   }
 
-  get hasPreviousPage(): boolean { return this.page > 1; }
-  get hasNextPage(): boolean { return this.page < this.totalPages; }
-  get rangeStart(): number { return this.totalItems === 0 ? 0 : (this.page - 1) * this.limit + 1; }
-  get rangeEnd(): number { return Math.min(this.page * this.limit, this.totalItems); }
+  get hasPreviousPage(): boolean {
+    return this.page > 1;
+  }
+  get hasNextPage(): boolean {
+    return this.page < this.totalPages;
+  }
+  get rangeStart(): number {
+    return this.totalItems === 0 ? 0 : (this.page - 1) * this.limit + 1;
+  }
+  get rangeEnd(): number {
+    return Math.min(this.page * this.limit, this.totalItems);
+  }
 
   openCreate(): void {
     this.editMode = false;
@@ -266,7 +353,13 @@ export class OrganizationsComponent implements OnInit {
 
   openEdit(org: any): void {
     if (!org?.organizationId) {
-      this.notificationModal.open({ type: "WARNING", title: "Edit organization", message: "Invalid organization id", contentType: "TEXT", autoCloseAfter: 3000 });
+      this.notificationModal.open({
+        type: "WARNING",
+        title: "Edit organization",
+        message: "Invalid organization id",
+        contentType: "TEXT",
+        autoCloseAfter: 3000,
+      });
       return;
     }
     this.editMode = true;
@@ -277,12 +370,12 @@ export class OrganizationsComponent implements OnInit {
       parentOrganizationId: org.parentOrganizationId ?? null,
       addressLine1: org.addressLine1 || "",
       addressLine2: org.addressLine2 || "",
-      city: org.city || "",
-      subDistrictName: org.subDistrictName || "",
-      districtName: org.districtName || "",
-      stateName: org.stateName || "",
-      country: org.country || "India",
-      postalCode: org.postalCode || "",
+      cityId: org.cityId || null,
+      subDistrictId: org.subDistrictId || null,
+      districtId: org.districtId || null,
+      stateId: org.stateId || null,
+      countryId: org.country || 104,
+      postalCodeId: org.postalCode || "",
       latitude: org.latitude ?? null,
       longitude: org.longitude ?? null,
     };
@@ -306,32 +399,46 @@ export class OrganizationsComponent implements OnInit {
       parentOrganizationId: this.form.parentOrganizationId || null,
       addressLine1: this.form.addressLine1 || null,
       addressLine2: this.form.addressLine2 || null,
-      city: this.form.city || null,
-      subDistrictName: this.form.subDistrictName || null,
-      districtName: this.form.districtName || null,
-      stateName: this.form.stateName || null,
-      country: this.form.country || null,
-      postalCode: this.form.postalCode || null,
+      cityId: this.form.cityId || null,
+      subDistrictId: this.form.subDistrictId || null,
+      districtId: this.form.districtId || null,
+      stateId: this.form.stateId || null,
+      countryId: this.form.countryId || null,
+      postalCodeId: this.form.postalCodeId || null,
       latitude: this.form.latitude,
       longitude: this.form.longitude,
     };
 
     if (this.editMode) {
-      this.api.put<any>(`/organizations/${this.form.organizationId}`, request).subscribe({
-        next: () => {
-          this.saving = false;
-          this.formOpen = false;
-          this.editMode = false;
-          this.resetForm();
-          this.notificationModal.open({ type: "SUCCESS", title: "Organization updated", message: "Organization updated successfully", contentType: "TEXT", autoCloseAfter: 2500 });
-          this.load();
-          this.loadParentOptions();
-        },
-        error: (error) => {
-          this.saving = false;
-          this.notificationModal.open({ type: "ERROR", title: "Failed to update organization", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
-        },
-      });
+      this.api
+        .put<any>(`/organizations/${this.form.organizationId}`, request)
+        .subscribe({
+          next: () => {
+            this.saving = false;
+            this.formOpen = false;
+            this.editMode = false;
+            this.resetForm();
+            this.notificationModal.open({
+              type: "SUCCESS",
+              title: "Organization updated",
+              message: "Organization updated successfully",
+              contentType: "TEXT",
+              autoCloseAfter: 2500,
+            });
+            this.load();
+            this.loadParentOptions();
+          },
+          error: (error) => {
+            this.saving = false;
+            this.notificationModal.open({
+              type: "ERROR",
+              title: "Failed to update organization",
+              message: error,
+              contentType: "TEXT",
+              autoCloseAfter: 4000,
+            });
+          },
+        });
       return;
     }
 
@@ -340,13 +447,25 @@ export class OrganizationsComponent implements OnInit {
         this.saving = false;
         this.formOpen = false;
         this.resetForm();
-        this.notificationModal.open({ type: "SUCCESS", title: "Organization created", message: "Organization created successfully", contentType: "TEXT", autoCloseAfter: 2500 });
+        this.notificationModal.open({
+          type: "SUCCESS",
+          title: "Organization created",
+          message: "Organization created successfully",
+          contentType: "TEXT",
+          autoCloseAfter: 2500,
+        });
         this.load();
         this.loadParentOptions();
       },
       error: (error) => {
         this.saving = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to create organization", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+        this.notificationModal.open({
+          type: "ERROR",
+          title: "Failed to create organization",
+          message: error,
+          contentType: "TEXT",
+          autoCloseAfter: 4000,
+        });
       },
     });
   }
@@ -368,18 +487,34 @@ export class OrganizationsComponent implements OnInit {
     if (!org?.organizationId) return;
 
     this.deleting = true;
-    this.api.patch<any>(`/organizations/${org.organizationId}/status`, { status: "DELETED" }).subscribe({
-      next: () => {
-        this.deleting = false;
-        this.notificationModal.open({ type: "SUCCESS", title: "Organization deleted", message: "Organization deleted successfully", contentType: "TEXT", autoCloseAfter: 2500 });
-        this.load();
-        this.loadParentOptions();
-      },
-      error: (error) => {
-        this.deleting = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to delete organization", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
-      },
-    });
+    this.api
+      .patch<any>(`/organizations/${org.organizationId}/status`, {
+        status: "DELETED",
+      })
+      .subscribe({
+        next: () => {
+          this.deleting = false;
+          this.notificationModal.open({
+            type: "SUCCESS",
+            title: "Organization deleted",
+            message: "Organization deleted successfully",
+            contentType: "TEXT",
+            autoCloseAfter: 2500,
+          });
+          this.load();
+          this.loadParentOptions();
+        },
+        error: (error) => {
+          this.deleting = false;
+          this.notificationModal.open({
+            type: "ERROR",
+            title: "Failed to delete organization",
+            message: error,
+            contentType: "TEXT",
+            autoCloseAfter: 4000,
+          });
+        },
+      });
   }
 
   onDeleteCancelled(): void {
@@ -396,7 +531,13 @@ export class OrganizationsComponent implements OnInit {
       },
       error: (error) => {
         this.loading = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to load organization", message: error, contentType: "TEXT", autoCloseAfter: 3000 });
+        this.notificationModal.open({
+          type: "ERROR",
+          title: "Failed to load organization",
+          message: error,
+          contentType: "TEXT",
+          autoCloseAfter: 3000,
+        });
       },
     });
   }
@@ -410,7 +551,10 @@ export class OrganizationsComponent implements OnInit {
       this.ui.show("Organization name is required");
       return false;
     }
-    if (this.editMode && this.form.parentOrganizationId === this.form.organizationId) {
+    if (
+      this.editMode &&
+      this.form.parentOrganizationId === this.form.organizationId
+    ) {
       this.ui.show("An organization cannot be its own parent");
       return false;
     }
@@ -430,12 +574,12 @@ export class OrganizationsComponent implements OnInit {
       parentOrganizationId: null,
       addressLine1: "",
       addressLine2: "",
-      city: "",
-      subDistrictName: "",
-      districtName: "",
-      stateName: "",
-      country: "India",
-      postalCode: "",
+      cityId: null,
+      subDistrictId: null,
+      districtId: null,
+      stateId: null,
+      countryId: -1,
+      postalCodeId: null,
       latitude: null,
       longitude: null,
     };

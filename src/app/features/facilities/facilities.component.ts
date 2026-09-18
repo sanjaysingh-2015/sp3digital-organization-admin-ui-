@@ -13,6 +13,7 @@ import {
 } from "ag-grid-community";
 
 import { ApiService } from "../../core/api.service";
+import { GeoService } from "../../core/geo.service";
 import { UiService } from "../../core/ui.service";
 import { PageComponent } from "../../shared/page.component";
 import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
@@ -20,12 +21,69 @@ import { NotificationModalComponent } from "../../shared/components/notification
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-export const FACILITY_TYPES = ["CHC", "PHC", "SUB_CENTER", "DISTRICT_HOSPITAL", "CLINIC", "OTHER"];
+export interface Country {
+  countryId: number;
+  isoAlpha2?: string;
+  isoAlpha3?: string;
+  name?: string;
+  status?: string;
+}
+
+export interface State {
+  countryId: number;
+  stateId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface District {
+  districtId: number;
+  stateId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface SubDistrict {
+  districtId: number;
+  subDistrictId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface City {
+  cityId: number;
+  subDistrictId: number;
+  name?: string;
+  status?: string;
+}
+
+export interface PostalCode {
+  postalCodeId: number;
+  subDistrictId: number;
+  code?: string;
+  status?: string;
+}
+
+export const FACILITY_TYPES = [
+  "CHC",
+  "PHC",
+  "SUB_CENTER",
+  "DISTRICT_HOSPITAL",
+  "CLINIC",
+  "OTHER",
+];
 
 @Component({
   selector: "app-facilities",
   standalone: true,
-  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PageComponent,
+    AgGridAngular,
+    ConfirmModalComponent,
+    NotificationModalComponent,
+  ],
   templateUrl: "./facilities.component.html",
   styleUrls: ["./facilities.component.scss"],
 })
@@ -49,10 +107,25 @@ export class FacilitiesComponent implements OnInit {
   saving = false;
   deleting = false;
 
+  countries: Country[] = [];
+  states: State[] = [];
+  districts: District[] = [];
+  subDistricts: SubDistrict[] = [];
+  cities: City[] = [];
+  postalCodes: PostalCode[] = [];
+
+  loadingCountries = false;
+  loadingStates = false;
+  loadingDistricts = false;
+  loadingSubDistricts = false;
+  loadingCities = false;
+  loadingPostalCodes = false;
+
   selected: any = null;
 
   @ViewChild("confirmModal") confirmModal!: ConfirmModalComponent;
-  @ViewChild("notificationModal") notificationModal!: NotificationModalComponent;
+  @ViewChild("notificationModal")
+  notificationModal!: NotificationModalComponent;
 
   private pendingDelete: any = null;
 
@@ -66,12 +139,12 @@ export class FacilitiesComponent implements OnInit {
     facilityType: "" as string,
     addressLine1: "",
     addressLine2: "",
-    city: "",
-    subDistrictName: "",
-    districtName: "",
-    stateName: "",
-    postalCode: "",
-    country: "India",
+    cityId: null as number | null,
+    subDistrictId: null as number | null,
+    districtId: null as number | null,
+    stateId: null as number | null,
+    postalCodeId: null as number | null,
+    countryId: -1,
     latitude: null as number | null,
     longitude: null as number | null,
     phoneNumber: "",
@@ -93,7 +166,12 @@ export class FacilitiesComponent implements OnInit {
     },
     { headerName: "Type", field: "facilityType", flex: 0.8, minWidth: 140 },
     { headerName: "City", field: "city", flex: 0.9, minWidth: 140 },
-    { headerName: "Organization ID", field: "organizationId", flex: 0.8, minWidth: 140 },
+    {
+      headerName: "Organization ID",
+      field: "organizationId",
+      flex: 0.8,
+      minWidth: 140,
+    },
     {
       headerName: "Status",
       field: "status",
@@ -104,7 +182,8 @@ export class FacilitiesComponent implements OnInit {
         let className = "ag-status-badge";
         if (status === "ACTIVE") className += " good";
         else if (status === "DISABLED") className += " warning";
-        else if (status === "INACTIVE" || status === "DELETED") className += " danger";
+        else if (status === "INACTIVE" || status === "DELETED")
+          className += " danger";
         return `<span class="${className}">${this.escapeHtml(status)}</span>`;
       },
     },
@@ -128,7 +207,9 @@ export class FacilitiesComponent implements OnInit {
           </div>`;
       },
       onCellClicked: (params) => {
-        const action = (params.event?.target as HTMLElement)?.getAttribute("data-action");
+        const action = (params.event?.target as HTMLElement)?.getAttribute(
+          "data-action",
+        );
         if (!action) return;
         if (action === "view") this.select(params.data);
         if (action === "edit") this.openEdit(params.data);
@@ -138,13 +219,23 @@ export class FacilitiesComponent implements OnInit {
   ];
 
   defaultColDef: ColDef = { resizable: true, sortable: true, filter: true };
-  gridOptions = { rowHeight: 64, headerHeight: 44, suppressCellFocus: true, animateRows: true };
+  gridOptions = {
+    rowHeight: 64,
+    headerHeight: 44,
+    suppressCellFocus: true,
+    animateRows: true,
+  };
 
-  constructor(private api: ApiService, private ui: UiService) {}
+  constructor(
+    private api: ApiService,
+    private ui: UiService,
+    private geoApi: GeoService,
+  ) {}
 
   ngOnInit(): void {
     this.load();
     this.loadOrganizationOptions();
+    this.loadCountries();
   }
 
   onGridReady(event: GridReadyEvent): void {
@@ -182,7 +273,13 @@ export class FacilitiesComponent implements OnInit {
         },
         error: (error) => {
           this.loading = false;
-          this.notificationModal.open({ type: "ERROR", title: "Failed to load facilities", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+          this.notificationModal.open({
+            type: "ERROR",
+            title: "Failed to load facilities",
+            message: error,
+            contentType: "TEXT",
+            autoCloseAfter: 4000,
+          });
         },
       });
   }
@@ -194,19 +291,163 @@ export class FacilitiesComponent implements OnInit {
     });
   }
 
+  loadCountries(): void {
+    this.loadingCountries = true;
+
+    this.geoApi.getGeography<any>("/geography/countries").subscribe({
+      next: (response) => {
+        this.countries = response?.data || response?.items || [];
+        this.loadingCountries = false;
+      },
+      error: (error) => {
+        this.loadingCountries = false;
+        console.error("Failed to load countries:", error);
+      },
+    });
+  }
+
+  onCountryChange(): void {
+    this.loadingStates = true;
+    const countryId = this.form.countryId;
+
+    if (!countryId) {
+      this.states = [];
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/states", { countryId })
+      .subscribe({
+        next: (response) => {
+          this.states = response?.data || response?.items || [];
+          this.loadingStates = false;
+        },
+        error: (error) => {
+          this.loadingStates = false;
+          console.error("Failed to load states:", error);
+        },
+      });
+  }
+
+  onStateChange(): void {
+    this.loadingDistricts = true;
+    const stateId = this.form.stateId;
+
+    if (!stateId) {
+      this.districts = [];
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/districts", { stateId })
+      .subscribe({
+        next: (response) => {
+          this.districts = response?.data || response?.items || [];
+          this.loadingDistricts = false;
+        },
+        error: (error) => {
+          this.loadingDistricts = false;
+          console.error("Failed to load districts:", error);
+        },
+      });
+  }
+
+  onDistrictChange(): void {
+    this.loadingSubDistricts = true;
+    const districtId = this.form.districtId;
+
+    if (!districtId) {
+      this.subDistricts = [];
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/sub-districts", { districtId })
+      .subscribe({
+        next: (response) => {
+          this.subDistricts = response?.data || response?.items || [];
+          this.loadingSubDistricts = false;
+        },
+        error: (error) => {
+          this.loadingSubDistricts = false;
+          console.error("Failed to load districts:", error);
+        },
+      });
+  }
+
+  onSubDistrictChange(): void {
+    this.loadingCities = true;
+    const subDistrictId = this.form.subDistrictId;
+
+    if (!subDistrictId) {
+      this.cities = [];
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/cities", { subDistrictId })
+      .subscribe({
+        next: (response) => {
+          this.cities = response?.data || response?.items || [];
+          this.loadingCities = false;
+        },
+        error: (error) => {
+          this.loadingCities = false;
+          console.error("Failed to load cities/villages:", error);
+        },
+      });
+  }
+
+  onCityChange(): void {
+    this.loadingPostalCodes = true;
+    const cityId = this.form.cityId;
+
+    if (!cityId) {
+      this.cities = [];
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/postal-codes", { cityId })
+      .subscribe({
+        next: (response) => {
+          this.postalCodes = response?.data || response?.items || [];
+          this.loadingPostalCodes = false;
+        },
+        error: (error) => {
+          this.loadingPostalCodes = false;
+          console.error("Failed to load postal codes:", error);
+        },
+      });
+  }
+
   onFilterChange(): void {
     this.load(1);
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages || page === this.page || this.loading) return;
+    if (
+      page < 1 ||
+      page > this.totalPages ||
+      page === this.page ||
+      this.loading
+    )
+      return;
     this.load(page);
   }
 
-  get hasPreviousPage(): boolean { return this.page > 1; }
-  get hasNextPage(): boolean { return this.page < this.totalPages; }
-  get rangeStart(): number { return this.totalItems === 0 ? 0 : (this.page - 1) * this.limit + 1; }
-  get rangeEnd(): number { return Math.min(this.page * this.limit, this.totalItems); }
+  get hasPreviousPage(): boolean {
+    return this.page > 1;
+  }
+  get hasNextPage(): boolean {
+    return this.page < this.totalPages;
+  }
+  get rangeStart(): number {
+    return this.totalItems === 0 ? 0 : (this.page - 1) * this.limit + 1;
+  }
+  get rangeEnd(): number {
+    return Math.min(this.page * this.limit, this.totalItems);
+  }
 
   openCreate(): void {
     this.editMode = false;
@@ -216,6 +457,7 @@ export class FacilitiesComponent implements OnInit {
 
   openEdit(facility: any): void {
     if (!facility?.facilityId) return;
+    console.log("facility ==> ", facility);
     this.editMode = true;
     this.form = {
       facilityId: facility.facilityId,
@@ -224,17 +466,18 @@ export class FacilitiesComponent implements OnInit {
       facilityType: facility.facilityType || "",
       addressLine1: facility.addressLine1 || "",
       addressLine2: facility.addressLine2 || "",
-      city: facility.city || "",
-      subDistrictName: facility.subDistrictName || "",
-      districtName: facility.districtName || "",
-      stateName: facility.stateName || "",
-      postalCode: facility.postalCode || "",
-      country: facility.country || "India",
+      cityId: facility.cityId ?? null,
+      subDistrictId: facility.subDistrictId ?? null,
+      districtId: facility.districtId ?? null,
+      stateId: facility.stateId ?? null,
+      postalCodeId: facility.postalCodeId ?? null,
+      countryId: facility.countryId ?? -1,
       latitude: facility.latitude ?? null,
       longitude: facility.longitude ?? null,
       phoneNumber: facility.phoneNumber || "",
       email: facility.email || "",
     };
+    console.log("Form ==> ", this.form);
     this.formOpen = true;
   }
 
@@ -255,12 +498,12 @@ export class FacilitiesComponent implements OnInit {
       facilityType: this.form.facilityType || null,
       addressLine1: this.form.addressLine1 || null,
       addressLine2: this.form.addressLine2 || null,
-      city: this.form.city || null,
-      subDistrictName: this.form.subDistrictName || null,
-      districtName: this.form.districtName || null,
-      stateName: this.form.stateName || null,
-      postalCode: this.form.postalCode || null,
-      country: this.form.country || null,
+      cityId: this.form.cityId ?? null,
+      subDistrictId: this.form.subDistrictId ?? null,
+      districtId: this.form.districtId ?? null,
+      stateId: this.form.stateId ?? null,
+      postalCodeId: this.form.postalCodeId ?? null,
+      countryId: this.form.countryId ?? null,
       latitude: this.form.latitude,
       longitude: this.form.longitude,
       phoneNumber: this.form.phoneNumber || null,
@@ -268,20 +511,34 @@ export class FacilitiesComponent implements OnInit {
     };
 
     if (this.editMode) {
-      this.api.put<any>(`/facilities/${this.form.facilityId}`, request).subscribe({
-        next: () => {
-          this.saving = false;
-          this.formOpen = false;
-          this.editMode = false;
-          this.resetForm();
-          this.notificationModal.open({ type: "SUCCESS", title: "Facility updated", message: "Facility updated successfully", contentType: "TEXT", autoCloseAfter: 2500 });
-          this.load();
-        },
-        error: (error) => {
-          this.saving = false;
-          this.notificationModal.open({ type: "ERROR", title: "Failed to update facility", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
-        },
-      });
+      this.api
+        .put<any>(`/facilities/${this.form.facilityId}`, request)
+        .subscribe({
+          next: () => {
+            this.saving = false;
+            this.formOpen = false;
+            this.editMode = false;
+            this.resetForm();
+            this.notificationModal.open({
+              type: "SUCCESS",
+              title: "Facility updated",
+              message: "Facility updated successfully",
+              contentType: "TEXT",
+              autoCloseAfter: 2500,
+            });
+            this.load();
+          },
+          error: (error) => {
+            this.saving = false;
+            this.notificationModal.open({
+              type: "ERROR",
+              title: "Failed to update facility",
+              message: error,
+              contentType: "TEXT",
+              autoCloseAfter: 4000,
+            });
+          },
+        });
       return;
     }
 
@@ -290,12 +547,24 @@ export class FacilitiesComponent implements OnInit {
         this.saving = false;
         this.formOpen = false;
         this.resetForm();
-        this.notificationModal.open({ type: "SUCCESS", title: "Facility created", message: "Facility created successfully", contentType: "TEXT", autoCloseAfter: 2500 });
+        this.notificationModal.open({
+          type: "SUCCESS",
+          title: "Facility created",
+          message: "Facility created successfully",
+          contentType: "TEXT",
+          autoCloseAfter: 2500,
+        });
         this.load();
       },
       error: (error) => {
         this.saving = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to create facility", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+        this.notificationModal.open({
+          type: "ERROR",
+          title: "Failed to create facility",
+          message: error,
+          contentType: "TEXT",
+          autoCloseAfter: 4000,
+        });
       },
     });
   }
@@ -317,17 +586,33 @@ export class FacilitiesComponent implements OnInit {
     if (!facility?.facilityId) return;
 
     this.deleting = true;
-    this.api.patch<any>(`/facilities/${facility.facilityId}/status`, { status: "DELETED" }).subscribe({
-      next: () => {
-        this.deleting = false;
-        this.notificationModal.open({ type: "SUCCESS", title: "Facility deleted", message: "Facility deleted successfully", contentType: "TEXT", autoCloseAfter: 2500 });
-        this.load();
-      },
-      error: (error) => {
-        this.deleting = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to delete facility", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
-      },
-    });
+    this.api
+      .patch<any>(`/facilities/${facility.facilityId}/status`, {
+        status: "DELETED",
+      })
+      .subscribe({
+        next: () => {
+          this.deleting = false;
+          this.notificationModal.open({
+            type: "SUCCESS",
+            title: "Facility deleted",
+            message: "Facility deleted successfully",
+            contentType: "TEXT",
+            autoCloseAfter: 2500,
+          });
+          this.load();
+        },
+        error: (error) => {
+          this.deleting = false;
+          this.notificationModal.open({
+            type: "ERROR",
+            title: "Failed to delete facility",
+            message: error,
+            contentType: "TEXT",
+            autoCloseAfter: 4000,
+          });
+        },
+      });
   }
 
   onDeleteCancelled(): void {
@@ -344,7 +629,13 @@ export class FacilitiesComponent implements OnInit {
       },
       error: (error) => {
         this.loading = false;
-        this.notificationModal.open({ type: "ERROR", title: "Failed to load facility", message: error, contentType: "TEXT", autoCloseAfter: 3000 });
+        this.notificationModal.open({
+          type: "ERROR",
+          title: "Failed to load facility",
+          message: error,
+          contentType: "TEXT",
+          autoCloseAfter: 3000,
+        });
       },
     });
   }
@@ -381,12 +672,12 @@ export class FacilitiesComponent implements OnInit {
       facilityType: "",
       addressLine1: "",
       addressLine2: "",
-      city: "",
-      subDistrictName: "",
-      districtName: "",
-      stateName: "",
-      postalCode: "",
-      country: "India",
+      cityId: null as number | null,
+      subDistrictId: null as number | null,
+      districtId: null as number | null,
+      stateId: null as number | null,
+      postalCodeId: null as number | null,
+      countryId: -1,
       latitude: null,
       longitude: null,
       phoneNumber: "",

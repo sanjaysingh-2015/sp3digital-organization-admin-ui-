@@ -93,28 +93,46 @@
         <input type="text" [(ngModel)]="form.addressLine2" autocomplete="off" />
       </label>
       <label>
-        <span>City</span>
-        <input type="text" [(ngModel)]="form.city" autocomplete="off" />
-      </label>
-      <label>
-        <span>Sub-district / Taluk</span>
-        <input type="text" [(ngModel)]="form.subDistrictName" autocomplete="off" />
-      </label>
-      <label>
-        <span>District</span>
-        <input type="text" [(ngModel)]="form.districtName" autocomplete="off" />
+        <span>Country</span>
+        <select [(ngModel)]="form.countryId" (change)="onCountryChange()">
+          <option [ngValue]="''">— none —</option>
+          @for (country of countries; track country) { <option [ngValue]="country.countryId">{{ country.name }}</option> }
+        </select>        
       </label>
       <label>
         <span>State</span>
-        <input type="text" [(ngModel)]="form.stateName" autocomplete="off" />
+        <select [(ngModel)]="form.stateId" (change)="onStateChange()">
+          <option [ngValue]="-1">— none —</option>
+          @for (state of states; track state) { <option [ngValue]="state.stateId">{{ state.name }}</option> }
+        </select> 
       </label>
       <label>
-        <span>Country</span>
-        <input type="text" [(ngModel)]="form.country" autocomplete="off" />
+        <span>District</span>
+        <select [(ngModel)]="form.districtId" (change)="onDistrictChange()">
+          <option [ngValue]="-1">— none —</option>
+          @for (district of districts; track district) { <option [ngValue]="district.districtId">{{ district.name }}</option> }
+        </select> 
+      </label>
+      <label>
+        <span>Sub-district / Taluk</span>
+        <select [(ngModel)]="form.subDistrictId" (change)="onSubDistrictChange()">
+          <option [ngValue]="-1">— none —</option>
+          @for (subDistrict of subDistricts; track subDistrict) { <option [ngValue]="subDistrict.subDistrictId">{{ subDistrict.name }}</option> }
+        </select>
+      </label>
+      <label>
+        <span>City</span>
+        <select [(ngModel)]="form.cityId" (change)="onCityChange()">
+          <option [ngValue]="''">— none —</option>
+          @for (city of cities; track city) { <option [ngValue]="city.cityId">{{ city.name }}</option> }
+        </select>
       </label>
       <label>
         <span>Postal code</span>
-        <input type="text" [(ngModel)]="form.postalCode" autocomplete="off" />
+        <select [(ngModel)]="form.postalCodeId">
+          <option [ngValue]="''">— none —</option>
+          @for (postalCode of postalCodes; track postalCode) { <option [ngValue]="postalCode.postalCodeId">{{ postalCode.code }}</option> }
+        </select>
       </label>
       <label>
         <span>Latitude</span>
