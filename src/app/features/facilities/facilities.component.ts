@@ -312,6 +312,7 @@ export class FacilitiesComponent implements OnInit {
 
     if (!countryId) {
       this.states = [];
+      this.loadingStates = false;
       return;
     }
 
@@ -335,6 +336,7 @@ export class FacilitiesComponent implements OnInit {
 
     if (!stateId) {
       this.districts = [];
+      this.loadingDistricts = false;
       return;
     }
 
@@ -358,6 +360,7 @@ export class FacilitiesComponent implements OnInit {
 
     if (!districtId) {
       this.subDistricts = [];
+      this.loadingSubDistricts = false;
       return;
     }
 
@@ -381,6 +384,7 @@ export class FacilitiesComponent implements OnInit {
 
     if (!subDistrictId) {
       this.cities = [];
+      this.loadingCities = false;
       return;
     }
 
@@ -403,7 +407,8 @@ export class FacilitiesComponent implements OnInit {
     const cityId = this.form.cityId;
 
     if (!cityId) {
-      this.cities = [];
+      this.postalCodes = [];
+      this.loadingPostalCodes = false;
       return;
     }
 
@@ -457,7 +462,6 @@ export class FacilitiesComponent implements OnInit {
 
   openEdit(facility: any): void {
     if (!facility?.facilityId) return;
-    console.log("facility ==> ", facility);
     this.editMode = true;
     this.form = {
       facilityId: facility.facilityId,
@@ -477,7 +481,19 @@ export class FacilitiesComponent implements OnInit {
       phoneNumber: facility.phoneNumber || "",
       email: facility.email || "",
     };
-    console.log("Form ==> ", this.form);
+
+    // The state/district/sub-district/city/postal-code <select> options are
+    // populated lazily via the on*Change() cascade as each parent is picked.
+    // On edit, the form already has the saved ids but the option lists are
+    // still empty, so nothing appears selected. Re-run the cascade for every
+    // level so each dropdown's option list is loaded and the saved id shows
+    // as selected.
+    this.onCountryChange();
+    this.onStateChange();
+    this.onDistrictChange();
+    this.onSubDistrictChange();
+    this.onCityChange();
+
     this.formOpen = true;
   }
 
@@ -655,14 +671,6 @@ export class FacilitiesComponent implements OnInit {
     }
     return true;
   }
-
-  // Facility still stores address as plain text columns (city/stateName/
-  // districtName/postalCode/country) rather than FK'ing into the geography
-  // tables -- see address-picker.component.ts's header comment for why.
-  // onAddressPicked()/<app-address-picker> used to sit here to help fill
-  // these in from a pincode lookup, but /geography/* now requires the
-  // internal-service token (see that component's header comment for why),
-  // so this form went back to plain manual text inputs for all of them.
 
   resetForm(): void {
     this.form = {

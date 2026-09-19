@@ -13,6 +13,7 @@ import {
 } from "ag-grid-community";
 
 import { ApiService } from "../../core/api.service";
+import { GeoService } from "../../core/geo.service";
 import { UiService } from "../../core/ui.service";
 import { PageComponent } from "../../shared/page.component";
 import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
@@ -223,12 +224,14 @@ export class OrganizationsComponent implements OnInit {
 
   constructor(
     private api: ApiService,
+    private geoApi: GeoService,
     private ui: UiService,
   ) {}
 
   ngOnInit(): void {
     this.load();
     this.loadParentOptions();
+    this.loadCountries();
   }
 
   onGridReady(event: GridReadyEvent): void {
@@ -310,11 +313,145 @@ export class OrganizationsComponent implements OnInit {
   loadParentOptions(): void {
     this.api.get<any>("/organizations/list").subscribe({
       next: (response) => {
-        console.log("List");
         this.parentOptions = response?.data || [];
       },
       error: () => (this.parentOptions = []),
     });
+  }
+
+  loadCountries(): void {
+    this.loadingCountries = true;
+
+    this.geoApi.getGeography<any>("/geography/countries").subscribe({
+      next: (response) => {
+        this.countries = response?.data || response?.items || [];
+        this.loadingCountries = false;
+      },
+      error: (error) => {
+        this.loadingCountries = false;
+        console.error("Failed to load countries:", error);
+      },
+    });
+  }
+
+  onCountryChange(): void {
+    this.loadingStates = true;
+    const countryId = this.form.countryId;
+
+    if (!countryId) {
+      this.states = [];
+      this.loadingStates = false;
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/states", { countryId })
+      .subscribe({
+        next: (response) => {
+          this.states = response?.data || response?.items || [];
+          this.loadingStates = false;
+        },
+        error: (error) => {
+          this.loadingStates = false;
+          console.error("Failed to load states:", error);
+        },
+      });
+  }
+
+  onStateChange(): void {
+    this.loadingDistricts = true;
+    const stateId = this.form.stateId;
+
+    if (!stateId) {
+      this.districts = [];
+      this.loadingDistricts = false;
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/districts", { stateId })
+      .subscribe({
+        next: (response) => {
+          this.districts = response?.data || response?.items || [];
+          this.loadingDistricts = false;
+        },
+        error: (error) => {
+          this.loadingDistricts = false;
+          console.error("Failed to load districts:", error);
+        },
+      });
+  }
+
+  onDistrictChange(): void {
+    this.loadingSubDistricts = true;
+    const districtId = this.form.districtId;
+
+    if (!districtId) {
+      this.subDistricts = [];
+      this.loadingSubDistricts = false;
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/sub-districts", { districtId })
+      .subscribe({
+        next: (response) => {
+          this.subDistricts = response?.data || response?.items || [];
+          this.loadingSubDistricts = false;
+        },
+        error: (error) => {
+          this.loadingSubDistricts = false;
+          console.error("Failed to load districts:", error);
+        },
+      });
+  }
+
+  onSubDistrictChange(): void {
+    this.loadingCities = true;
+    const subDistrictId = this.form.subDistrictId;
+
+    if (!subDistrictId) {
+      this.cities = [];
+      this.loadingCities = false;
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/cities", { subDistrictId })
+      .subscribe({
+        next: (response) => {
+          this.cities = response?.data || response?.items || [];
+          this.loadingCities = false;
+        },
+        error: (error) => {
+          this.loadingCities = false;
+          console.error("Failed to load cities/villages:", error);
+        },
+      });
+  }
+
+  onCityChange(): void {
+    this.loadingPostalCodes = true;
+    const cityId = this.form.cityId;
+
+    if (!cityId) {
+      this.postalCodes = [];
+      this.loadingPostalCodes = false;
+      return;
+    }
+
+    this.geoApi
+      .getGeography<any>("/geography/postal-codes", { cityId })
+      .subscribe({
+        next: (response) => {
+          this.postalCodes = response?.data || response?.items || [];
+          this.loadingPostalCodes = false;
+        },
+        error: (error) => {
+          this.loadingPostalCodes = false;
+          console.error("Failed to load postal codes:", error);
+        },
+      });
   }
 
   onFilterChange(): void {
@@ -370,15 +507,28 @@ export class OrganizationsComponent implements OnInit {
       parentOrganizationId: org.parentOrganizationId ?? null,
       addressLine1: org.addressLine1 || "",
       addressLine2: org.addressLine2 || "",
-      cityId: org.cityId || null,
-      subDistrictId: org.subDistrictId || null,
-      districtId: org.districtId || null,
-      stateId: org.stateId || null,
-      countryId: org.country || 104,
-      postalCodeId: org.postalCode || "",
+      cityId: org.cityId ?? null,
+      subDistrictId: org.subDistrictId ?? null,
+      districtId: org.districtId ?? null,
+      stateId: org.stateId ?? null,
+      countryId: org.countryId ?? -1,
+      postalCodeId: org.postalCodeId ?? null,
       latitude: org.latitude ?? null,
       longitude: org.longitude ?? null,
     };
+
+    // The state/district/sub-district/city/postal-code <select> options are
+    // populated lazily via the on*Change() cascade as each parent is picked.
+    // On edit, the form already has the saved ids but the option lists are
+    // still empty, so nothing appears selected. Re-run the cascade for every
+    // level so each dropdown's option list is loaded and the saved id shows
+    // as selected.
+    this.onCountryChange();
+    this.onStateChange();
+    this.onDistrictChange();
+    this.onSubDistrictChange();
+    this.onCityChange();
+
     this.formOpen = true;
   }
 
