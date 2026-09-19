@@ -165,7 +165,24 @@ export class FacilitiesComponent implements OnInit {
       },
     },
     { headerName: "Type", field: "facilityType", flex: 0.8, minWidth: 140 },
-    { headerName: "City", field: "city", flex: 0.9, minWidth: 140 },
+    {
+      headerName: "City",
+      field: "cityName",
+      flex: 1.4,
+      minWidth: 100,
+    },
+    {
+      headerName: "State",
+      field: "stateName",
+      flex: 1.4,
+      minWidth: 100,
+    },
+    {
+      headerName: "Country",
+      field: "countryName",
+      flex: 1.4,
+      minWidth: 100,
+    },
     {
       headerName: "Organization ID",
       field: "organizationId",

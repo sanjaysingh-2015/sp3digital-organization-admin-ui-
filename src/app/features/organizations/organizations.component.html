@@ -161,6 +161,38 @@
       <div class="summary-item"><span>City</span><strong>{{ selected.city || "—" }}</strong></div>
       <div class="summary-item"><span>Parent Organization ID</span><strong>{{ selected.parentOrganizationId || "—" }}</strong></div>
       <div class="summary-item">
+        <span>Address#1</span>
+        <strong>{{ selected.addressLine1 || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Address#2</span>
+        <strong>{{ selected.addressLine2 || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>City</span>
+        <strong>{{ selected.cityName || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Sub District</span>
+        <strong>{{ selected.subDistrictName || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>District</span>
+        <strong>{{ selected.districtName || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>State</span>
+        <strong>{{ selected.stateName || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Country</span>
+        <strong>{{ selected.countryName || "—" }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Postal Code</span>
+        <strong>{{ selected.postalCode || "—" }}</strong>
+      </div>
+      <div class="summary-item">
         <span>Status</span>
         <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'DISABLED'"
           [class.danger]="selected.status === 'INACTIVE' || selected.status === 'DELETED'">{{ selected.status || "—" }}</span>

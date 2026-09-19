@@ -168,6 +168,24 @@ export class OrganizationsComponent implements OnInit {
     },
     { headerName: "Type", field: "organizationType", flex: 1, minWidth: 160 },
     {
+      headerName: "City",
+      field: "cityName",
+      flex: 1.4,
+      minWidth: 100,
+    },
+    {
+      headerName: "State",
+      field: "stateName",
+      flex: 1.4,
+      minWidth: 100,
+    },
+    {
+      headerName: "Country",
+      field: "countryName",
+      flex: 1.4,
+      minWidth: 100,
+    },
+    {
       headerName: "Status",
       field: "status",
       flex: 0.8,
