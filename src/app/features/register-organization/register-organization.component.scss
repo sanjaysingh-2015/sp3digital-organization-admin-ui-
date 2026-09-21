@@ -1,0 +1,239 @@
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f7fb;
+  padding: 40px 16px;
+}
+
+.register-card {
+  width: 560px;
+  max-width: 100%;
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  p {
+    margin-top: 8px;
+    color: #666;
+  }
+}
+
+// =========================================================
+// STEPPER
+// =========================================================
+
+.stepper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #98a2b3;
+}
+
+.stepper-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #d0d5dd;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepper-label {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stepper-step.active {
+  color: #2563eb;
+
+  .stepper-index {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #fff;
+  }
+}
+
+.stepper-step.done {
+  color: #16a34a;
+
+  .stepper-index {
+    border-color: #16a34a;
+    background: #16a34a;
+    color: #fff;
+  }
+}
+
+.stepper-connector {
+  flex: 1;
+  height: 2px;
+  background: #d0d5dd;
+  margin: 0 10px;
+
+  &.done {
+    background: #16a34a;
+  }
+}
+
+// =========================================================
+// FORM
+// =========================================================
+
+.section-divider {
+  margin: 22px 0 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+.form-group {
+  position: relative;
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 600;
+    font-size: 13px;
+
+    b {
+      color: #dc2626;
+      font-weight: 700;
+    }
+  }
+
+  input,
+  select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 13px;
+    border: 1px solid #d0d5dd;
+    border-radius: 7px;
+    font-size: 14px;
+    color: #222;
+    background: #fff;
+
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+  }
+}
+
+.phone-code {
+  max-width: 110px;
+}
+
+.field-error {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.register-error {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+// =========================================================
+// ACTIONS
+// =========================================================
+
+.step-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+
+  &.two {
+    justify-content: space-between;
+  }
+}
+
+button {
+  padding: 13px 22px;
+
+  border: none;
+  border-radius: 7px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+button.primary {
+  background: #2563eb;
+  color: white;
+}
+
+button.secondary {
+  background: #eef2f7;
+  color: #344054;
+}
+
+.register-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #667085;
+
+  a {
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

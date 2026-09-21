@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from "@angular/core";
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from "@angular/forms";
 
 import {
@@ -27,7 +27,7 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
 @Component({
   selector: "app-login",
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: "./login.component.html",
   styleUrl: "./login.component.scss",
 })
@@ -35,6 +35,7 @@ export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   mode: "login" | "register" = "login";
 
@@ -50,7 +51,7 @@ export class LoginComponent implements OnInit {
   registerLoading = false;
   registerError = "";
   registerSuccess = false;
-
+  successMessage = "";
   loginForm = this.fb.group({
     usernameOrEmail: ["", Validators.required],
 
@@ -78,6 +79,10 @@ export class LoginComponent implements OnInit {
   }, { validators: passwordsMatchValidator });
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get("organizationCreated") === "1") {
+      this.successMessage =
+        "Organization created successfully. Please sign in to continue.";
+    }
     this.loginForm.controls.tenant.valueChanges
       .pipe(
         debounceTime(400),

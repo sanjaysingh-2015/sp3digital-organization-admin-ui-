@@ -2,9 +2,11 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 import { ShellComponent } from './layout/shell.component';
 import { LoginComponent } from './features/login/login.component';
+import { RegisterOrganizationComponent } from './features/register-organization/register-organization.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'register-organization', component: RegisterOrganizationComponent },
   {
     path: '',
     component: ShellComponent,

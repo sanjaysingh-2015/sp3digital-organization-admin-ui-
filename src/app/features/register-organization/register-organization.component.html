@@ -1,0 +1,292 @@
+<div class="register-page">
+
+    <div class="register-card">
+
+        <div class="register-header">
+
+            <h1>SP3 Digital</h1>
+
+            <p>Create Organization</p>
+
+        </div>
+
+        <!-- Stepper -->
+
+        <div class="stepper">
+
+            <div class="stepper-step" [class.active]="step === 1" [class.done]="step > 1">
+                <span class="stepper-index">1</span>
+                <span class="stepper-label">Organization Details</span>
+            </div>
+
+            <div class="stepper-connector" [class.done]="step > 1"></div>
+
+            <div class="stepper-step" [class.active]="step === 2">
+                <span class="stepper-index">2</span>
+                <span class="stepper-label">Administrator Detail</span>
+            </div>
+
+        </div>
+
+        <!-- Error -->
+
+        @if (errorMessage) {
+
+        <div class="register-error">
+            {{ errorMessage }}
+        </div>
+
+        }
+
+        <!-- ============================================================ -->
+        <!-- STEP 1 — ORGANIZATION DETAILS (WITH ADDRESS)                  -->
+        <!-- ============================================================ -->
+
+        @if (step === 1) {
+
+        <form [formGroup]="orgForm" (ngSubmit)="continueToAdministrator()" autocomplete="off">
+
+            <div class="form-group">
+                <label for="organizationName">Organization Name <b>*</b></label>
+                <input id="organizationName" type="text" formControlName="organizationName"
+                    placeholder="e.g. Sunrise Health Network" />
+                @if (orgForm.controls.organizationName.touched && orgForm.controls.organizationName.invalid) {
+                <div class="field-error">Organization name is required (2–200 characters).</div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label for="organizationType">Organization Type <b>*</b></label>
+                <select id="organizationType" formControlName="organizationType">
+                    <option value="" disabled>Select a type</option>
+                    @for (type of organizationTypes; track type) {
+                    <option [value]="type">{{ type }}</option>
+                    }
+                </select>
+                @if (orgForm.controls.organizationType.touched && orgForm.controls.organizationType.invalid) {
+                <div class="field-error">Organization type is required.</div>
+                }
+            </div>
+
+            <div class="section-divider">Address</div>
+
+            <div class="form-group">
+                <label for="addressLine1">Address Line 1</label>
+                <input id="addressLine1" type="text" formControlName="addressLine1" />
+            </div>
+
+            <div class="form-group">
+                <label for="addressLine2">Address Line 2</label>
+                <input id="addressLine2" type="text" formControlName="addressLine2" />
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="countryId">Country</label>
+                    <select id="countryId" formControlName="countryId" (change)="onCountryChange()">
+                        <option value="" disabled>Select a country</option>
+                        @for (country of countries; track country.countryId) {
+                        <option [value]="country.countryId">{{ country.name }}</option>
+                        }
+                    </select>
+                    @if (orgForm.controls.countryId.touched && orgForm.controls.countryId.invalid) {
+                    <div class="field-error">Country is required.</div>
+                    }
+                </div>
+                <div class="form-group">
+                    <label for="stateId">State</label>
+                    <select id="stateId" formControlName="stateId" (change)="onStateChange()">
+                        <option value="" disabled>Select a state</option>
+                        @for (state of states; track state.stateId) {
+                        <option [value]="state.stateId">{{ state.name }}</option>
+                        }
+                    </select>
+                    @if (orgForm.controls.stateId.touched && orgForm.controls.stateId.invalid) {
+                    <div class="field-error">State is required.</div>
+                    }
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="districtId">District</label>
+                    <select id="districtId" formControlName="districtId" (change)="onDistrictChange()">
+                        <option value="" disabled>Select a district</option>
+                        @for (district of districts; track district.districtId) {
+                        <option [value]="district.districtId">{{ district.name }}</option>
+                        }
+                    </select>
+                    @if (orgForm.controls.districtId.touched && orgForm.controls.districtId.invalid) {
+                    <div class="field-error">District is required.</div>
+                    }
+                </div>
+                <div class="form-group">
+                    <label for="subDistrictId">Sub-district / Taluk</label>
+                    <select id="subDistrictId" formControlName="subDistrictId" (change)="onSubDistrictChange()">
+                        <option value="" disabled>Select a Sub District</option>
+                        @for (subDistrict of subDistricts; track subDistrict.subDistrictId) {
+                        <option [value]="subDistrict.subDistrictId">{{ subDistrict.name }}</option>
+                        }
+                    </select>
+                    @if (orgForm.controls.subDistrictId.touched && orgForm.controls.subDistrictId.invalid) {
+                    <div class="field-error">Sub-District is required.</div>
+                    }
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cityId">City</label>
+                    <select id="cityId" formControlName="cityId" (change)="onCityChange()">
+                        <option value="" disabled>Select a city</option>
+                        @for (city of cities; track city.cityId) {
+                        <option [value]="city.cityId">{{ city.name }}</option>
+                        }
+                    </select>
+                    @if (orgForm.controls.cityId.touched && orgForm.controls.cityId.invalid) {
+                    <div class="field-error">City is required.</div>
+                    }
+                </div>
+                <div class="form-group">
+                    <label for="postalCodeId">Postal Code</label>
+                    <select id="postalCodeId" formControlName="postalCodeId" (change)="onPostalCodeChange()">
+                        <option value="" disabled>Select a pincode</option>
+                        @for (postalCode of postalCodes; track postalCode.postalCodeId) {
+                        <option [value]="postalCode.postalCodeId">{{ postalCode.code }}</option>
+                        }
+                    </select>
+                    @if (orgForm.controls.postalCodeId.touched && orgForm.controls.postalCodeId.invalid) {
+                    <div class="field-error">Pincode is required.</div>
+                    }
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button type="submit" class="primary">Next: Administrator Detail</button>
+            </div>
+        </form>
+        }
+
+        <!-- ============================================================ -->
+        <!-- STEP 2 — ADMINISTRATOR DETAIL                                 -->
+        <!-- ============================================================ -->
+
+        @if (step === 2) {
+
+        <form [formGroup]="adminForm" (ngSubmit)="submit()" autocomplete="off">
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="firstName">First Name <b>*</b></label>
+                    <input id="firstName" type="text" formControlName="firstName" />
+                    @if (adminForm.controls.firstName.touched && adminForm.controls.firstName.invalid) {
+                    <div class="field-error">First name is required.</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Last Name <b>*</b></label>
+                    <input id="lastName" type="text" formControlName="lastName" />
+                    @if (adminForm.controls.lastName.touched && adminForm.controls.lastName.invalid) {
+                    <div class="field-error">Last name is required.</div>
+                    }
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="middleName">Middle Name</label>
+                    <input id="middleName" type="text" formControlName="middleName" />
+                </div>
+
+                <div class="form-group">
+                    <label for="displayName">Display Name</label>
+                    <input id="displayName" type="text" formControlName="displayName"
+                        placeholder="Defaults to first + last name" />
+                </div>
+
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username <b>*</b></label>
+                <input id="username" type="text" formControlName="username" autocomplete="off" />
+                @if (adminForm.controls.username.touched && adminForm.controls.username.invalid) {
+                <div class="field-error">Username is required (at least 3 characters).</div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email <b>*</b></label>
+                <input id="email" type="email" formControlName="email" autocomplete="off" />
+                @if (adminForm.controls.email.touched && adminForm.controls.email.invalid) {
+                <div class="field-error">A valid email address is required.</div>
+                }
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group phone-code">
+                    <label for="phoneCountryCode">Code <b>*</b></label>
+                    <input id="phoneCountryCode" type="text" formControlName="phoneCountryCode" placeholder="+91" />
+                </div>
+
+                <div class="form-group phone-number">
+                    <label for="phoneNumber">Phone Number <b>*</b></label>
+                    <input id="phoneNumber" type="text" formControlName="phoneNumber" />
+                    @if (adminForm.controls.phoneNumber.touched && adminForm.controls.phoneNumber.invalid) {
+                    <div class="field-error">Phone number is required.</div>
+                    }
+                </div>
+
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="password">Password <b>*</b></label>
+                    <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+                    @if (adminForm.controls.password.touched && adminForm.controls.password.invalid) {
+                    <div class="field-error">Password must be at least 8 characters.</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password <b>*</b></label>
+                    <input id="confirmPassword" type="password" formControlName="confirmPassword"
+                        autocomplete="new-password" />
+                    @if (
+                    adminForm.controls.confirmPassword.touched &&
+                    adminForm.errors?.['passwordMismatch']
+                    ) {
+                    <div class="field-error">Passwords do not match.</div>
+                    }
+                </div>
+
+            </div>
+
+            <div class="step-actions two">
+                <button type="button" class="secondary" (click)="backToOrganization()" [disabled]="submitting">
+                    Back
+                </button>
+                <button type="submit" class="primary" [disabled]="submitting">
+                    @if (submitting) {
+                    Creating organization...
+                    } @else {
+                    Create Organization
+                    }
+                </button>
+            </div>
+
+        </form>
+
+        }
+
+        <div class="register-footer">
+            Already have an organization? <a routerLink="/login">Sign in</a>
+        </div>
+
+    </div>
+
+</div>
