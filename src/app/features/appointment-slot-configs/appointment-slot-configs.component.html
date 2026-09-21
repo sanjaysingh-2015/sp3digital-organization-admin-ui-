@@ -1,0 +1,208 @@
+<app-page eyebrow="ORGANIZATION" title="Appointment Slot Configuration" description="Recurring weekly slot schedules per facility service. TENANT_USER submissions need TENANT_ADMIN approval before they take effect.">
+  <button actions type="button" class="primary" (click)="openCreate()">+ Create slot</button>
+</app-page>
+
+<div class="toolbar">
+  <select [(ngModel)]="facilityId" (change)="onFilterFacilityChange()">
+    <option [ngValue]="''">All facilities</option>
+    @for (facility of facilityOptions; track facility.facilityId) {
+      <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
+    }
+  </select>
+  <select [(ngModel)]="facilityServiceId" (change)="onFilterChange()">
+    <option [ngValue]="''">All services</option>
+    @for (service of filteredFacilityServiceOptions; track service.facilityServiceId) {
+      <option [ngValue]="service.facilityServiceId">{{ service.serviceName }} ({{ service.facilityName }})</option>
+    }
+  </select>
+  <select [(ngModel)]="approvalStatus" (change)="onFilterChange()">
+    <option value="">All approval states</option>
+    <option value="PENDING_APPROVAL">PENDING_APPROVAL</option>
+    <option value="APPROVED">APPROVED</option>
+    <option value="REJECTED">REJECTED</option>
+  </select>
+  <select [(ngModel)]="status" (change)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="INACTIVE">INACTIVE</option>
+  </select>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) { Loading... } @else { Refresh }
+  </button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="slot-configs-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No results }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+@if (formOpen) {
+<div class="modal-backdrop" (click)="closeCreate()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>@if (editMode) { Edit slot configuration } @else { Create slot configuration }</h3>
+        <p>@if (editMode) { Update the schedule, duration or capacity. } @else { Propose a recurring weekly slot schedule for a facility service. }</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">×</button>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        <span>Facility <b>*</b></span>
+        <select [(ngModel)]="form.facilityId" (change)="onFormFacilityChange()" [disabled]="editMode">
+          <option [ngValue]="null">— select —</option>
+          @for (facility of facilityOptions; track facility.facilityId) {
+            <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Facility service <b>*</b></span>
+        <select [(ngModel)]="form.facilityServiceId" [disabled]="editMode || !form.facilityId">
+          <option [ngValue]="null">— select —</option>
+          @for (service of formFacilityServiceOptions; track service.facilityServiceId) {
+            <option [ngValue]="service.facilityServiceId">{{ service.serviceName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Day of week <b>*</b></span>
+        <select [(ngModel)]="form.dayOfWeek" [disabled]="editMode">
+          @for (day of dayOptions; track day.value) {
+            <option [ngValue]="day.value">{{ day.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Capacity per slot <b>*</b></span>
+        <input type="number" min="1" [(ngModel)]="form.capacityPerSlot" />
+      </label>
+      <label>
+        <span>Start time <b>*</b></span>
+        <input type="time" [(ngModel)]="form.startTime" />
+      </label>
+      <label>
+        <span>End time <b>*</b></span>
+        <input type="time" [(ngModel)]="form.endTime" />
+      </label>
+      <label>
+        <span>Slot duration (minutes) <b>*</b></span>
+        <input type="number" min="1" max="480" [(ngModel)]="form.slotDurationMinutes" />
+      </label>
+      <label>
+        <span>Effective from <b>*</b></span>
+        <input type="date" [(ngModel)]="form.effectiveFrom" />
+      </label>
+      <label>
+        <span>Effective to (optional)</span>
+        <input type="date" [(ngModel)]="form.effectiveTo" />
+      </label>
+    </div>
+
+    @if (!editMode) {
+      <p class="form-hint">
+        @if (canApprove) {
+          You hold approval rights, so this will be created as <strong>APPROVED</strong> immediately.
+        } @else {
+          This will be submitted as <strong>PENDING_APPROVAL</strong> until a tenant admin reviews it.
+        }
+      </p>
+    }
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreate()" [disabled]="saving">Cancel</button>
+      <button type="button" class="primary" (click)="save()" [disabled]="saving">
+        @if (saving) { @if (editMode) { Updating... } @else { Submitting... } } @else { @if (editMode) { Update } @else { Submit } }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- REJECT MODAL -->
+@if (rejectFormOpen) {
+<div class="modal-backdrop" (click)="closeReject()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>Reject slot configuration</h3>
+        <p>{{ serviceLabel(rejectTarget) }} — {{ dayLabel(rejectTarget?.dayOfWeek) }} {{ rejectTarget?.startTime }}–{{ rejectTarget?.endTime }}</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeReject()" aria-label="Close">×</button>
+    </div>
+
+    <label>
+      <span>Rejection reason <b>*</b></span>
+      <textarea rows="4" maxlength="500" [(ngModel)]="rejectReason" placeholder="Why is this schedule being rejected?"></textarea>
+    </label>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeReject()" [disabled]="rejecting">Cancel</button>
+      <button type="button" class="primary" (click)="submitReject()" [disabled]="rejecting">
+        @if (rejecting) { Rejecting... } @else { Reject }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- DETAILS MODAL -->
+@if (selected) {
+<div class="modal-backdrop" (click)="closeDetails()">
+  <div class="modal details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div><h3>Slot configuration details</h3><p>{{ serviceLabel(selected) }}</p></div>
+      <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">×</button>
+    </div>
+
+    <div class="tenant-summary">
+      <div class="summary-item"><span>Facility</span><strong>{{ facilityFor(selected.facilityId)?.facilityName || "—" }}</strong></div>
+      <div class="summary-item"><span>Service</span><strong>{{ serviceLabel(selected) }}</strong></div>
+      <div class="summary-item"><span>Day</span><strong>{{ dayLabel(selected.dayOfWeek) }}</strong></div>
+      <div class="summary-item"><span>Time</span><strong>{{ selected.startTime }}–{{ selected.endTime }}</strong></div>
+      <div class="summary-item"><span>Slot duration</span><strong>{{ selected.slotDurationMinutes }} min</strong></div>
+      <div class="summary-item"><span>Capacity per slot</span><strong>{{ selected.capacityPerSlot }}</strong></div>
+      <div class="summary-item"><span>Effective from</span><strong>{{ selected.effectiveFrom || "—" }}</strong></div>
+      <div class="summary-item"><span>Effective to</span><strong>{{ selected.effectiveTo || "— (open-ended)" }}</strong></div>
+      <div class="summary-item">
+        <span>Status</span>
+        <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.warning]="selected.status === 'INACTIVE'">{{ selected.status || "—" }}</span>
+      </div>
+      <div class="summary-item">
+        <span>Approval</span>
+        <span class="badge" [class.good]="selected.approvalStatus === 'APPROVED'" [class.warning]="selected.approvalStatus === 'PENDING_APPROVAL'"
+          [class.danger]="selected.approvalStatus === 'REJECTED'">{{ selected.approvalStatus || "—" }}</span>
+      </div>
+      @if (selected.approvalStatus === 'REJECTED') {
+        <div class="summary-item"><span>Rejection reason</span><strong>{{ selected.rejectionReason || "—" }}</strong></div>
+      }
+    </div>
+
+    <details class="raw-details">
+      <summary>View raw response</summary>
+      <pre>{{ selected | json }}</pre>
+    </details>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onApproveConfirmed()" (cancelled)="onApproveCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

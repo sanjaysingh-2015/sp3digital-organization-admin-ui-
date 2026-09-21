@@ -226,6 +226,30 @@ export class AuthService {
     return String(c["user_id"] ?? c["userId"] ?? c["sub"] ?? "");
   }
 
+  /**
+   * Fine-grained permission check against the JWT's `permissions` claim —
+   * mirrors appointment-admin-service's own authorize()/hasPermission()
+   * matching exactly (ALL_PERMISSIONS bypass, `<service>:*` wildcard, or
+   * an exact code match), so the UI only shows actions the backend will
+   * actually allow. The backend is still the real enforcement point —
+   * this is purely to avoid showing a button that would just 403.
+   */
+  hasPermission(requiredPermission: string): boolean {
+    const c = this.claims();
+    const permissions = c["permissions"];
+    if (!Array.isArray(permissions)) return false;
+    if (permissions.includes("ALL_PERMISSIONS")) return true;
+
+    const required = requiredPermission.toUpperCase();
+    const requiredService = required.split(":")[0];
+
+    return permissions.some((code) => {
+      const upper = String(code).toUpperCase();
+      if (upper === required) return true;
+      return upper === `${requiredService}:*`;
+    });
+  }
+
   private getAccessTokenPayload(): JwtResponse | null {
     const token = localStorage.getItem(this.idTokenKey);
 
