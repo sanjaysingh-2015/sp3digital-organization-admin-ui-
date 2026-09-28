@@ -33,6 +33,12 @@ const DAY_LABELS: Record<number, string> = {
   7: "Sunday",
 };
 
+const RECURRENCE_LABELS: Record<string, string> = {
+  DAILY: "Daily",
+  WEEKLY: "Weekly",
+  MONTHLY: "Monthly",
+};
+
 @Component({
   selector: "app-appointment-slot-configs",
   standalone: true,
@@ -42,6 +48,8 @@ const DAY_LABELS: Record<number, string> = {
 })
 export class AppointmentSlotConfigsComponent implements OnInit {
   dayOptions = Object.entries(DAY_LABELS).map(([value, label]) => ({ value: Number(value), label }));
+  recurrenceOptions = Object.entries(RECURRENCE_LABELS).map(([value, label]) => ({ value, label }));
+  monthDayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
 
   // =========================================================
   // DATA
@@ -62,6 +70,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   // Filters
   facilityId: number | "" = "";
   facilityServiceId: number | "" = "";
+  recurrenceType = "";
   approvalStatus = "";
   status = "";
 
@@ -89,7 +98,9 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     slotConfigId: null as number | null,
     facilityId: null as number | null,
     facilityServiceId: null as number | null,
-    dayOfWeek: 1,
+    recurrenceType: "WEEKLY" as "DAILY" | "WEEKLY" | "MONTHLY",
+    dayOfWeek: 1 as number | null,
+    dayOfMonth: null as number | null,
     startTime: "09:00",
     endTime: "13:00",
     slotDurationMinutes: 30,
@@ -121,10 +132,10 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       },
     },
     {
-      headerName: "Day / Time",
-      flex: 1.2,
-      minWidth: 180,
-      valueGetter: (params) => `${DAY_LABELS[params.data?.dayOfWeek] || "—"} · ${params.data?.startTime}–${params.data?.endTime}`,
+      headerName: "Recurrence",
+      flex: 1.3,
+      minWidth: 200,
+      valueGetter: (params) => `${this.recurrenceLabel(params.data)} · ${params.data?.startTime}–${params.data?.endTime}`,
     },
     {
       headerName: "Duration / Capacity",
@@ -235,6 +246,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
         limit: this.limit,
         facilityId: this.facilityId || undefined,
         facilityServiceId: this.facilityServiceId || undefined,
+        recurrenceType: this.recurrenceType,
         approvalStatus: this.approvalStatus,
         status: this.status,
       })
@@ -330,7 +342,9 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       slotConfigId: row.slotConfigId,
       facilityId: row.facilityId ?? null,
       facilityServiceId: row.facilityServiceId ?? null,
-      dayOfWeek: row.dayOfWeek,
+      recurrenceType: row.recurrenceType || "WEEKLY",
+      dayOfWeek: row.dayOfWeek ?? null,
+      dayOfMonth: row.dayOfMonth ?? null,
       startTime: row.startTime?.slice(0, 5) || "09:00",
       endTime: row.endTime?.slice(0, 5) || "13:00",
       slotDurationMinutes: row.slotDurationMinutes,
@@ -372,10 +386,21 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     if (!this.validateForm()) return;
     this.saving = true;
 
+    // Send the day field that actually applies to the chosen recurrence
+    // and explicitly null the other, rather than relying on whatever was
+    // left over from a previous recurrenceType the user tried in this
+    // same form session (onRecurrenceTypeChange() already clears these on
+    // the form model, but this keeps the outgoing request unambiguous
+    // regardless of how the form got here — e.g. a pre-filled edit).
+    const dayOfWeek = this.form.recurrenceType === "WEEKLY" ? this.form.dayOfWeek : null;
+    const dayOfMonth = this.form.recurrenceType === "MONTHLY" ? this.form.dayOfMonth : null;
+
     const request: any = {
       facilityId: this.form.facilityId,
       facilityServiceId: this.form.facilityServiceId,
-      dayOfWeek: this.form.dayOfWeek,
+      recurrenceType: this.form.recurrenceType,
+      dayOfWeek,
+      dayOfMonth,
       startTime: this.form.startTime,
       endTime: this.form.endTime,
       slotDurationMinutes: this.form.slotDurationMinutes,
@@ -388,9 +413,11 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       // facilityId/facilityServiceId aren't part of the edit contract —
       // appointment-admin-service's updateSchema doesn't accept them (a
       // slot config's service is fixed at creation; only its schedule,
-      // capacity and status can change).
+      // recurrence, capacity and status can change).
       const patch: any = {
+        recurrenceType: request.recurrenceType,
         dayOfWeek: request.dayOfWeek,
+        dayOfMonth: request.dayOfMonth,
         startTime: request.startTime,
         endTime: request.endTime,
         slotDurationMinutes: request.slotDurationMinutes,
@@ -449,7 +476,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     this.pendingApprove = row;
     this.confirmModal.open({
       title: "Approve slot configuration",
-      message: `Approve the "${this.serviceLabel(row)}" schedule for ${DAY_LABELS[row.dayOfWeek]} ${row.startTime}–${row.endTime}?`,
+      message: `Approve the "${this.serviceLabel(row)}" schedule for ${this.recurrenceLabel(row)} ${row.startTime}–${row.endTime}?`,
       confirmText: "Approve",
       cancelText: "Cancel",
     });
@@ -543,6 +570,45 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     return DAY_LABELS[dayOfWeek] || "—";
   }
 
+  /**
+   * Human-readable recurrence description for a slot config row — used in
+   * the grid, the approve confirmation, and the details modal. Falls back
+   * gracefully if recurrenceType is missing (older rows created before
+   * this field existed default to WEEKLY server-side, but a client that
+   * somehow gets an unrecognized value here shouldn't crash the grid).
+   */
+  recurrenceLabel(row: any): string {
+    if (!row) return "—";
+    switch (row.recurrenceType) {
+      case "DAILY":
+        return "Daily";
+      case "MONTHLY":
+        return row.dayOfMonth ? `Monthly (day ${row.dayOfMonth})` : "Monthly";
+      case "WEEKLY":
+      default:
+        return row.dayOfWeek ? this.dayLabel(row.dayOfWeek) : "Weekly";
+    }
+  }
+
+  /**
+   * Called when the Recurrence Type select changes in the create/edit
+   * form — resets the now-irrelevant day field(s) and defaults the newly
+   * relevant one, so switching Daily <-> Weekly <-> Monthly (and back)
+   * never leaves a stale value from the previous mode sitting in the form.
+   */
+  onRecurrenceTypeChange(): void {
+    if (this.form.recurrenceType === "DAILY") {
+      this.form.dayOfWeek = null;
+      this.form.dayOfMonth = null;
+    } else if (this.form.recurrenceType === "WEEKLY") {
+      this.form.dayOfWeek = this.form.dayOfWeek ?? 1;
+      this.form.dayOfMonth = null;
+    } else if (this.form.recurrenceType === "MONTHLY") {
+      this.form.dayOfMonth = this.form.dayOfMonth ?? 1;
+      this.form.dayOfWeek = null;
+    }
+  }
+
   validateForm(): boolean {
     if (!this.form.facilityId) {
       this.ui.show("Facility is required");
@@ -550,6 +616,14 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     }
     if (!this.form.facilityServiceId) {
       this.ui.show("Facility service is required");
+      return false;
+    }
+    if (this.form.recurrenceType === "WEEKLY" && !this.form.dayOfWeek) {
+      this.ui.show("Day of week is required for a weekly recurrence");
+      return false;
+    }
+    if (this.form.recurrenceType === "MONTHLY" && !this.form.dayOfMonth) {
+      this.ui.show("Day of month is required for a monthly recurrence");
       return false;
     }
     if (!this.form.startTime || !this.form.endTime) {
@@ -576,7 +650,9 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       slotConfigId: null,
       facilityId: null,
       facilityServiceId: null,
+      recurrenceType: "WEEKLY",
       dayOfWeek: 1,
+      dayOfMonth: null,
       startTime: "09:00",
       endTime: "13:00",
       slotDurationMinutes: 30,

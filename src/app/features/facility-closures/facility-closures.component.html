@@ -1,0 +1,163 @@
+<app-page eyebrow="SCHEDULES" title="Holidays / Weekly Offs" description="Facility closures — one-time holidays, annual holidays, and standing weekly offs (e.g. closed every Sunday).">
+  @if (canWrite) {
+    <button actions type="button" class="primary" (click)="openCreate()">+ Add closure</button>
+  }
+</app-page>
+
+<div class="toolbar">
+  <select [(ngModel)]="facilityId" (change)="onFilterChange()">
+    <option [ngValue]="''">All facilities</option>
+    @for (facility of facilityOptions; track facility.facilityId) {
+      <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
+    }
+  </select>
+  <select [(ngModel)]="closureType" (change)="onFilterChange()">
+    <option value="">All types</option>
+    @for (option of closureTypeOptions; track option.value) {
+      <option [value]="option.value">{{ option.label }}</option>
+    }
+  </select>
+  <select [(ngModel)]="recurrenceType" (change)="onFilterChange()">
+    <option value="">All recurrences</option>
+    @for (option of recurrenceOptions; track option.value) {
+      <option [value]="option.value">{{ option.label }}</option>
+    }
+  </select>
+  <select [(ngModel)]="status" (change)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="CANCELLED">CANCELLED</option>
+  </select>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) { Loading... } @else { Refresh }
+  </button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="closures-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No results }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+@if (formOpen) {
+<div class="modal-backdrop" (click)="closeCreate()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>@if (editMode) { Edit closure } @else { Add closure }</h3>
+        <p>A one-time date, an annual holiday, or a standing weekly off.</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeCreate()" aria-label="Close">×</button>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        <span>Facility</span>
+        <select [(ngModel)]="form.facilityId">
+          <option [ngValue]="null">All facilities</option>
+          @for (facility of facilityOptions; track facility.facilityId) {
+            <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Closure type <b>*</b></span>
+        <select [(ngModel)]="form.closureType">
+          @for (option of closureTypeOptions; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Recurrence <b>*</b></span>
+        <select [(ngModel)]="form.recurrenceType" (change)="onRecurrenceTypeChange()">
+          @for (option of recurrenceOptions; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+      @if (form.recurrenceType === 'WEEKLY') {
+        <label>
+          <span>Day of week <b>*</b></span>
+          <select [(ngModel)]="form.dayOfWeek">
+            @for (day of dayOptions; track day.value) {
+              <option [ngValue]="day.value">{{ day.label }}</option>
+            }
+          </select>
+        </label>
+      } @else {
+        <label>
+          <span>Date <b>*</b></span>
+          <input type="date" [(ngModel)]="form.closureDate" />
+        </label>
+      }
+      <label>
+        <span>Name <b>*</b></span>
+        <input type="text" [(ngModel)]="form.closureName" placeholder="e.g. Republic Day, Sunday off" />
+      </label>
+      <label>
+        <span>Reason (optional)</span>
+        <input type="text" [(ngModel)]="form.reason" placeholder="e.g. Water supply outage" />
+      </label>
+    </div>
+
+    @if (form.recurrenceType === 'ANNUAL') {
+      <p class="form-hint">Recurs every year on this date's month and day.</p>
+    }
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreate()" [disabled]="saving">Cancel</button>
+      <button type="button" class="primary" (click)="save()" [disabled]="saving">
+        @if (saving) { @if (editMode) { Updating... } @else { Saving... } } @else { @if (editMode) { Update } @else { Save } }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- DETAILS MODAL -->
+@if (selected) {
+<div class="modal-backdrop" (click)="closeDetails()">
+  <div class="modal details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div><h3>Closure details</h3><p>{{ selected.closureName }}</p></div>
+      <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close">×</button>
+    </div>
+
+    <div class="tenant-summary">
+      <div class="summary-item"><span>Facility</span><strong>{{ selected.facilityId ? (facilityFor(selected.facilityId)?.facilityName || "—") : "All facilities" }}</strong></div>
+      <div class="summary-item"><span>Type</span><strong>{{ selected.closureType }}</strong></div>
+      <div class="summary-item"><span>Recurs</span><strong>{{ recurrenceLabel(selected) }}</strong></div>
+      <div class="summary-item"><span>Reason</span><strong>{{ selected.reason || "—" }}</strong></div>
+      <div class="summary-item">
+        <span>Status</span>
+        <span class="badge" [class.good]="selected.status === 'ACTIVE'" [class.danger]="selected.status === 'CANCELLED'">{{ selected.status || "—" }}</span>
+      </div>
+    </div>
+
+    <details class="raw-details">
+      <summary>View raw response</summary>
+      <pre>{{ selected | json }}</pre>
+    </details>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onCancelConfirmed()" (cancelled)="onCancelDismissed()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

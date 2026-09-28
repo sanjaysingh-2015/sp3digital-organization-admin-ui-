@@ -1,4 +1,4 @@
-<app-page eyebrow="ORGANIZATION" title="Appointment Slot Configuration" description="Recurring weekly slot schedules per facility service. TENANT_USER submissions need TENANT_ADMIN approval before they take effect.">
+<app-page eyebrow="SCHEDULES" title="Appointment Slot Configuration" description="Recurring slot schedules per facility service — Daily, Weekly, or Monthly. TENANT_USER submissions need TENANT_ADMIN approval before they take effect.">
   <button actions type="button" class="primary" (click)="openCreate()">+ Create slot</button>
 </app-page>
 
@@ -13,6 +13,12 @@
     <option [ngValue]="''">All services</option>
     @for (service of filteredFacilityServiceOptions; track service.facilityServiceId) {
       <option [ngValue]="service.facilityServiceId">{{ service.serviceName }} ({{ service.facilityName }})</option>
+    }
+  </select>
+  <select [(ngModel)]="recurrenceType" (change)="onFilterChange()">
+    <option value="">All recurrences</option>
+    @for (option of recurrenceOptions; track option.value) {
+      <option [value]="option.value">{{ option.label }}</option>
     }
   </select>
   <select [(ngModel)]="approvalStatus" (change)="onFilterChange()">
@@ -80,13 +86,33 @@
         </select>
       </label>
       <label>
-        <span>Day of week <b>*</b></span>
-        <select [(ngModel)]="form.dayOfWeek" [disabled]="editMode">
-          @for (day of dayOptions; track day.value) {
-            <option [ngValue]="day.value">{{ day.label }}</option>
+        <span>Recurrence <b>*</b></span>
+        <select [(ngModel)]="form.recurrenceType" (change)="onRecurrenceTypeChange()">
+          @for (option of recurrenceOptions; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
           }
         </select>
       </label>
+      @if (form.recurrenceType === 'WEEKLY') {
+        <label>
+          <span>Day of week <b>*</b></span>
+          <select [(ngModel)]="form.dayOfWeek">
+            @for (day of dayOptions; track day.value) {
+              <option [ngValue]="day.value">{{ day.label }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (form.recurrenceType === 'MONTHLY') {
+        <label>
+          <span>Day of month <b>*</b></span>
+          <select [(ngModel)]="form.dayOfMonth">
+            @for (day of monthDayOptions; track day) {
+              <option [ngValue]="day">{{ day }}</option>
+            }
+          </select>
+        </label>
+      }
       <label>
         <span>Capacity per slot <b>*</b></span>
         <input type="number" min="1" [(ngModel)]="form.capacityPerSlot" />
@@ -140,7 +166,7 @@
     <div class="modal-header">
       <div>
         <h3>Reject slot configuration</h3>
-        <p>{{ serviceLabel(rejectTarget) }} — {{ dayLabel(rejectTarget?.dayOfWeek) }} {{ rejectTarget?.startTime }}–{{ rejectTarget?.endTime }}</p>
+        <p>{{ serviceLabel(rejectTarget) }} — {{ recurrenceLabel(rejectTarget) }} {{ rejectTarget?.startTime }}–{{ rejectTarget?.endTime }}</p>
       </div>
       <button type="button" class="modal-close" (click)="closeReject()" aria-label="Close">×</button>
     </div>
@@ -172,7 +198,7 @@
     <div class="tenant-summary">
       <div class="summary-item"><span>Facility</span><strong>{{ facilityFor(selected.facilityId)?.facilityName || "—" }}</strong></div>
       <div class="summary-item"><span>Service</span><strong>{{ serviceLabel(selected) }}</strong></div>
-      <div class="summary-item"><span>Day</span><strong>{{ dayLabel(selected.dayOfWeek) }}</strong></div>
+      <div class="summary-item"><span>Recurrence</span><strong>{{ recurrenceLabel(selected) }}</strong></div>
       <div class="summary-item"><span>Time</span><strong>{{ selected.startTime }}–{{ selected.endTime }}</strong></div>
       <div class="summary-item"><span>Slot duration</span><strong>{{ selected.slotDurationMinutes }} min</strong></div>
       <div class="summary-item"><span>Capacity per slot</span><strong>{{ selected.capacityPerSlot }}</strong></div>

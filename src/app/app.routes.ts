@@ -23,6 +23,7 @@ export const routes: Routes = [
       { path: 'services', loadComponent: () => import('./features/services/services.component').then(m => m.ServicesComponent) },
       { path: 'facility-services', loadComponent: () => import('./features/facility-services/facility-services.component').then(m => m.FacilityServicesComponent) },
       { path: 'appointment-slot-configs', loadComponent: () => import('./features/appointment-slot-configs/appointment-slot-configs.component').then(m => m.AppointmentSlotConfigsComponent) },
+      { path: 'facility-closures', loadComponent: () => import('./features/facility-closures/facility-closures.component').then(m => m.FacilityClosuresComponent) },
     ]
   },
   { path: '**', redirectTo: '' }
