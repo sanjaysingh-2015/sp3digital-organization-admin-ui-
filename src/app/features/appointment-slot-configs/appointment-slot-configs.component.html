@@ -35,8 +35,16 @@
   <button type="button" class="secondary" (click)="load()" [disabled]="loading">
     @if (loading) { Loading... } @else { Refresh }
   </button>
+
+  <div class="view-toggle" role="group" aria-label="View">
+    <button type="button" [class.active]="view === 'list'" (click)="setView('list')">List</button>
+    <button type="button" [class.active]="view === 'day'" (click)="setView('day')">Day</button>
+    <button type="button" [class.active]="view === 'week'" (click)="setView('week')">Week</button>
+    <button type="button" [class.active]="view === 'month'" (click)="setView('month')">Month</button>
+  </div>
 </div>
 
+@if (view === 'list') {
 <div class="panel grid-panel">
   <ag-grid-angular class="slot-configs-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
     [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
@@ -53,6 +61,14 @@
     </div>
   </div>
 </div>
+} @else {
+<div class="panel calendar-panel">
+  @if (calendarLoading) {
+    <p class="calendar-loading">Loading calendar…</p>
+  }
+  <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+</div>
+}
 
 <!-- CREATE / EDIT MODAL -->
 @if (formOpen) {

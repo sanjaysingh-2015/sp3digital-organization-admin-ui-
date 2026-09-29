@@ -12,6 +12,12 @@ import {
   AllCommunityModule,
 } from "ag-grid-community";
 
+import { FullCalendarComponent, FullCalendarModule } from "@fullcalendar/angular";
+import { CalendarOptions, EventInput } from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
 import { ApiService } from "../../core/api.service";
 import { AppointmentApiService } from "../../core/appointment-api.service";
 import { AuthService } from "../../core/auth.service";
@@ -42,7 +48,7 @@ const RECURRENCE_LABELS: Record<string, string> = {
 @Component({
   selector: "app-appointment-slot-configs",
   standalone: true,
-  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent],
+  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, FullCalendarModule, ConfirmModalComponent, NotificationModalComponent],
   templateUrl: "./appointment-slot-configs.component.html",
   styleUrls: ["./appointment-slot-configs.component.scss"],
 })
@@ -85,6 +91,37 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   rejecting = false;
 
   selected: any = null;
+
+  // =========================================================
+  // VIEW MODE — List (the existing paginated grid) or Calendar (a
+  // visual projection of the same recurring rules onto an actual
+  // calendar, closer to how spedu-tutors-tutor-ui presents availability).
+  // =========================================================
+
+  view: "list" | "day" | "week" | "month" = "list";
+
+  // Unpaginated — the calendar needs every matching rule at once to expand
+  // occurrences across whatever range is currently in view, independent of
+  // the grid's page size.
+  calendarRows: any[] = [];
+  calendarLoading = false;
+
+  @ViewChild("calendar") calendarComponent?: FullCalendarComponent;
+
+  calendarOptions: CalendarOptions = {
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    initialView: "timeGridWeek",
+    headerToolbar: { left: "prev,next today", center: "title", right: "" },
+    height: "auto",
+    allDaySlot: false,
+    slotDuration: { minutes: 30 },
+    firstDay: 1,
+    events: (info, successCallback) => successCallback(this.computeOccurrences(info.start, info.end)),
+    eventClick: (arg) => {
+      const row = (arg.event.extendedProps as any)?.row;
+      if (row) this.select(row);
+    },
+  };
 
   @ViewChild("confirmModal") confirmModal!: ConfirmModalComponent;
   @ViewChild("notificationModal") notificationModal!: NotificationModalComponent;
@@ -308,6 +345,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
 
   onFilterChange(): void {
     this.load(1);
+    if (this.view !== "list") this.loadCalendarRows();
   }
 
   goToPage(page: number): void {
@@ -324,6 +362,136 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   get hasNextPage(): boolean { return this.page < this.totalPages; }
   get rangeStart(): number { return this.totalItems === 0 ? 0 : (this.page - 1) * this.limit + 1; }
   get rangeEnd(): number { return Math.min(this.page * this.limit, this.totalItems); }
+
+  // =========================================================
+  // CALENDAR VIEW
+  //
+  // A slot config is a recurring *rule* (e.g. "every Monday, 9–1"), not a
+  // dated event, so there's nothing to fetch per-day the way
+  // spedu-tutors-tutor-ui's tutor-availability calendar does. Instead we
+  // load every rule matching the current filters once, and expand each
+  // one into its calendar occurrences on the fly for whatever date range
+  // is currently on screen.
+  // =========================================================
+
+  setView(view: "list" | "day" | "week" | "month"): void {
+    this.view = view;
+    if (view === "list") return;
+
+    const fcView = view === "day" ? "timeGridDay" : view === "month" ? "dayGridMonth" : "timeGridWeek";
+    // Defer to let the @if switch the calendar into the DOM first.
+    setTimeout(() => this.calendarComponent?.getApi()?.changeView(fcView));
+
+    if (this.calendarRows.length === 0 && !this.calendarLoading) {
+      this.loadCalendarRows();
+    }
+  }
+
+  loadCalendarRows(): void {
+    this.calendarLoading = true;
+    this.appointmentApi
+      .get<any>("/slot-configs", {
+        page: 1,
+        limit: 100,
+        facilityId: this.facilityId || undefined,
+        facilityServiceId: this.facilityServiceId || undefined,
+        recurrenceType: this.recurrenceType,
+        approvalStatus: this.approvalStatus,
+        status: this.status,
+      })
+      .subscribe({
+        next: (response) => {
+          this.calendarRows = response?.data || [];
+          this.calendarLoading = false;
+          this.calendarComponent?.getApi()?.refetchEvents();
+        },
+        error: (error) => {
+          this.calendarLoading = false;
+          this.notificationModal.open({ type: "ERROR", title: "Failed to load calendar", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
+        },
+      });
+  }
+
+  /** Status/approval → the same good/warning/danger palette used elsewhere in the app. */
+  private colorFor(row: any): string {
+    if (row.approvalStatus === "REJECTED") return "var(--danger)";
+    if (row.approvalStatus === "PENDING_APPROVAL") return "var(--warn)";
+    return row.status === "ACTIVE" ? "var(--good)" : "var(--muted)";
+  }
+
+  /**
+   * Expands every loaded rule into concrete occurrences that fall within
+   * [rangeStart, rangeEnd) — the window FullCalendar is currently showing.
+   * DAILY/WEEKLY use FullCalendar's own recurring-event fields (it expands
+   * them internally); MONTHLY has no native "day of month" recurrence in
+   * FullCalendar, so those instances are computed by hand.
+   */
+  private computeOccurrences(rangeStart: Date, rangeEnd: Date): EventInput[] {
+    const events: EventInput[] = [];
+
+    for (const row of this.calendarRows) {
+      const color = this.colorFor(row);
+      const title = `${this.serviceLabel(row)} (${row.capacityPerSlot})`;
+      const startRecur = row.effectiveFrom || undefined;
+      const endRecur = row.effectiveTo || undefined;
+
+      if (row.recurrenceType === "DAILY") {
+        events.push({
+          title,
+          daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+          startTime: row.startTime,
+          endTime: row.endTime,
+          startRecur,
+          endRecur,
+          color,
+          extendedProps: { row },
+        });
+      } else if (row.recurrenceType === "WEEKLY") {
+        // FullCalendar's daysOfWeek is 0 (Sun) – 6 (Sat); our dayOfWeek is 1 (Mon) – 7 (Sun).
+        const fcDay = row.dayOfWeek === 7 ? 0 : row.dayOfWeek;
+        if (fcDay === undefined || fcDay === null) continue;
+        events.push({
+          title,
+          daysOfWeek: [fcDay],
+          startTime: row.startTime,
+          endTime: row.endTime,
+          startRecur,
+          endRecur,
+          color,
+          extendedProps: { row },
+        });
+      } else if (row.recurrenceType === "MONTHLY" && row.dayOfMonth) {
+        const from = row.effectiveFrom ? new Date(row.effectiveFrom + "T00:00:00") : null;
+        const to = row.effectiveTo ? new Date(row.effectiveTo + "T23:59:59") : null;
+
+        const cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
+        const last = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1);
+        while (cursor <= last) {
+          const occurrence = new Date(cursor.getFullYear(), cursor.getMonth(), row.dayOfMonth);
+          // Skip months shorter than dayOfMonth (e.g. day 31 in February) rather than rolling into the next month.
+          if (
+            occurrence.getMonth() === cursor.getMonth() &&
+            occurrence >= rangeStart &&
+            occurrence < rangeEnd &&
+            (!from || occurrence >= from) &&
+            (!to || occurrence <= to)
+          ) {
+            const dateStr = occurrence.toISOString().slice(0, 10);
+            events.push({
+              title,
+              start: `${dateStr}T${row.startTime}`,
+              end: `${dateStr}T${row.endTime}`,
+              color,
+              extendedProps: { row },
+            });
+          }
+          cursor.setMonth(cursor.getMonth() + 1);
+        }
+      }
+    }
+
+    return events;
+  }
 
   // =========================================================
   // CREATE / EDIT

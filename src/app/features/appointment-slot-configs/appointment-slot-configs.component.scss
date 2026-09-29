@@ -16,6 +16,102 @@
 }
 
 /* =========================================================
+   VIEW TOGGLE (List / Day / Week / Month)
+========================================================= */
+
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+
+.view-toggle button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+
+  &:hover {
+    color: var(--ink);
+  }
+
+  &.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+}
+
+/* =========================================================
+   CALENDAR PANEL
+========================================================= */
+
+.calendar-panel {
+  padding: 16px;
+}
+
+.calendar-loading {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+::ng-deep .calendar-panel {
+  .fc {
+    font-family: var(--font-family);
+  }
+
+  .fc-toolbar-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .fc-button {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    color: var(--ink);
+    box-shadow: none;
+    text-transform: capitalize;
+
+    &:hover {
+      background: var(--bg);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+
+  .fc-button-primary:not(:disabled).fc-button-active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .fc-event {
+    border: 0;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .fc-daygrid-day.fc-day-today,
+  .fc-timegrid-col.fc-day-today {
+    background: var(--accent-soft);
+  }
+}
+
+/* =========================================================
    INPUTS
 ========================================================= */
 

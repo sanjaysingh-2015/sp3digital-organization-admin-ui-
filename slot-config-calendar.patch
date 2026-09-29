@@ -1,0 +1,461 @@
+diff --git a/package-lock.json b/package-lock.json
+index f65be41..410408c 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -16,6 +16,11 @@
+         "@angular/platform-browser": "20.3.28",
+         "@angular/platform-browser-dynamic": "20.3.28",
+         "@angular/router": "20.3.28",
++        "@fullcalendar/angular": "^6.1.21",
++        "@fullcalendar/core": "^6.1.21",
++        "@fullcalendar/daygrid": "^6.1.21",
++        "@fullcalendar/interaction": "^6.1.21",
++        "@fullcalendar/timegrid": "^6.1.21",
+         "ag-grid-angular": "36.1.0",
+         "ag-grid-community": "36.1.0",
+         "rxjs": "7.8.2",
+@@ -3137,6 +3142,59 @@
+         "node": ">=18"
+       }
+     },
++    "node_modules/@fullcalendar/angular": {
++      "version": "6.1.21",
++      "resolved": "https://registry.npmjs.org/@fullcalendar/angular/-/angular-6.1.21.tgz",
++      "integrity": "sha512-ao2VKdqmu+y++Hyfb5q2qt9vXrNl9twgP74ClhcnVvDWaMNh7ku2QMAfkiYsyUXRY5YX74jP3eWSYAVGrU/rZQ==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "^2.3.0"
++      },
++      "peerDependencies": {
++        "@angular/common": "12 - 22",
++        "@angular/core": "12 - 22",
++        "@fullcalendar/core": "~6.1.21"
++      }
++    },
++    "node_modules/@fullcalendar/core": {
++      "version": "6.1.21",
++      "resolved": "https://registry.npmjs.org/@fullcalendar/core/-/core-6.1.21.tgz",
++      "integrity": "sha512-t3u/+sqh3Iq7TWtUnVLcGDUE6OWZh0UD3c04bI/l7lSLAgAKr3kngBmhHiQD1QXpwC8ZN5iNqG7a7gOVixhSKQ==",
++      "license": "MIT",
++      "dependencies": {
++        "preact": "~10.12.1"
++      }
++    },
++    "node_modules/@fullcalendar/daygrid": {
++      "version": "6.1.21",
++      "resolved": "https://registry.npmjs.org/@fullcalendar/daygrid/-/daygrid-6.1.21.tgz",
++      "integrity": "sha512-QYb1y40RGYLlOxKpYWg8O+7njEnKnFG8Tt7qjnubJGR35s1phQg67E+81y2TyAbbm59p2JFOCXGDk9t6KDujIA==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@fullcalendar/core": "~6.1.21"
++      }
++    },
++    "node_modules/@fullcalendar/interaction": {
++      "version": "6.1.21",
++      "resolved": "https://registry.npmjs.org/@fullcalendar/interaction/-/interaction-6.1.21.tgz",
++      "integrity": "sha512-WPYpqtljDWmU0Xm2cOtFrLlocgxv7cgkOppj34Q6OUUat8a6Cnd6kYo2JR+irP223PE5lBYHFNp1qh7SIpJc0w==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@fullcalendar/core": "~6.1.21"
++      }
++    },
++    "node_modules/@fullcalendar/timegrid": {
++      "version": "6.1.21",
++      "resolved": "https://registry.npmjs.org/@fullcalendar/timegrid/-/timegrid-6.1.21.tgz",
++      "integrity": "sha512-2DnShx/jallGmb8QCkr6pAOu/zuPhJrP7+uTrAtSnbqsX7GF3lTxqSeNGkTQwsgF5g/ia8udhQ+JNYaE+TN1cQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@fullcalendar/daygrid": "~6.1.21"
++      },
++      "peerDependencies": {
++        "@fullcalendar/core": "~6.1.21"
++      }
++    },
+     "node_modules/@gar/promise-retry": {
+       "version": "1.0.3",
+       "resolved": "https://registry.npmjs.org/@gar/promise-retry/-/promise-retry-1.0.3.tgz",
+@@ -11187,6 +11245,16 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/preact": {
++      "version": "10.12.1",
++      "resolved": "https://registry.npmjs.org/preact/-/preact-10.12.1.tgz",
++      "integrity": "sha512-l8386ixSsBdbreOAkqtrwqHwdvR35ID8c3rKPa8lCWuO86dBi32QWHV4vfsZK1utLLFMvw+Z5Ad4XLkZzchscg==",
++      "license": "MIT",
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/preact"
++      }
++    },
+     "node_modules/proc-log": {
+       "version": "5.0.0",
+       "resolved": "https://registry.npmjs.org/proc-log/-/proc-log-5.0.0.tgz",
+diff --git a/package.json b/package.json
+index 593c2ee..819bde0 100644
+--- a/package.json
++++ b/package.json
+@@ -16,6 +16,11 @@
+     "@angular/platform-browser": "20.3.28",
+     "@angular/platform-browser-dynamic": "20.3.28",
+     "@angular/router": "20.3.28",
++    "@fullcalendar/angular": "^6.1.21",
++    "@fullcalendar/core": "^6.1.21",
++    "@fullcalendar/daygrid": "^6.1.21",
++    "@fullcalendar/interaction": "^6.1.21",
++    "@fullcalendar/timegrid": "^6.1.21",
+     "ag-grid-angular": "36.1.0",
+     "ag-grid-community": "36.1.0",
+     "rxjs": "7.8.2",
+diff --git a/src/app/features/appointment-slot-configs/appointment-slot-configs.component.html b/src/app/features/appointment-slot-configs/appointment-slot-configs.component.html
+index e4cbda0..c093fd7 100644
+--- a/src/app/features/appointment-slot-configs/appointment-slot-configs.component.html
++++ b/src/app/features/appointment-slot-configs/appointment-slot-configs.component.html
+@@ -35,8 +35,16 @@
+   <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+     @if (loading) { Loading... } @else { Refresh }
+   </button>
++
++  <div class="view-toggle" role="group" aria-label="View">
++    <button type="button" [class.active]="view === 'list'" (click)="setView('list')">List</button>
++    <button type="button" [class.active]="view === 'day'" (click)="setView('day')">Day</button>
++    <button type="button" [class.active]="view === 'week'" (click)="setView('week')">Week</button>
++    <button type="button" [class.active]="view === 'month'" (click)="setView('month')">Month</button>
++  </div>
+ </div>
+ 
++@if (view === 'list') {
+ <div class="panel grid-panel">
+   <ag-grid-angular class="slot-configs-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+     [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+@@ -53,6 +61,14 @@
+     </div>
+   </div>
+ </div>
++} @else {
++<div class="panel calendar-panel">
++  @if (calendarLoading) {
++    <p class="calendar-loading">Loading calendar…</p>
++  }
++  <full-calendar #calendar [options]="calendarOptions"></full-calendar>
++</div>
++}
+ 
+ <!-- CREATE / EDIT MODAL -->
+ @if (formOpen) {
+diff --git a/src/app/features/appointment-slot-configs/appointment-slot-configs.component.scss b/src/app/features/appointment-slot-configs/appointment-slot-configs.component.scss
+index e4755ba..31c3038 100644
+--- a/src/app/features/appointment-slot-configs/appointment-slot-configs.component.scss
++++ b/src/app/features/appointment-slot-configs/appointment-slot-configs.component.scss
+@@ -15,6 +15,102 @@
+   flex-wrap: wrap;
+ }
+ 
++/* =========================================================
++   VIEW TOGGLE (List / Day / Week / Month)
++========================================================= */
++
++.view-toggle {
++  display: flex;
++  gap: 2px;
++  margin-left: auto;
++  padding: 3px;
++  background: var(--bg);
++  border-radius: var(--radius-md);
++}
++
++.view-toggle button {
++  padding: 6px 14px;
++  border: 0;
++  border-radius: var(--radius-sm);
++  background: transparent;
++  color: var(--muted);
++  cursor: pointer;
++  font-family: var(--font-family);
++  font-size: 13px;
++  font-weight: 500;
++  transition:
++    background 120ms ease,
++    color 120ms ease;
++
++  &:hover {
++    color: var(--ink);
++  }
++
++  &.active {
++    background: var(--accent);
++    color: #fff;
++    font-weight: 600;
++  }
++}
++
++/* =========================================================
++   CALENDAR PANEL
++========================================================= */
++
++.calendar-panel {
++  padding: 16px;
++}
++
++.calendar-loading {
++  margin: 0 0 8px;
++  color: var(--muted);
++  font-size: 13px;
++}
++
++::ng-deep .calendar-panel {
++  .fc {
++    font-family: var(--font-family);
++  }
++
++  .fc-toolbar-title {
++    font-size: 16px;
++    font-weight: 700;
++    color: var(--ink);
++  }
++
++  .fc-button {
++    background: #fff;
++    border: 1px solid #d1d5db;
++    color: var(--ink);
++    box-shadow: none;
++    text-transform: capitalize;
++
++    &:hover {
++      background: var(--bg);
++    }
++
++    &:disabled {
++      opacity: 0.5;
++    }
++  }
++
++  .fc-button-primary:not(:disabled).fc-button-active {
++    background: var(--accent);
++    border-color: var(--accent);
++  }
++
++  .fc-event {
++    border: 0;
++    cursor: pointer;
++    font-size: 12px;
++  }
++
++  .fc-daygrid-day.fc-day-today,
++  .fc-timegrid-col.fc-day-today {
++    background: var(--accent-soft);
++  }
++}
++
+ /* =========================================================
+    INPUTS
+ ========================================================= */
+diff --git a/src/app/features/appointment-slot-configs/appointment-slot-configs.component.ts b/src/app/features/appointment-slot-configs/appointment-slot-configs.component.ts
+index dc47fe9..a5012a8 100644
+--- a/src/app/features/appointment-slot-configs/appointment-slot-configs.component.ts
++++ b/src/app/features/appointment-slot-configs/appointment-slot-configs.component.ts
+@@ -12,6 +12,12 @@ import {
+   AllCommunityModule,
+ } from "ag-grid-community";
+ 
++import { FullCalendarComponent, FullCalendarModule } from "@fullcalendar/angular";
++import { CalendarOptions, EventInput } from "@fullcalendar/core";
++import dayGridPlugin from "@fullcalendar/daygrid";
++import timeGridPlugin from "@fullcalendar/timegrid";
++import interactionPlugin from "@fullcalendar/interaction";
++
+ import { ApiService } from "../../core/api.service";
+ import { AppointmentApiService } from "../../core/appointment-api.service";
+ import { AuthService } from "../../core/auth.service";
+@@ -42,7 +48,7 @@ const RECURRENCE_LABELS: Record<string, string> = {
+ @Component({
+   selector: "app-appointment-slot-configs",
+   standalone: true,
+-  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, ConfirmModalComponent, NotificationModalComponent],
++  imports: [CommonModule, FormsModule, PageComponent, AgGridAngular, FullCalendarModule, ConfirmModalComponent, NotificationModalComponent],
+   templateUrl: "./appointment-slot-configs.component.html",
+   styleUrls: ["./appointment-slot-configs.component.scss"],
+ })
+@@ -86,6 +92,37 @@ export class AppointmentSlotConfigsComponent implements OnInit {
+ 
+   selected: any = null;
+ 
++  // =========================================================
++  // VIEW MODE — List (the existing paginated grid) or Calendar (a
++  // visual projection of the same recurring rules onto an actual
++  // calendar, closer to how spedu-tutors-tutor-ui presents availability).
++  // =========================================================
++
++  view: "list" | "day" | "week" | "month" = "list";
++
++  // Unpaginated — the calendar needs every matching rule at once to expand
++  // occurrences across whatever range is currently in view, independent of
++  // the grid's page size.
++  calendarRows: any[] = [];
++  calendarLoading = false;
++
++  @ViewChild("calendar") calendarComponent?: FullCalendarComponent;
++
++  calendarOptions: CalendarOptions = {
++    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
++    initialView: "timeGridWeek",
++    headerToolbar: { left: "prev,next today", center: "title", right: "" },
++    height: "auto",
++    allDaySlot: false,
++    slotDuration: { minutes: 30 },
++    firstDay: 1,
++    events: (info, successCallback) => successCallback(this.computeOccurrences(info.start, info.end)),
++    eventClick: (arg) => {
++      const row = (arg.event.extendedProps as any)?.row;
++      if (row) this.select(row);
++    },
++  };
++
+   @ViewChild("confirmModal") confirmModal!: ConfirmModalComponent;
+   @ViewChild("notificationModal") notificationModal!: NotificationModalComponent;
+ 
+@@ -308,6 +345,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
+ 
+   onFilterChange(): void {
+     this.load(1);
++    if (this.view !== "list") this.loadCalendarRows();
+   }
+ 
+   goToPage(page: number): void {
+@@ -325,6 +363,136 @@ export class AppointmentSlotConfigsComponent implements OnInit {
+   get rangeStart(): number { return this.totalItems === 0 ? 0 : (this.page - 1) * this.limit + 1; }
+   get rangeEnd(): number { return Math.min(this.page * this.limit, this.totalItems); }
+ 
++  // =========================================================
++  // CALENDAR VIEW
++  //
++  // A slot config is a recurring *rule* (e.g. "every Monday, 9–1"), not a
++  // dated event, so there's nothing to fetch per-day the way
++  // spedu-tutors-tutor-ui's tutor-availability calendar does. Instead we
++  // load every rule matching the current filters once, and expand each
++  // one into its calendar occurrences on the fly for whatever date range
++  // is currently on screen.
++  // =========================================================
++
++  setView(view: "list" | "day" | "week" | "month"): void {
++    this.view = view;
++    if (view === "list") return;
++
++    const fcView = view === "day" ? "timeGridDay" : view === "month" ? "dayGridMonth" : "timeGridWeek";
++    // Defer to let the @if switch the calendar into the DOM first.
++    setTimeout(() => this.calendarComponent?.getApi()?.changeView(fcView));
++
++    if (this.calendarRows.length === 0 && !this.calendarLoading) {
++      this.loadCalendarRows();
++    }
++  }
++
++  loadCalendarRows(): void {
++    this.calendarLoading = true;
++    this.appointmentApi
++      .get<any>("/slot-configs", {
++        page: 1,
++        limit: 500,
++        facilityId: this.facilityId || undefined,
++        facilityServiceId: this.facilityServiceId || undefined,
++        recurrenceType: this.recurrenceType,
++        approvalStatus: this.approvalStatus,
++        status: this.status,
++      })
++      .subscribe({
++        next: (response) => {
++          this.calendarRows = response?.data || [];
++          this.calendarLoading = false;
++          this.calendarComponent?.getApi()?.refetchEvents();
++        },
++        error: (error) => {
++          this.calendarLoading = false;
++          this.notificationModal.open({ type: "ERROR", title: "Failed to load calendar", message: error, contentType: "TEXT", autoCloseAfter: 4000 });
++        },
++      });
++  }
++
++  /** Status/approval → the same good/warning/danger palette used elsewhere in the app. */
++  private colorFor(row: any): string {
++    if (row.approvalStatus === "REJECTED") return "var(--danger)";
++    if (row.approvalStatus === "PENDING_APPROVAL") return "var(--warn)";
++    return row.status === "ACTIVE" ? "var(--good)" : "var(--muted)";
++  }
++
++  /**
++   * Expands every loaded rule into concrete occurrences that fall within
++   * [rangeStart, rangeEnd) — the window FullCalendar is currently showing.
++   * DAILY/WEEKLY use FullCalendar's own recurring-event fields (it expands
++   * them internally); MONTHLY has no native "day of month" recurrence in
++   * FullCalendar, so those instances are computed by hand.
++   */
++  private computeOccurrences(rangeStart: Date, rangeEnd: Date): EventInput[] {
++    const events: EventInput[] = [];
++
++    for (const row of this.calendarRows) {
++      const color = this.colorFor(row);
++      const title = `${this.serviceLabel(row)} (${row.capacityPerSlot})`;
++      const startRecur = row.effectiveFrom || undefined;
++      const endRecur = row.effectiveTo || undefined;
++
++      if (row.recurrenceType === "DAILY") {
++        events.push({
++          title,
++          daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
++          startTime: row.startTime,
++          endTime: row.endTime,
++          startRecur,
++          endRecur,
++          color,
++          extendedProps: { row },
++        });
++      } else if (row.recurrenceType === "WEEKLY") {
++        // FullCalendar's daysOfWeek is 0 (Sun) – 6 (Sat); our dayOfWeek is 1 (Mon) – 7 (Sun).
++        const fcDay = row.dayOfWeek === 7 ? 0 : row.dayOfWeek;
++        if (fcDay === undefined || fcDay === null) continue;
++        events.push({
++          title,
++          daysOfWeek: [fcDay],
++          startTime: row.startTime,
++          endTime: row.endTime,
++          startRecur,
++          endRecur,
++          color,
++          extendedProps: { row },
++        });
++      } else if (row.recurrenceType === "MONTHLY" && row.dayOfMonth) {
++        const from = row.effectiveFrom ? new Date(row.effectiveFrom + "T00:00:00") : null;
++        const to = row.effectiveTo ? new Date(row.effectiveTo + "T23:59:59") : null;
++
++        const cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
++        const last = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1);
++        while (cursor <= last) {
++          const occurrence = new Date(cursor.getFullYear(), cursor.getMonth(), row.dayOfMonth);
++          // Skip months shorter than dayOfMonth (e.g. day 31 in February) rather than rolling into the next month.
++          if (
++            occurrence.getMonth() === cursor.getMonth() &&
++            occurrence >= rangeStart &&
++            occurrence < rangeEnd &&
++            (!from || occurrence >= from) &&
++            (!to || occurrence <= to)
++          ) {
++            const dateStr = occurrence.toISOString().slice(0, 10);
++            events.push({
++              title,
++              start: `${dateStr}T${row.startTime}`,
++              end: `${dateStr}T${row.endTime}`,
++              color,
++              extendedProps: { row },
++            });
++          }
++          cursor.setMonth(cursor.getMonth() + 1);
++        }
++      }
++    }
++
++    return events;
++  }
++
+   // =========================================================
+   // CREATE / EDIT
+   // =========================================================
