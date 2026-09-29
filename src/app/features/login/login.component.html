@@ -1,110 +1,195 @@
 <div class="login-page">
-    <div class="login-card">
-        <div class="login-header">
-            <h1>SP3 Digital</h1>
-            <p>Identity Administration</p>
+  <div class="login-bg" aria-hidden="true">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="dot-grid"></span>
+  </div>
+
+  <div class="login-shell">
+    <!-- Decorative hero — mirrors the animated marketing side of the reference design,
+         recolored to the app's blue→cyan palette. Nothing here is functional. -->
+    <section class="login-hero" aria-hidden="true">
+      <div class="hero-brand">
+        <div class="hero-brand-mark">SP3</div>
+        <div>
+          <strong>SP3 Digital</strong>
+          <small>Organization Admin</small>
+        </div>
+      </div>
+
+      <h1 class="hero-headline">
+        Unlock seamless
+        <span class="hero-word-swap">
+          @for (word of heroWords; track word; let i = $index) {
+            <span class="hero-word" [class.active]="i === heroWordIndex">{{ word }}</span>
+          }
+        </span>
+        <span class="hero-underline">across your organization</span>
+      </h1>
+
+      <p class="hero-sub">
+        One console for facilities, departments, services and appointment scheduling —
+        with tenant-aware access and approvals built in.
+      </p>
+
+      <div class="hero-preview">
+        <div class="hero-preview__bar">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-amber"></span>
+          <span class="dot dot-green"></span>
+          <span class="hero-preview__title">Organization overview</span>
+          <span class="hero-preview__live"><span class="live-dot"></span>Live</span>
         </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="login()" autocomplete="off">
-            <!-- Username / Email -->
-            <div class="form-group">
-                <label for="usernameOrEmail">
-                    Username or Email
-                </label>
-                <input id="usernameOrEmail" type="text" formControlName="usernameOrEmail"
-                    placeholder="Enter username or email" />
-                @if (
-                loginForm.controls.usernameOrEmail.touched &&
-                loginForm.controls.usernameOrEmail.invalid
-                ) {
-                <div class="field-error">
-                    Username or email is required
-                </div>
-                }
-            </div>
-            <!-- Password -->
-            <div class="form-group">
-                <label for="password">
-                    Password
-                </label>
-                <input id="password" type="password" formControlName="password" placeholder="Enter password" />
-                @if (
-                loginForm.controls.password.touched &&
-                loginForm.controls.password.invalid
-                ) {
-                <div class="field-error">
-                    Password is required
-                </div>
-                }
-            </div>
-            <!-- Tenant -->
-            <div class="form-group tenant-group">
-                <label for="tenant">
-                    Tenant
-                </label>
-                <input id="tenant" type="text" formControlName="tenant" placeholder="Type at least 5 characters"
-                    autocomplete="off" />
-                @if (tenantLoading) {
-                <div class="tenant-loading">
-                    Searching...
-                </div>
-                }
-                @if (
-                !tenantLoading &&
-                showTenantList &&
-                tenants.length > 0
-                ) {
-                <div class="tenant-dropdown">
-                    @for (
-                    tenant of tenants;
-                    track tenant.tenantUuid
-                    ) {
-                    <div class="tenant-option" (click)="selectTenant(tenant)">
-                        <div class="tenant-name">
-                            {{ tenant.tenantName }}
-                        </div>
-                        <div class="tenant-code">
-                            {{ tenant.tenantCode }}
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
+        <div class="hero-preview__stats">
+          <div>
+            <strong>12</strong>
+            <span>Facilities</span>
+          </div>
+          <div>
+            <strong>38</strong>
+            <span>Departments</span>
+          </div>
+          <div>
+            <strong>96%</strong>
+            <span>Approved</span>
+          </div>
+        </div>
 
-                @if (
-                !tenantLoading &&
-                tenants.length === 0 &&
-                (loginForm.controls.tenant.value?.trim().length ?? 0) >= 5
-                ) {
-                <div class="tenant-no-results">
-                    No tenants found
-                </div>
-                }
-            </div>
-            <!-- Success (e.g. redirected here after registering an organization) -->
-            @if (successMessage) {
-            <div class="login-success">
-                {{ successMessage }}
-            </div>
-            }
-            <!-- Error -->
-            @if (errorMessage) {
-            <div class="login-error">
-                {{ errorMessage }}
-            </div>
-            }
-            <!-- Login -->
-            <button type="submit" [disabled]="loading">
-                @if (loading) {
-                Signing in...
-                } @else {
-                Sign In
-                }
+        <div class="hero-preview__rows">
+          <div class="preview-row">
+            <span>Facility Services</span>
+            <div class="preview-bar"><i style="width: 82%"></i></div>
+          </div>
+          <div class="preview-row">
+            <span>Slot Configuration</span>
+            <div class="preview-bar"><i style="width: 61%"></i></div>
+          </div>
+          <div class="preview-row">
+            <span>Approvals</span>
+            <div class="preview-bar"><i style="width: 45%"></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Functional sign-in card -->
+    <section class="login-card">
+      <div class="login-card__bar"></div>
+
+      <div class="login-header">
+        <h1>Sign In</h1>
+        <p>SP3 Digital &middot; Organization Admin</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="login()" autocomplete="off">
+        <!-- Username / Email -->
+        <div class="form-group">
+          <label for="usernameOrEmail">Username or Email</label>
+          <input id="usernameOrEmail" type="text" formControlName="usernameOrEmail"
+            placeholder="Enter username or email" />
+          @if (
+          loginForm.controls.usernameOrEmail.touched &&
+          loginForm.controls.usernameOrEmail.invalid
+          ) {
+          <div class="field-error">Username or email is required</div>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
+              placeholder="Enter password" />
+            <button type="button" class="password-toggle" (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+              @if (showPassword) {
+                <!-- eye-off -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a17.6 17.6 0 0 1-3.06 4.24M6.61 6.61A17.7 17.7 0 0 0 2 12s3 8 10 8a9.26 9.26 0 0 0 5.39-1.61M1 1l22 22" />
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                </svg>
+              } @else {
+                <!-- eye -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s3-8 11-8 11 8 11 8-3 8-11 8-11-8-11-8Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
             </button>
-        </form>
-
-        <div class="register-footer">
-            New organization? <a routerLink="/register-organization">Create one</a>
+          </div>
+          @if (
+          loginForm.controls.password.touched &&
+          loginForm.controls.password.invalid
+          ) {
+          <div class="field-error">Password is required</div>
+          }
         </div>
-    </div>
+
+        <!-- Tenant -->
+        <div class="form-group tenant-group">
+          <label for="tenant">Tenant</label>
+          <input id="tenant" type="text" formControlName="tenant" placeholder="Type at least 5 characters"
+            autocomplete="off" />
+          @if (tenantLoading) {
+          <div class="tenant-loading">Searching...</div>
+          }
+          @if (
+          !tenantLoading &&
+          showTenantList &&
+          tenants.length > 0
+          ) {
+          <div class="tenant-dropdown">
+            @for (
+            tenant of tenants;
+            track tenant.tenantUuid
+            ) {
+            <div class="tenant-option" (click)="selectTenant(tenant)">
+              <div class="tenant-name">{{ tenant.tenantName }}</div>
+              <div class="tenant-code">{{ tenant.tenantCode }}</div>
+            </div>
+            }
+          </div>
+          }
+
+          @if (
+          !tenantLoading &&
+          tenants.length === 0 &&
+          (loginForm.controls.tenant.value?.trim().length ?? 0) >= 5
+          ) {
+          <div class="tenant-no-results">No tenants found</div>
+          }
+        </div>
+
+        <!-- Success (e.g. redirected here after registering an organization) -->
+        @if (successMessage) {
+        <div class="login-success">{{ successMessage }}</div>
+        }
+        <!-- Error -->
+        @if (errorMessage) {
+        <div class="login-error">{{ errorMessage }}</div>
+        }
+
+        <!-- Login -->
+        <button type="submit" class="submit-btn" [disabled]="loading">
+          @if (loading) {
+          Signing in...
+          } @else {
+          Sign In
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+          }
+        </button>
+      </form>
+
+      <div class="register-footer">
+        New organization? <a routerLink="/register-organization">Create one</a>
+      </div>
+    </section>
+  </div>
 </div>

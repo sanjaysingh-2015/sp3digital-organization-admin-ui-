@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from "@angular/core";
+import { Component, OnInit, OnDestroy, inject } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from "@angular/forms";
 
@@ -31,7 +31,7 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
   templateUrl: "./login.component.html",
   styleUrl: "./login.component.scss",
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -52,6 +52,13 @@ export class LoginComponent implements OnInit {
   registerError = "";
   registerSuccess = false;
   successMessage = "";
+
+  // Purely decorative — cycles the highlighted word in the hero headline.
+  readonly heroWords = ["Control", "Clarity", "Oversight", "Efficiency"];
+  heroWordIndex = 0;
+  private heroWordTimer?: ReturnType<typeof setInterval>;
+
+  showPassword = false;
   loginForm = this.fb.group({
     usernameOrEmail: ["", Validators.required],
 
@@ -79,6 +86,10 @@ export class LoginComponent implements OnInit {
   }, { validators: passwordsMatchValidator });
 
   ngOnInit(): void {
+    this.heroWordTimer = setInterval(() => {
+      this.heroWordIndex = (this.heroWordIndex + 1) % this.heroWords.length;
+    }, 2200);
+
     if (this.route.snapshot.queryParamMap.get("organizationCreated") === "1") {
       this.successMessage =
         "Organization created successfully. Please sign in to continue.";
@@ -124,6 +135,14 @@ export class LoginComponent implements OnInit {
           this.showTenantList = this.tenants.length > 0;
         },
       });
+  }
+
+  ngOnDestroy(): void {
+    if (this.heroWordTimer) clearInterval(this.heroWordTimer);
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   switchMode(mode: "login" | "register"): void {
