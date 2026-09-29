@@ -1,77 +1,96 @@
 <div class="app-shell">
-  <aside class="sidebar" aria-label="Main navigation">
-    <div class="brand">
-      <div class="brand-mark" aria-hidden="true">SP3</div>
+  <header class="nav-card">
+    <div class="nav-card__left">
+      <a routerLink="/dashboard" class="brand" aria-label="SP3 Digital Organization Admin">
+        <div class="brand-mark" aria-hidden="true">SP3</div>
 
-      <div class="brand-copy">
-        <strong>SP3 Digital</strong>
-        <small>Organization Admin</small>
-      </div>
-    </div>
-
-    <nav class="navigation">
-      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <span class="nav-icon" aria-hidden="true">▦</span>
-        <span>Dashboard</span>
+        <div class="brand-copy">
+          <strong>SP3 Digital</strong>
+          <small>Organization Admin</small>
+        </div>
       </a>
-      <a routerLink="/onboarding" routerLinkActive="active">
-        <span class="nav-icon" aria-hidden="true">✦</span>
-        <span>Get Started</span>
-      </a>
-      <div class="nav-label">ORGANIZATION</div>
-      <a routerLink="/users" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">♙</span><span>Users</span></a>
-      <a routerLink="/organizations" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◉</span><span>Organizations</span></a>
-      <a routerLink="/facilities" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◈</span><span>Facilities</span></a>
-      <a routerLink="/departments" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◆</span><span>Departments</span></a>
-      <a routerLink="/service-categories" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◇</span><span>Service Categories</span></a>
-      <a routerLink="/services" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◇</span><span>Services</span></a>
-      <a routerLink="/facility-services" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">◇</span><span>Facility Services</span></a>
-      <div class="nav-label">SCHEDULES</div>
-      <a routerLink="/appointment-slot-configs" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▤</span><span>Slots</span></a>
-      <a routerLink="/facility-closures" routerLinkActive="active"><span class="nav-icon" aria-hidden="true">▧</span><span>Holidays / Weekly Offs</span></a>
-    </nav>
 
-    <div class="sidebar-foot">
-      <span>Tenant</span>
-      <strong>{{ auth.tenantName() || 'JWT tenant claim' }}</strong>
-    </div>
-  </aside>
+      <nav class="nav-groups" aria-label="Main navigation">
+        <div class="nav-group">
+          <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <span class="nav-icon" aria-hidden="true">▦</span>
+            <span>Dashboard</span>
+          </a>
+          <a routerLink="/onboarding" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">✦</span>
+            <span>Get Started</span>
+          </a>
+        </div>
 
-  <main class="main">
-    <header class="topbar">
-      <div class="page-heading">
-        <span class="eyebrow">ORGANIZATION PLATFORM</span>
-        <h1>Administration Console</h1>
-      </div>
+        <div class="nav-group">
+          <a routerLink="/users" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">♙</span>
+            <span>Users</span>
+          </a>
+          <a routerLink="/organizations" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">◉</span>
+            <span>Organizations</span>
+          </a>
+        </div>
 
-      <div class="top-actions">
-        <span class="connection-status">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span>Connected</span>
-        </span>
+        <div class="nav-group">
+          <a routerLink="/facilities" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">◈</span>
+            <span>Facilities</span>
+          </a>
+          <a routerLink="/departments" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">◆</span>
+            <span>Departments</span>
+          </a>
+        </div>
 
-        <div class="user-profile">
-          <div class="user-profile__avatar" aria-hidden="true">{{ initials }}</div>
-          <div class="user-profile__details">
-            <span class="user-profile__name">{{ displayName }}</span>
-          </div>
-          <button
-            type="button"
-            class="user-profile__logout"
-            title="Sign out"
-            aria-label="Sign out"
-            (click)="auth.clear()"
-          >
-            <span aria-hidden="true">⋮</span>
+        <div class="nav-group">
+          <a routerLink="/service-categories" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">◇</span>
+            <span>Service Categories</span>
+          </a>
+          <a routerLink="/services" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">◇</span>
+            <span>Services</span>
+          </a>
+          <a routerLink="/facility-services" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">◇</span>
+            <span>Facility Services</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <a routerLink="/appointment-slot-configs" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">▤</span>
+            <span>Slots</span>
+          </a>
+          <a routerLink="/facility-closures" routerLinkActive="active">
+            <span class="nav-icon" aria-hidden="true">▧</span>
+            <span>Holidays / Offs</span>
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <button type="button" class="nav-logout" title="Sign out" aria-label="Sign out" (click)="auth.clear()">
+            <span class="nav-icon" aria-hidden="true">⏻</span>
+            <span>Logout</span>
           </button>
         </div>
-      </div>
-    </header>
+      </nav>
+    </div>
 
-    @if (ui.toast()) {
-      <div class="toast" role="status" aria-live="polite">{{ ui.toast() }}</div>
-    }
+    <div class="user-profile">
+      <div class="user-profile__avatar" aria-hidden="true">{{ initials }}</div>
+      <span class="user-profile__name">{{ displayName }}</span>
+      <span class="user-profile__tenant">{{ auth.tenantName() || 'JWT tenant claim' }}</span>
+    </div>
+  </header>
 
+  @if (ui.toast()) {
+    <div class="toast" role="status" aria-live="polite">{{ ui.toast() }}</div>
+  }
+
+  <main class="main">
     <section class="content">
       <router-outlet />
     </section>
