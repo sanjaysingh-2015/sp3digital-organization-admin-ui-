@@ -10,72 +10,48 @@
         </div>
       </a>
 
-      <nav class="nav-groups" aria-label="Main navigation">
-        <div class="nav-group">
-          <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-            <span class="nav-icon" aria-hidden="true">▦</span>
-            <span>Dashboard</span>
+      <nav class="nav-groups" aria-label="Main navigation" (click)="$event.stopPropagation()">
+        @for (link of topLinks; track link.route) {
+          <a class="nav-link" [routerLink]="link.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <span class="nav-icon" aria-hidden="true">{{ link.icon }}</span>
+            <span>{{ link.label }}</span>
           </a>
-          <a routerLink="/onboarding" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">✦</span>
-            <span>Get Started</span>
-          </a>
-        </div>
+        }
 
-        <div class="nav-group">
-          <a routerLink="/users" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">♙</span>
-            <span>Users</span>
-          </a>
-          <a routerLink="/organizations" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">◉</span>
-            <span>Organizations</span>
-          </a>
-        </div>
+        @for (group of groups; track group.label) {
+          <div class="nav-dropdown" [class.open]="openGroup() === group.label">
+            <button
+              type="button"
+              class="nav-link nav-link--group"
+              [class.active]="isGroupActive(group)"
+              [attr.aria-expanded]="openGroup() === group.label"
+              aria-haspopup="menu"
+              (click)="toggleGroup(group.label, $event)"
+              (keydown)="onGroupKeydown(group.label, $event)"
+            >
+              <span class="nav-icon" aria-hidden="true">{{ group.icon }}</span>
+              <span>{{ group.label }}</span>
+              <span class="nav-caret" aria-hidden="true">▾</span>
+            </button>
 
-        <div class="nav-group">
-          <a routerLink="/facilities" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">◈</span>
-            <span>Facilities</span>
-          </a>
-          <a routerLink="/departments" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">◆</span>
-            <span>Departments</span>
-          </a>
-        </div>
-
-        <div class="nav-group">
-          <a routerLink="/service-categories" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">◇</span>
-            <span>Service Categories</span>
-          </a>
-          <a routerLink="/services" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">◇</span>
-            <span>Services</span>
-          </a>
-          <a routerLink="/facility-services" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">◇</span>
-            <span>Facility Services</span>
-          </a>
-        </div>
-
-        <div class="nav-group">
-          <a routerLink="/appointment-slot-configs" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">▤</span>
-            <span>Slots</span>
-          </a>
-          <a routerLink="/facility-closures" routerLinkActive="active">
-            <span class="nav-icon" aria-hidden="true">▧</span>
-            <span>Holidays / Offs</span>
-          </a>
-        </div>
-
-        <div class="nav-group">
-          <button type="button" class="nav-logout" title="Sign out" aria-label="Sign out" (click)="auth.clear()">
-            <span class="nav-icon" aria-hidden="true">⏻</span>
-            <span>Logout</span>
-          </button>
-        </div>
+            @if (openGroup() === group.label) {
+              <div class="nav-menu" role="menu">
+                @for (link of group.links; track link.route) {
+                  <a
+                    role="menuitem"
+                    [routerLink]="link.route"
+                    routerLinkActive="active"
+                    class="nav-menu__item"
+                    (click)="closeGroup()"
+                  >
+                    <span class="nav-icon" aria-hidden="true">{{ link.icon }}</span>
+                    <span>{{ link.label }}</span>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
       </nav>
     </div>
 
@@ -83,6 +59,9 @@
       <div class="user-profile__avatar" aria-hidden="true">{{ initials }}</div>
       <span class="user-profile__name">{{ displayName }}</span>
       <span class="user-profile__tenant">{{ auth.tenantName() || 'JWT tenant claim' }}</span>
+      <button type="button" class="user-profile__logout" title="Sign out" aria-label="Sign out" (click)="auth.clear()">
+        <span aria-hidden="true">⏻</span>
+      </button>
     </div>
   </header>
 
