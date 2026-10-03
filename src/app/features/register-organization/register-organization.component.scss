@@ -70,11 +70,11 @@
 }
 
 .stepper-step.active {
-  color: #2563eb;
+  color: var(--accent);
 
   .stepper-index {
-    border-color: #2563eb;
-    background: #2563eb;
+    border-color: var(--accent);
+    background: var(--accent);
     color: #fff;
   }
 }
@@ -150,7 +150,7 @@
 
     &:focus {
       outline: none;
-      border-color: #2563eb;
+      border-color: var(--accent);
     }
   }
 }
@@ -206,7 +206,7 @@ button {
 }
 
 button.primary {
-  background: #2563eb;
+  background: var(--accent);
   color: white;
 }
 
@@ -222,7 +222,7 @@ button.secondary {
   color: #667085;
 
   a {
-    color: #2563eb;
+    color: var(--accent);
     font-weight: 600;
     text-decoration: none;
 

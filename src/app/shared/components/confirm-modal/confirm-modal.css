@@ -118,7 +118,7 @@
 }
 
 .close-button:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--accent);
 
   outline-offset: 2px;
 }
@@ -201,7 +201,7 @@
 }
 
 .modal-footer button:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--accent);
 
   outline-offset: 2px;
 }
@@ -231,23 +231,19 @@
 ========================================================= */
 
 .modal-footer .primary {
-  background: #2563eb;
+  background: var(--accent-gradient);
 
   color: #ffffff;
 
-  border: 1px solid #2563eb;
+  border: 1px solid transparent;
 }
 
 .modal-footer .primary:hover {
-  background: #1d4ed8;
-
-  border-color: #1d4ed8;
+  filter: brightness(1.08);
 }
 
 .modal-footer .primary:active {
-  background: #1e40af;
-
-  border-color: #1e40af;
+  filter: brightness(0.94);
 }
 
 /* =========================================================

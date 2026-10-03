@@ -26,7 +26,7 @@
 
 <section class="stats" aria-label="Organization statistics">
   @for (stat of stats; track stat.route) {
-    <article class="stat-card">
+    <article class="stat-card" [class]="'stat-card--' + stat.color">
       <div class="stat-card__icon" aria-hidden="true">
         {{ stat.icon }}
       </div>
@@ -40,6 +40,113 @@
       </div>
     </article>
   }
+</section>
+
+<section class="overview-grid" aria-label="Operational overview">
+  <!-- Team -->
+  <article class="overview-panel">
+    <header>
+      <h2>Team</h2>
+      <a routerLink="/users">View all →</a>
+    </header>
+
+    @if (teamLoading) {
+      <p class="overview-empty">Loading…</p>
+    } @else if (team.length === 0) {
+      <p class="overview-empty">No users yet.</p>
+    } @else {
+      <ul class="team-list">
+        @for (member of team; track member.id; let i = $index) {
+          <li>
+            <span class="team-avatar" [style.background]="avatarColor(i)">{{ initialsFor(member.name) }}</span>
+            <span class="team-info">
+              <strong>{{ member.name }}</strong>
+              <small>{{ member.secondary }}</small>
+            </span>
+            <span class="pill pill--neutral">{{ member.userType }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
+
+  <!-- Schedule (Slot Configuration) -->
+  <article class="overview-panel">
+    <header>
+      <h2>Schedule</h2>
+      <a routerLink="/appointment-slot-configs">View all →</a>
+    </header>
+
+    @if (scheduleLoading) {
+      <p class="overview-empty">Loading…</p>
+    } @else if (schedule.length === 0) {
+      <p class="overview-empty">No active schedules yet.</p>
+    } @else {
+      <ul class="simple-list">
+        @for (item of schedule; track item.id) {
+          <li>
+            <span class="simple-list__main">
+              <strong>{{ item.serviceName }}</strong>
+              <small>{{ item.recurrenceLabel }} · {{ item.timeRange }} · cap {{ item.capacity }}</small>
+            </span>
+            <span class="pill pill--good">{{ item.status }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
+
+  <!-- Weekly offs & holidays (Facility Closures) -->
+  <article class="overview-panel">
+    <header>
+      <h2>Weekly Offs &amp; Holidays</h2>
+      <a routerLink="/facility-closures">View all →</a>
+    </header>
+
+    @if (closuresLoading) {
+      <p class="overview-empty">Loading…</p>
+    } @else if (closures.length === 0) {
+      <p class="overview-empty">No upcoming closures.</p>
+    } @else {
+      <ul class="simple-list">
+        @for (item of closures; track item.id) {
+          <li>
+            <span class="simple-list__main">
+              <strong>{{ item.scope }}</strong>
+              <small>{{ item.dateLabel }} &middot; {{ item.reason }}</small>
+            </span>
+            <span class="pill pill--amber">{{ item.typeLabel }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
+
+  <!-- Services -->
+  <article class="overview-panel">
+    <header>
+      <h2>Services</h2>
+      <a routerLink="/services">View all →</a>
+    </header>
+
+    @if (servicesLoading) {
+      <p class="overview-empty">Loading…</p>
+    } @else if (services.length === 0) {
+      <p class="overview-empty">No services configured yet.</p>
+    } @else {
+      <ul class="simple-list">
+        @for (item of services; track item.id) {
+          <li>
+            <span class="simple-list__main">
+              <strong>{{ item.name }}</strong>
+              <small>{{ item.scope }}</small>
+            </span>
+            <span class="pill pill--neutral">{{ item.status }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
 </section>
 
 <section class="quick-links" aria-label="Organization management">

@@ -38,9 +38,18 @@
 
   --line: #e5e7eb;        /* gray-200 */
 
-  --accent: #2563eb;      /* blue-600 (primary) */
-  --accent2: #1d4ed8;     /* blue-700 (hover) */
-  --accent-soft: #eff6ff; /* blue-50 */
+  --accent: #4338ca;      /* indigo-700 (primary) */
+  --accent2: #312e81;     /* indigo-900 (hover) */
+  --accent-soft: #eef2ff; /* indigo-50 */
+  --brand-cyan: #7e22ce;  /* purple-700 — paired with --accent for the app's navy→purple gradient treatment */
+  --accent-gradient: linear-gradient(135deg, var(--accent), var(--brand-cyan));
+
+  /* Decorative palette for dashboard-style stat pills (counts, not status —
+     keep these separate from --good/--warn/--danger, which mean something). */
+  --stat-purple: #a21caf;
+  --stat-purple-bg: #fdf4ff;
+  --stat-blue: #0369a1;
+  --stat-blue-bg: #f0f9ff;
 
   --good: #15803d;
   --goodbg: #dcfce7;
@@ -287,8 +296,13 @@ small {
    BUTTONS
 ========================================================= */
 
-button.primary {
-  background: var(--accent);
+button.primary,
+a.primary {
+  background: var(--accent-gradient);
+
+  background-size: 160% 100%;
+
+  background-position: 0% 0%;
 
   border: 0;
 
@@ -305,12 +319,16 @@ button.primary {
   font-weight: 500;
 
   transition:
-    background 0.15s ease,
+    background-position 0.25s ease,
+    box-shadow 0.2s ease,
     opacity 0.15s ease;
 }
 
-button.primary:hover:not(:disabled) {
-  background: var(--accent2);
+button.primary:hover:not(:disabled),
+a.primary:hover {
+  background-position: 100% 0%;
+
+  box-shadow: 0 6px 16px rgba(49, 46, 129, 0.3);
 }
 
 button.primary:disabled {

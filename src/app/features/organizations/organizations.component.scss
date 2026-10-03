@@ -48,9 +48,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--primary-color, #2563eb);
+  border-color: var(--accent);
 
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.12);
 }
 
 /* =========================================================
@@ -76,9 +76,9 @@ button:disabled {
 }
 
 .primary {
-  border: 1px solid var(--primary-color, #2563eb);
+  border: 1px solid var(--accent);
 
-  background: var(--primary-color, #2563eb);
+  background: var(--accent);
 
   color: #ffffff;
 }
@@ -274,11 +274,11 @@ button:disabled {
 }
 
 :host ::ng-deep .ag-action-btn.view {
-  color: #2563eb;
+  color: var(--accent);
 }
 
 :host ::ng-deep .ag-action-btn.edit {
-  color: #2563eb;
+  color: var(--accent);
 }
 
 :host ::ng-deep .ag-action-btn.assign {
@@ -587,7 +587,7 @@ button:disabled {
 .raw-details summary {
   cursor: pointer;
 
-  color: #2563eb;
+  color: var(--accent);
 
   font-size: 13px;
 

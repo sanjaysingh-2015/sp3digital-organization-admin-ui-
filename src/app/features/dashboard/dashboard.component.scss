@@ -23,7 +23,7 @@
 .section-eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: #2563eb;
+  color: var(--accent);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -70,8 +70,8 @@
   align-items: center;
   gap: 14px;
   padding: 18px;
-  border: 1px solid #e4e7ec;
-  border-radius: 10px;
+  border: 1px solid transparent;
+  border-radius: 16px;
   background: #fff;
   box-sizing: border-box;
   overflow: hidden;
@@ -83,10 +83,7 @@
   height: 44px;
   flex: 0 0 44px;
   place-items: center;
-  border-radius: 10px;
-  background: #eff6ff;
-  color: #2563eb;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -102,9 +99,8 @@
 .stat-card__label {
   display: block;
   overflow: hidden;
-  color: #475467;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -112,10 +108,173 @@
 
 .stat-card__value {
   display: block;
-  color: #101828;
   font-size: 24px;
   font-weight: 700;
   line-height: 1;
+}
+
+// Decorative per-stat tinting — counts, not statuses (see dashboard.component.ts).
+// Icon + value carry the full accent color; the label is a softer tint of the
+// same hue so the big number stays the clearest thing on the card.
+.stat-card--purple {
+  background: var(--stat-purple-bg);
+  .stat-card__icon, .stat-card__value { color: var(--stat-purple); }
+  .stat-card__label { color: color-mix(in srgb, var(--stat-purple) 75%, #475467); }
+}
+
+.stat-card--blue {
+  background: var(--stat-blue-bg);
+  .stat-card__icon, .stat-card__value { color: var(--stat-blue); }
+  .stat-card__label { color: color-mix(in srgb, var(--stat-blue) 75%, #475467); }
+}
+
+.stat-card--green {
+  background: var(--goodbg);
+  .stat-card__icon, .stat-card__value { color: var(--good); }
+  .stat-card__label { color: color-mix(in srgb, var(--good) 75%, #475467); }
+}
+
+.stat-card--amber {
+  background: var(--warnbg);
+  .stat-card__icon, .stat-card__value { color: var(--warn); }
+  .stat-card__label { color: color-mix(in srgb, var(--warn) 75%, #475467); }
+}
+
+// =========================================================
+// OVERVIEW PANELS — Team / Schedule / Weekly Offs & Holidays / Services
+// =========================================================
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overview-panel {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    h2 {
+      margin: 0;
+      color: #101828;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    a {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.overview-empty {
+  margin: 8px 0;
+  color: #98a2b3;
+  font-size: 13px;
+}
+
+.team-list,
+.simple-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-top: 1px solid #f2f4f7;
+
+    &:first-child {
+      border-top: 0;
+    }
+  }
+}
+
+.team-avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.team-info,
+.simple-list__main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    overflow: hidden;
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.pill {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.pill--neutral {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.pill--good {
+  background: var(--goodbg);
+  color: var(--good);
+}
+
+.pill--amber {
+  background: var(--warnbg);
+  color: var(--warn);
 }
 
 .quick-links {
@@ -150,7 +309,7 @@
 }
 
 .quick-link:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -161,8 +320,8 @@
   flex: 0 0 40px;
   place-items: center;
   border-radius: 9px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: 16px;
 }
 

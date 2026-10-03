@@ -214,25 +214,23 @@
 ========================================================= */
 
 .type-information .notification-icon {
-  background: #dbeafe;
+  background: var(--accent-soft);
 
-  color: #2563eb;
+  color: var(--accent);
 }
 
 .type-information .notification-modal-header {
-  border-bottom-color: #bfdbfe;
+  border-bottom-color: #e0e7ff;
 }
 
 .type-information .notification-ok-button {
-  background: #2563eb;
+  background: var(--accent-gradient);
 
-  border-color: #2563eb;
+  border-color: transparent;
 }
 
 .type-information .notification-ok-button:hover {
-  background: #1d4ed8;
-
-  border-color: #1d4ed8;
+  filter: brightness(1.08);
 }
 
 
@@ -279,7 +277,7 @@
 }
 
 .notification-close-button:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--accent);
 
   outline-offset: 2px;
 }
@@ -469,7 +467,7 @@
 }
 
 .notification-ok-button:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--accent);
 
   outline-offset: 2px;
 }

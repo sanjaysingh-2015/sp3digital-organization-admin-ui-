@@ -5,7 +5,9 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 
 import { ApiService } from '../../core/api.service';
+import { AppointmentApiService } from '../../core/appointment-api.service';
 import { AuthService } from '../../core/auth.service';
+import { UserService } from '../../core/user.service';
 import { PageComponent } from '../../shared/page.component';
 
 interface CountResponse {
@@ -17,11 +19,55 @@ interface CountResponse {
   };
 }
 
+// Same values as facility-closures.component.ts's CLOSURE_TYPE_LABELS.
+const CLOSURE_TYPE_LABELS: Record<string, string> = {
+  HOLIDAY: 'Holiday',
+  WEEKLY_OFF: 'Weekly off',
+  EMERGENCY: 'Emergency closure',
+  MAINTENANCE: 'Maintenance',
+  OTHER: 'Other',
+};
+
 interface DashboardStat {
   label: string;
   value: number;
   icon: string;
   route: string;
+  // Purely decorative — these are counts, not statuses, so this is a
+  // rotating accent palette rather than --good/--warn/--danger.
+  color: "purple" | "blue" | "green" | "amber";
+}
+
+interface TeamMemberPreview {
+  id: number | string;
+  name: string;
+  secondary: string;
+  userType: string;
+  status: string;
+}
+
+interface SchedulePreview {
+  id: number | string;
+  serviceName: string;
+  recurrenceLabel: string;
+  timeRange: string;
+  capacity: number;
+  status: string;
+}
+
+interface ClosurePreview {
+  id: number | string;
+  scope: string;
+  typeLabel: string;
+  dateLabel: string;
+  reason: string;
+}
+
+interface ServicePreview {
+  id: number | string;
+  name: string;
+  scope: string;
+  status: string;
 }
 
 @Component({
@@ -40,34 +86,205 @@ export class DashboardComponent implements OnInit {
       value: 0,
       icon: '◉',
       route: '/organizations',
+      color: 'purple',
     },
     {
       label: 'Facilities',
       value: 0,
       icon: '◈',
       route: '/facilities',
+      color: 'blue',
     },
     {
       label: 'Departments',
       value: 0,
       icon: '◆',
       route: '/departments',
+      color: 'green',
     },
     {
       label: 'Facility Services',
       value: 0,
       icon: '◇',
       route: '/facility-services',
+      color: 'amber',
     },
   ];
 
+  // Rotating decorative palette for team-member avatars — purely visual,
+  // same idea as the stat-card colors above (not a status signal).
+  private readonly avatarPalette = ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#6b7280', '#ef4444'];
+
+  team: TeamMemberPreview[] = [];
+  teamLoading = true;
+
+  schedule: SchedulePreview[] = [];
+  scheduleLoading = true;
+
+  closures: ClosurePreview[] = [];
+  closuresLoading = true;
+
+  services: ServicePreview[] = [];
+  servicesLoading = true;
+
   constructor(
     private readonly api: ApiService,
+    private readonly appointmentApi: AppointmentApiService,
+    private readonly userApi: UserService,
     public readonly auth: AuthService,
   ) {}
 
   ngOnInit(): void {
     this.loadDashboardStats();
+    this.loadTeam();
+    this.loadFacilityServicesAndSchedule();
+    this.loadFacilitiesAndClosures();
+  }
+
+  avatarColor(index: number): string {
+    return this.avatarPalette[index % this.avatarPalette.length];
+  }
+
+  initialsFor(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  private loadTeam(): void {
+    this.teamLoading = true;
+    this.userApi
+      .getUsers({ page: 1, limit: 5, search: '', status: '' })
+      .pipe(
+        map((response: any) => {
+          const rows = this.extractUserRows(response);
+          return rows.map((user: any): TeamMemberPreview => {
+            const name =
+              user.displayName ||
+              `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+              user.username ||
+              'Unknown user';
+            return {
+              id: user.userId ?? user.userUuid ?? name,
+              name,
+              secondary: user.username || user.email || '',
+              userType: user.userType || '—',
+              status: user.status || '—',
+            };
+          });
+        }),
+        catchError(() => of([])),
+        finalize(() => (this.teamLoading = false)),
+      )
+      .subscribe((team) => (this.team = team));
+  }
+
+  private loadFacilityServicesAndSchedule(): void {
+    this.servicesLoading = true;
+    this.scheduleLoading = true;
+
+    this.api
+      .get<any>('/facility-services/list')
+      .pipe(catchError(() => of({ data: [] })))
+      .subscribe((response) => {
+        const facilityServices = response?.data || [];
+        const nameById = new Map<number, string>(
+          facilityServices.map((fs: any) => [fs.facilityServiceId, fs.serviceName]),
+        );
+
+        this.services = facilityServices.slice(0, 5).map((fs: any): ServicePreview => ({
+          id: fs.facilityServiceId,
+          name: fs.serviceName || `Facility service #${fs.facilityServiceId}`,
+          scope: fs.facilityName || fs.categoryName || '—',
+          status: fs.status || '—',
+        }));
+        this.servicesLoading = false;
+
+        this.appointmentApi
+          .get<any>('/slot-configs', { page: 1, limit: 5, status: 'ACTIVE' })
+          .pipe(
+            map((response: any) => {
+              const rows = response?.data || [];
+              return rows.map((row: any): SchedulePreview => ({
+                id: row.slotConfigId,
+                serviceName: nameById.get(row.facilityServiceId) || `Facility service #${row.facilityServiceId}`,
+                recurrenceLabel: this.recurrenceLabel(row),
+                timeRange: `${row.startTime?.slice(0, 5) || ''}–${row.endTime?.slice(0, 5) || ''}`,
+                capacity: row.capacityPerSlot,
+                status: row.status || '—',
+              }));
+            }),
+            catchError(() => of([])),
+            finalize(() => (this.scheduleLoading = false)),
+          )
+          .subscribe((schedule) => (this.schedule = schedule));
+      });
+  }
+
+  private loadFacilitiesAndClosures(): void {
+    this.closuresLoading = true;
+
+    this.api
+      .get<any>('/facilities/list')
+      .pipe(catchError(() => of({ data: [] })))
+      .subscribe((response) => {
+        const facilities = response?.data || [];
+        const nameById = new Map<number, string>(
+          facilities.map((f: any) => [f.facilityId, f.facilityName]),
+        );
+
+        this.appointmentApi
+          .get<any>('/facility-closures', { page: 1, limit: 5, status: 'ACTIVE' })
+          .pipe(
+            map((response: any) => {
+              const rows = response?.data || [];
+              return rows.map((row: any): ClosurePreview => ({
+                id: row.closureId,
+                scope: row.facilityId ? nameById.get(row.facilityId) || `Facility #${row.facilityId}` : 'All facilities',
+                typeLabel: CLOSURE_TYPE_LABELS[row.closureType] || row.closureType || '—',
+                dateLabel: row.closureDate
+                  ? row.closureDate
+                  : row.dayOfWeek
+                    ? this.dayLabel(row.dayOfWeek)
+                    : 'Recurring',
+                reason: row.reason || '—',
+              }));
+            }),
+            catchError(() => of([])),
+            finalize(() => (this.closuresLoading = false)),
+          )
+          .subscribe((closures) => (this.closures = closures));
+      });
+  }
+
+  private recurrenceLabel(row: any): string {
+    if (!row) return '—';
+    switch (row.recurrenceType) {
+      case 'DAILY':
+        return 'Daily';
+      case 'MONTHLY':
+        return row.dayOfMonth ? `Monthly · day ${row.dayOfMonth}` : 'Monthly';
+      case 'WEEKLY':
+      default:
+        return row.dayOfWeek ? `Weekly · ${this.dayLabel(row.dayOfWeek)}` : 'Weekly';
+    }
+  }
+
+  // Same extraction logic as users.component.ts — the list endpoint's
+  // envelope shape varies (data as array vs. data.items vs. top-level items/rows).
+  private extractUserRows(response: any): any[] {
+    if (!response) return [];
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data && 'items' in response.data) return response.data.items ?? [];
+    if (response.items) return response.items;
+    if (response.rows) return response.rows;
+    return [];
+  }
+
+  private dayLabel(dayOfWeek: number): string {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[dayOfWeek === 7 ? 0 : dayOfWeek] || '—';
   }
 
   get organizationCount(): number {
