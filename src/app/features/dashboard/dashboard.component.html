@@ -54,28 +54,6 @@
     <span class="quick-link__arrow" aria-hidden="true">→</span>
   </a>
 
-  <a routerLink="/facilities" class="quick-link tone--sky">
-    <span class="quick-link__icon" aria-hidden="true">◈</span>
-
-    <span class="quick-link__content">
-      <strong>Facilities</strong>
-      <small>CHC / PHC / hospitals / clinics</small>
-    </span>
-
-    <span class="quick-link__arrow" aria-hidden="true">→</span>
-  </a>
-
-  <a routerLink="/departments" class="quick-link tone--emerald">
-    <span class="quick-link__icon" aria-hidden="true">◆</span>
-
-    <span class="quick-link__content">
-      <strong>Departments</strong>
-      <small>OPD / IPD / Lab / Pharmacy</small>
-    </span>
-
-    <span class="quick-link__arrow" aria-hidden="true">→</span>
-  </a>
-
   <a routerLink="/facility-services" class="quick-link tone--amber">
     <span class="quick-link__icon" aria-hidden="true">◇</span>
 
@@ -89,6 +67,61 @@
 </section>
 
 <section class="overview-grid" aria-label="Operational overview">
+
+  <!-- Facility -->
+  <article class="overview-panel tone--indigo">
+    <header>
+      <h2>Facilities</h2>
+      <a routerLink="/facilities">View all →</a>
+    </header>
+
+    @if (facilityLoading) {
+      <p class="overview-empty">Loading…</p>
+    } @else if (facility.length === 0) {
+      <p class="overview-empty">No users yet.</p>
+    } @else {
+      <ul class="team-list">
+        @for (member of facility; track member.facilityId) {
+          <li>
+            <span class="team-avatar">{{ initialsFor(member.facilityName) }}</span>
+            <span class="team-info">
+              <strong>{{ member.facilityName }}</strong>
+              <small>{{ member.facilityType }} · {{ member.cityName }}</small>
+            </span>
+            <span class="pill pill--neutral">{{ member.status }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
+
+  <!-- Department -->
+  <article class="overview-panel tone--indigo">
+    <header>
+      <h2>Department</h2>
+      <a routerLink="/departments">View all →</a>
+    </header>
+
+    @if (departmentLoading) {
+      <p class="overview-empty">Loading…</p>
+    } @else if (department.length === 0) {
+      <p class="overview-empty">No department yet.</p>
+    } @else {
+      <ul class="team-list">
+        @for (member of department; track member.departmentId) {
+          <li>
+            <span class="team-avatar">{{ initialsFor(member.departmentName) }}</span>
+            <span class="team-info">
+              <strong>{{ member.departmentName }}</strong>
+              <small>{{ member.departmentType }} . {{ member.facilityName }} </small>
+            </span>
+            <span class="pill pill--neutral">{{ member.status }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
+
   <!-- Team -->
   <article class="overview-panel tone--indigo">
     <header>

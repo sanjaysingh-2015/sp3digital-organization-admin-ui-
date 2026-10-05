@@ -92,7 +92,7 @@ export class AuthService {
   private readonly key = "sp3_organization_token";
   private readonly idTokenKey = "sp3_organization_id_token";
   private readonly refreshTokenkey = "sp3_organization_refresh_token";
-
+  
   private readonly identityApiBaseUrl = environment.identityApiBaseUrl;
 
   readonly token = signal<string | null>(localStorage.getItem(this.key));

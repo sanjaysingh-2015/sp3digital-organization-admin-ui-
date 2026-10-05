@@ -46,6 +46,22 @@ interface TeamMemberPreview {
   status: string;
 }
 
+interface FacilityPreview {
+  facilityId: number | string;
+  facilityName: string;
+  facilityType: string;
+  cityName: string;
+  status: string;
+}
+
+interface DepartmentPreview {
+  departmentId: number | string;
+  departmentName: string;
+  departmentType: string;
+  facilityName: string;
+  status: string;
+}
+
 interface SchedulePreview {
   id: number | string;
   serviceName: string;
@@ -111,6 +127,12 @@ export class DashboardComponent implements OnInit {
     },
   ];
 
+  facility: FacilityPreview[] = [];
+  facilityLoading = true;
+
+  department: DepartmentPreview[] = [];
+  departmentLoading = true;
+
   team: TeamMemberPreview[] = [];
   teamLoading = true;
 
@@ -132,6 +154,8 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardStats();
+    this.loadFacilities();
+    this.loadDepartments();
     this.loadTeam();
     this.loadFacilityServicesAndSchedule();
     this.loadFacilitiesAndClosures();
@@ -142,6 +166,60 @@ export class DashboardComponent implements OnInit {
     if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  private loadFacilities(): void {
+    this.facilityLoading = true;
+    this.api
+      .get<any>("/facilities", {page: 1, limit: 5, search: '', status: '', 
+      })
+      .pipe(
+        map((response: any) => {
+          const rows = this.extractFacilityRows(response);
+          return rows.map((facility: any): FacilityPreview => {
+            const name =
+              facility.facilityName ||
+              'Unknown facility';
+            return {
+              facilityId: facility.facilityId ?? facility.userUuid ?? name,
+              facilityName: facility.facilityName,
+              facilityType: facility.facilityType || '',
+              cityName: facility.cityName + ", "+ facility.stateName || '—',
+              status: facility.status || '—',
+            };
+          });
+        }),
+        catchError(() => of([])),
+        finalize(() => (this.facilityLoading = false)),
+      )
+      .subscribe((facility) => (this.facility = facility));
+  }
+
+  private loadDepartments(): void {
+    this.departmentLoading = true;
+    this.api
+      .get<any>("/departments", {page: 1, limit: 5, search: '', status: '', 
+      })
+      .pipe(
+        map((response: any) => {
+          const rows = this.extractFacilityRows(response);
+          return rows.map((department: any): DepartmentPreview => {
+            const name =
+              department.departmentName ||
+              'Unknown department';
+            return {
+              departmentId: department.departmentId ?? department.departmentUuid ?? name,
+              departmentName: department.departmentName,
+              departmentType: department.departmentType || '',
+              facilityName: department.facilityName || '',
+              status: department.status || '—',
+            };
+          });
+        }),
+        catchError(() => of([])),
+        finalize(() => (this.departmentLoading = false)),
+      )
+      .subscribe((department) => (this.department = department));
   }
 
   private loadTeam(): void {
@@ -266,6 +344,17 @@ export class DashboardComponent implements OnInit {
   // Same extraction logic as users.component.ts — the list endpoint's
   // envelope shape varies (data as array vs. data.items vs. top-level items/rows).
   private extractUserRows(response: any): any[] {
+    if (!response) return [];
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data && 'items' in response.data) return response.data.items ?? [];
+    if (response.items) return response.items;
+    if (response.rows) return response.rows;
+    return [];
+  }
+
+  // Same extraction logic as users.component.ts — the list endpoint's
+  // envelope shape varies (data as array vs. data.items vs. top-level items/rows).
+  private extractFacilityRows(response: any): any[] {
     if (!response) return [];
     if (Array.isArray(response.data)) return response.data;
     if (response.data && 'items' in response.data) return response.data.items ?? [];
