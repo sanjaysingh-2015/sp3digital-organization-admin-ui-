@@ -42,9 +42,55 @@
   }
 </section>
 
+<section class="quick-links" aria-label="Organization management">
+  <a routerLink="/organizations" class="quick-link stat-card--purple">
+    <span class="quick-link__icon" aria-hidden="true">◉</span>
+
+    <span class="quick-link__content">
+      <strong>Organizations</strong>
+      <small>Manage health networks &amp; authorities</small>
+    </span>
+
+    <span class="quick-link__arrow" aria-hidden="true">→</span>
+  </a>
+
+  <a routerLink="/facilities" class="quick-link stat-card--blue">
+    <span class="quick-link__icon" aria-hidden="true">◈</span>
+
+    <span class="quick-link__content">
+      <strong>Facilities</strong>
+      <small>CHC / PHC / hospitals / clinics</small>
+    </span>
+
+    <span class="quick-link__arrow" aria-hidden="true">→</span>
+  </a>
+
+  <a routerLink="/departments" class="quick-link stat-card--green">
+    <span class="quick-link__icon" aria-hidden="true">◆</span>
+
+    <span class="quick-link__content">
+      <strong>Departments</strong>
+      <small>OPD / IPD / Lab / Pharmacy</small>
+    </span>
+
+    <span class="quick-link__arrow" aria-hidden="true">→</span>
+  </a>
+
+  <a routerLink="/facility-services" class="quick-link stat-card--amber">
+    <span class="quick-link__icon" aria-hidden="true">◇</span>
+
+    <span class="quick-link__content">
+      <strong>Facility Services</strong>
+      <small>Teleconsultation, Immunization, and more</small>
+    </span>
+
+    <span class="quick-link__arrow" aria-hidden="true">→</span>
+  </a>
+</section>
+
 <section class="overview-grid" aria-label="Operational overview">
   <!-- Team -->
-  <article class="overview-panel">
+  <article class="overview-panel stat-card--purple">
     <header>
       <h2>Team</h2>
       <a routerLink="/users">View all →</a>
@@ -71,7 +117,7 @@
   </article>
 
   <!-- Schedule (Slot Configuration) -->
-  <article class="overview-panel">
+  <article class="overview-panel stat-card--blue">
     <header>
       <h2>Schedule</h2>
       <a routerLink="/appointment-slot-configs">View all →</a>
@@ -97,7 +143,7 @@
   </article>
 
   <!-- Weekly offs & holidays (Facility Closures) -->
-  <article class="overview-panel">
+  <article class="overview-panel stat-card--green">
     <header>
       <h2>Weekly Offs &amp; Holidays</h2>
       <a routerLink="/facility-closures">View all →</a>
@@ -123,7 +169,7 @@
   </article>
 
   <!-- Services -->
-  <article class="overview-panel">
+  <article class="overview-panel stat-card--amber">
     <header>
       <h2>Services</h2>
       <a routerLink="/services">View all →</a>
@@ -147,50 +193,4 @@
       </ul>
     }
   </article>
-</section>
-
-<section class="quick-links" aria-label="Organization management">
-  <a routerLink="/organizations" class="quick-link">
-    <span class="quick-link__icon" aria-hidden="true">◉</span>
-
-    <span class="quick-link__content">
-      <strong>Organizations</strong>
-      <small>Manage health networks &amp; authorities</small>
-    </span>
-
-    <span class="quick-link__arrow" aria-hidden="true">→</span>
-  </a>
-
-  <a routerLink="/facilities" class="quick-link">
-    <span class="quick-link__icon" aria-hidden="true">◈</span>
-
-    <span class="quick-link__content">
-      <strong>Facilities</strong>
-      <small>CHC / PHC / hospitals / clinics</small>
-    </span>
-
-    <span class="quick-link__arrow" aria-hidden="true">→</span>
-  </a>
-
-  <a routerLink="/departments" class="quick-link">
-    <span class="quick-link__icon" aria-hidden="true">◆</span>
-
-    <span class="quick-link__content">
-      <strong>Departments</strong>
-      <small>OPD / IPD / Lab / Pharmacy</small>
-    </span>
-
-    <span class="quick-link__arrow" aria-hidden="true">→</span>
-  </a>
-
-  <a routerLink="/facility-services" class="quick-link">
-    <span class="quick-link__icon" aria-hidden="true">◇</span>
-
-    <span class="quick-link__content">
-      <strong>Facility Services</strong>
-      <small>Teleconsultation, Immunization, and more</small>
-    </span>
-
-    <span class="quick-link__arrow" aria-hidden="true">→</span>
-  </a>
 </section>
