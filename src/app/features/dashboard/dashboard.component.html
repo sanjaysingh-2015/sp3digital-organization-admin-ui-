@@ -26,7 +26,7 @@
 
 <section class="stats" aria-label="Organization statistics">
   @for (stat of stats; track stat.route) {
-    <article class="stat-card" [class]="'stat-card--' + stat.color">
+    <article class="stat-card" [class]="'tone--' + stat.color">
       <div class="stat-card__icon" aria-hidden="true">
         {{ stat.icon }}
       </div>
@@ -43,7 +43,7 @@
 </section>
 
 <section class="quick-links" aria-label="Organization management">
-  <a routerLink="/organizations" class="quick-link stat-card--purple">
+  <a routerLink="/organizations" class="quick-link tone--indigo">
     <span class="quick-link__icon" aria-hidden="true">◉</span>
 
     <span class="quick-link__content">
@@ -54,7 +54,7 @@
     <span class="quick-link__arrow" aria-hidden="true">→</span>
   </a>
 
-  <a routerLink="/facilities" class="quick-link stat-card--blue">
+  <a routerLink="/facilities" class="quick-link tone--sky">
     <span class="quick-link__icon" aria-hidden="true">◈</span>
 
     <span class="quick-link__content">
@@ -65,7 +65,7 @@
     <span class="quick-link__arrow" aria-hidden="true">→</span>
   </a>
 
-  <a routerLink="/departments" class="quick-link stat-card--green">
+  <a routerLink="/departments" class="quick-link tone--emerald">
     <span class="quick-link__icon" aria-hidden="true">◆</span>
 
     <span class="quick-link__content">
@@ -76,7 +76,7 @@
     <span class="quick-link__arrow" aria-hidden="true">→</span>
   </a>
 
-  <a routerLink="/facility-services" class="quick-link stat-card--amber">
+  <a routerLink="/facility-services" class="quick-link tone--amber">
     <span class="quick-link__icon" aria-hidden="true">◇</span>
 
     <span class="quick-link__content">
@@ -90,7 +90,7 @@
 
 <section class="overview-grid" aria-label="Operational overview">
   <!-- Team -->
-  <article class="overview-panel stat-card--purple">
+  <article class="overview-panel tone--indigo">
     <header>
       <h2>Team</h2>
       <a routerLink="/users">View all →</a>
@@ -102,9 +102,9 @@
       <p class="overview-empty">No users yet.</p>
     } @else {
       <ul class="team-list">
-        @for (member of team; track member.id; let i = $index) {
+        @for (member of team; track member.id) {
           <li>
-            <span class="team-avatar" [style.background]="avatarColor(i)">{{ initialsFor(member.name) }}</span>
+            <span class="team-avatar">{{ initialsFor(member.name) }}</span>
             <span class="team-info">
               <strong>{{ member.name }}</strong>
               <small>{{ member.secondary }}</small>
@@ -117,7 +117,7 @@
   </article>
 
   <!-- Schedule (Slot Configuration) -->
-  <article class="overview-panel stat-card--blue">
+  <article class="overview-panel tone--sky">
     <header>
       <h2>Schedule</h2>
       <a routerLink="/appointment-slot-configs">View all →</a>
@@ -143,7 +143,7 @@
   </article>
 
   <!-- Weekly offs & holidays (Facility Closures) -->
-  <article class="overview-panel stat-card--green">
+  <article class="overview-panel tone--emerald">
     <header>
       <h2>Weekly Offs &amp; Holidays</h2>
       <a routerLink="/facility-closures">View all →</a>
@@ -161,7 +161,7 @@
               <strong>{{ item.scope }}</strong>
               <small>{{ item.dateLabel }} &middot; {{ item.reason }}</small>
             </span>
-            <span class="pill pill--amber">{{ item.typeLabel }}</span>
+            <span class="pill pill--tone">{{ item.typeLabel }}</span>
           </li>
         }
       </ul>
@@ -169,7 +169,7 @@
   </article>
 
   <!-- Services -->
-  <article class="overview-panel stat-card--amber">
+  <article class="overview-panel tone--amber">
     <header>
       <h2>Services</h2>
       <a routerLink="/services">View all →</a>

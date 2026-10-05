@@ -35,7 +35,7 @@ interface DashboardStat {
   route: string;
   // Purely decorative — these are counts, not statuses, so this is a
   // rotating accent palette rather than --good/--warn/--danger.
-  color: "purple" | "blue" | "green" | "amber";
+  color: "indigo" | "sky" | "emerald" | "amber";
 }
 
 interface TeamMemberPreview {
@@ -86,21 +86,21 @@ export class DashboardComponent implements OnInit {
       value: 0,
       icon: '◉',
       route: '/organizations',
-      color: 'purple',
+      color: 'indigo',
     },
     {
       label: 'Facilities',
       value: 0,
       icon: '◈',
       route: '/facilities',
-      color: 'blue',
+      color: 'sky',
     },
     {
       label: 'Departments',
       value: 0,
       icon: '◆',
       route: '/departments',
-      color: 'green',
+      color: 'emerald',
     },
     {
       label: 'Facility Services',
@@ -110,10 +110,6 @@ export class DashboardComponent implements OnInit {
       color: 'amber',
     },
   ];
-
-  // Rotating decorative palette for team-member avatars — purely visual,
-  // same idea as the stat-card colors above (not a status signal).
-  private readonly avatarPalette = ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#6b7280', '#ef4444'];
 
   team: TeamMemberPreview[] = [];
   teamLoading = true;
@@ -139,10 +135,6 @@ export class DashboardComponent implements OnInit {
     this.loadTeam();
     this.loadFacilityServicesAndSchedule();
     this.loadFacilitiesAndClosures();
-  }
-
-  avatarColor(index: number): string {
-    return this.avatarPalette[index % this.avatarPalette.length];
   }
 
   initialsFor(name: string): string {

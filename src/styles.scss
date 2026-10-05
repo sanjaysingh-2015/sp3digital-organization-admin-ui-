@@ -44,16 +44,18 @@
   --brand-cyan: #7e22ce;  /* purple-700 — paired with --accent for the app's navy→purple gradient treatment */
   --accent-gradient: linear-gradient(135deg, var(--accent), var(--brand-cyan));
 
-  /* Decorative palette for dashboard-style stat pills (counts, not status —
-     keep these separate from --good/--warn/--danger, which mean something). */
-  --stat-purple: #a21caf;
-  --stat-purple-bg: #fdf4ff;
-  --stat-purple-bg2: #fae8ff;
-  --stat-blue: #0369a1;
-  --stat-blue-bg: #f0f9ff;
-  --stat-blue-bg2: #e0f2fe;
-  --stat-green-bg2: #bbf7d0;
-  --stat-amber-bg2: #fef0c7;
+  /* Dashboard tone palette — four hues, each with a soft tint. A tone is
+     applied the same way everywhere (icon chip, accent bar, link color) so the
+     page stays colorful but balanced. Decorative only: keep separate from
+     --good/--warn/--danger, which carry meaning. */
+  --tone-indigo: #4f46e5;
+  --tone-indigo-soft: #eef2ff;
+  --tone-sky: #0284c7;
+  --tone-sky-soft: #e0f2fe;
+  --tone-emerald: #059669;
+  --tone-emerald-soft: #d1fae5;
+  --tone-amber: #d97706;
+  --tone-amber-soft: #fef3c7;
 
   --good: #15803d;
   --goodbg: #dcfce7;

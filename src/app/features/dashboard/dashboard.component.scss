@@ -57,6 +57,22 @@
   box-sizing: border-box;
 }
 
+// ---------------------------------------------------------
+// Tone system
+// Each tone sets two variables; every card reads them the same way.
+// Color intensity steps down the page: stat cards (accent bar + chip)
+// -> quick links (chip only) -> overview panels (dot + link only).
+// ---------------------------------------------------------
+$card-radius: 14px;
+$card-border: 1px solid var(--line);
+$card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+
+.tone--indigo { --tone: var(--tone-indigo); --tone-soft: var(--tone-indigo-soft); }
+.tone--sky     { --tone: var(--tone-sky);     --tone-soft: var(--tone-sky-soft); }
+.tone--emerald { --tone: var(--tone-emerald); --tone-soft: var(--tone-emerald-soft); }
+.tone--amber   { --tone: var(--tone-amber);   --tone-soft: var(--tone-amber-soft); }
+
+// Four equal columns -> two equal columns -> two equal columns.
 .stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -64,17 +80,28 @@
 }
 
 .stat-card {
+  position: relative;
   display: flex;
   min-width: 0;
   min-height: 96px;
   align-items: center;
   gap: 14px;
   padding: 18px;
-  border: 1px solid transparent;
-  border-radius: 16px;
+  border: $card-border;
+  border-radius: $card-radius;
   background: #fff;
+  box-shadow: $card-shadow;
   box-sizing: border-box;
   overflow: hidden;
+
+  // The one strong color moment on the card.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--tone);
+  }
 }
 
 .stat-card__icon {
@@ -83,8 +110,9 @@
   height: 44px;
   flex: 0 0 44px;
   place-items: center;
-  border-radius: 50%;
-  color: #fff !important;
+  border-radius: 12px;
+  background: var(--tone-soft);
+  color: var(--tone);
   font-size: 20px;
   line-height: 1;
 }
@@ -101,6 +129,7 @@
 .stat-card__label {
   display: block;
   overflow: hidden;
+  color: var(--muted);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.3;
@@ -110,53 +139,20 @@
 
 .stat-card__value {
   display: block;
+  color: var(--ink);
   font-size: 24px;
   font-weight: 700;
   line-height: 1;
 }
 
-// Decorative per-stat tinting — counts, not statuses (see dashboard.component.ts).
-// Icon + value carry the full accent color; the label is a softer tint of the
-// same hue so the big number stays the clearest thing on the card.
-.stat-card--purple {
-  background: linear-gradient(135deg, var(--stat-purple-bg), var(--stat-purple-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--stat-purple) 18%, transparent);
-  .stat-card__icon { background: var(--stat-purple); }
-  .stat-card__value { color: var(--stat-purple); }
-  .stat-card__label { color: color-mix(in srgb, var(--stat-purple) 75%, #475467); }
-}
-
-.stat-card--blue {
-  background: linear-gradient(135deg, var(--stat-blue-bg), var(--stat-blue-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--stat-blue) 18%, transparent);
-  .stat-card__icon { background: var(--stat-blue); }
-  .stat-card__value { color: var(--stat-blue); }
-  .stat-card__label { color: color-mix(in srgb, var(--stat-blue) 75%, #475467); }
-}
-
-.stat-card--green {
-  background: linear-gradient(135deg, var(--goodbg), var(--stat-green-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--good) 18%, transparent);
-  .stat-card__icon { background: var(--good); }
-  .stat-card__value { color: var(--good); }
-  .stat-card__label { color: color-mix(in srgb, var(--good) 75%, #475467); }
-}
-
-.stat-card--amber {
-  background: linear-gradient(135deg, var(--warnbg), var(--stat-amber-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--warn) 18%, transparent);
-  .stat-card__icon { background: var(--warn); }
-  .stat-card__value { color: var(--warn); }
-  .stat-card__label { color: color-mix(in srgb, var(--warn) 75%, #475467); }
-}
-
 // =========================================================
 // OVERVIEW PANELS — Team / Schedule / Weekly Offs & Holidays / Services
+// Same four tones, same order as the stat row above.
 // =========================================================
 
 .overview-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin: 24px 0;
 
@@ -167,8 +163,11 @@
 
 .overview-panel {
   padding: 18px;
-  border: 1px solid #e4e7ec;
-  border-radius: 14px;
+  border: $card-border;
+  border-radius: $card-radius;
+  background: #fff;
+  box-shadow: $card-shadow;
+  box-sizing: border-box;
 
   header {
     display: flex;
@@ -177,14 +176,25 @@
     margin-bottom: 12px;
 
     h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin: 0;
-      color: #101828;
+      color: var(--ink);
       font-size: 15px;
       font-weight: 700;
+
+      &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--tone);
+      }
     }
 
     a {
-      color: var(--accent);
+      color: var(--tone);
       font-size: 12px;
       font-weight: 600;
       text-decoration: none;
@@ -196,27 +206,6 @@
   }
 }
 
-.overview-panel-service {
-  background: linear-gradient(135deg, var(--warnbg), var(--stat-amber-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--warn) 18%, transparent);
-}
-
-.overview-panel-team {
-  background: linear-gradient(135deg, var(--stat-purple-bg), var(--stat-purple-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--stat-purple) 18%, transparent);
-}
-
-.overview-panel-schedule {
-  background: linear-gradient(135deg, var(--stat-blue-bg), var(--stat-blue-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--stat-blue) 18%, transparent);
-}
-
-.overview-panel-department {
-  background: linear-gradient(135deg, var(--goodbg), var(--stat-green-bg2));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--good) 18%, transparent);
-}
-
-  
 .overview-empty {
   margin: 8px 0;
   color: #98a2b3;
@@ -251,7 +240,8 @@
   flex: 0 0 32px;
   place-items: center;
   border-radius: 50%;
-  color: #fff;
+  background: var(--tone-soft);
+  color: var(--tone);
   font-size: 12px;
   font-weight: 700;
 }
@@ -302,15 +292,15 @@
   color: var(--good);
 }
 
-.pill--amber {
-  background: var(--warnbg);
-  color: var(--warn);
+.pill--tone {
+  background: var(--tone-soft);
+  color: var(--tone);
 }
 
 .quick-links {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
+  gap: 16px;
   margin-top: 24px;
 }
 
@@ -321,7 +311,10 @@
   gap: 14px;
   min-height: 76px;
   padding: 14px 16px;
-  border-radius: 10px;
+  border: $card-border;
+  border-radius: $card-radius;
+  background: #fff;
+  box-shadow: $card-shadow;
   color: inherit;
   text-decoration: none;
   box-sizing: border-box;
@@ -333,13 +326,13 @@
 }
 
 .quick-link:hover {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+  border-color: var(--tone);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
   transform: translateY(-1px);
 }
 
 .quick-link:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--tone);
   outline-offset: 2px;
 }
 
@@ -349,9 +342,9 @@
   height: 40px;
   flex: 0 0 40px;
   place-items: center;
-  border-radius: 9px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  border-radius: 12px;
+  background: var(--tone-soft);
+  color: var(--tone);
   font-size: 16px;
 }
 
@@ -365,7 +358,7 @@
 
 .quick-link__content strong {
   overflow: hidden;
-  color: #101828;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.35;
