@@ -83,6 +83,8 @@
   height: 44px;
   flex: 0 0 44px;
   place-items: center;
+  border-radius: 50%;
+  color: #fff !important;
   font-size: 20px;
   line-height: 1;
 }
@@ -117,26 +119,34 @@
 // Icon + value carry the full accent color; the label is a softer tint of the
 // same hue so the big number stays the clearest thing on the card.
 .stat-card--purple {
-  background: var(--stat-purple-bg);
-  .stat-card__icon, .stat-card__value { color: var(--stat-purple); }
+  background: linear-gradient(135deg, var(--stat-purple-bg), var(--stat-purple-bg2));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--stat-purple) 18%, transparent);
+  .stat-card__icon { background: var(--stat-purple); }
+  .stat-card__value { color: var(--stat-purple); }
   .stat-card__label { color: color-mix(in srgb, var(--stat-purple) 75%, #475467); }
 }
 
 .stat-card--blue {
-  background: var(--stat-blue-bg);
-  .stat-card__icon, .stat-card__value { color: var(--stat-blue); }
+  background: linear-gradient(135deg, var(--stat-blue-bg), var(--stat-blue-bg2));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--stat-blue) 18%, transparent);
+  .stat-card__icon { background: var(--stat-blue); }
+  .stat-card__value { color: var(--stat-blue); }
   .stat-card__label { color: color-mix(in srgb, var(--stat-blue) 75%, #475467); }
 }
 
 .stat-card--green {
-  background: var(--goodbg);
-  .stat-card__icon, .stat-card__value { color: var(--good); }
+  background: linear-gradient(135deg, var(--goodbg), var(--stat-green-bg2));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--good) 18%, transparent);
+  .stat-card__icon { background: var(--good); }
+  .stat-card__value { color: var(--good); }
   .stat-card__label { color: color-mix(in srgb, var(--good) 75%, #475467); }
 }
 
 .stat-card--amber {
-  background: var(--warnbg);
-  .stat-card__icon, .stat-card__value { color: var(--warn); }
+  background: linear-gradient(135deg, var(--warnbg), var(--stat-amber-bg2));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--warn) 18%, transparent);
+  .stat-card__icon { background: var(--warn); }
+  .stat-card__value { color: var(--warn); }
   .stat-card__label { color: color-mix(in srgb, var(--warn) 75%, #475467); }
 }
 
