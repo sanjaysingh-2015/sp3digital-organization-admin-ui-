@@ -1,0 +1,102 @@
+:host {
+  display: block;
+  --tone: var(--tone-amber);
+  --tone-soft: var(--tone-amber-soft);
+}
+
+.head-actions { display: flex; gap: 10px; }
+.loading, .empty { color: var(--muted); font-size: 14px; }
+.empty { margin: 6px 0; }
+
+.card {
+  position: relative;
+  margin: 0 0 16px;
+  padding: 22px 20px 18px;
+  overflow: hidden;
+
+  &::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--tone); }
+  h3 { margin: 0 0 12px; color: var(--ink); font-size: 16px; }
+  h3.sub { margin-top: 22px; }
+  h4 { margin: 18px 0 6px; color: var(--ink); font-size: 14px; }
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;
+  h3 { margin: 0; } }
+
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 36px;
+  margin: 0 0 16px;
+  padding: 16px 20px;
+}
+.strip-item { display: flex; flex-direction: column; gap: 4px; min-width: 120px;
+  .label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  strong { color: var(--ink); font-size: 15px; }
+  small { color: var(--muted); font-size: 12px; max-width: 220px; }
+}
+.strip-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; align-self: center; }
+button.danger { color: var(--danger); }
+
+// ---- affiliations
+.aff-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.aff {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  &.paused { opacity: 0.75; }
+
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .aff-title { display: flex; flex-direction: column; flex: 1; min-width: 0;
+    strong { color: var(--ink); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    small { color: var(--muted); font-size: 12px; }
+  }
+  dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 0; }
+  dl div.wide { grid-column: 1 / -1; }
+  dt { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  dd { margin: 2px 0 0; color: #1f2937; font-size: 13px; }
+  footer { display: flex; gap: 16px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f2f4f7; }
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  &--physical { background: var(--tone-indigo-soft); color: var(--tone-indigo); }
+  &--remote { background: var(--tone-sky-soft); color: var(--tone-sky); }
+  &--other { background: var(--tone-emerald-soft); color: var(--tone-emerald); }
+  &--primary { background: var(--tone-amber-soft); color: var(--tone-amber); }
+}
+.ended { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; li { margin: 3px 0; } }
+button.link.danger { color: var(--danger); }
+
+// ---- profile blocks
+.two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0;
+  div.wide { grid-column: 1 / -1; }
+  dt { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  dd { margin: 2px 0 0; color: #1f2937; font-size: 14px; word-break: break-word; }
+}
+.bio { margin: 12px 0 0; color: #374151; font-size: 14px; line-height: 1.5; }
+.line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 0; border-top: 1px solid #f2f4f7;
+  &:first-of-type { border-top: 0; }
+  strong { color: #1f2937; font-size: 14px; }
+  small { color: var(--muted); font-size: 12px; }
+  a { color: var(--tone); text-decoration: none; &:hover { text-decoration: underline; } }
+}
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+@media (max-width: 900px) {
+  .aff-list, .two-col { grid-template-columns: 1fr; }
+  .strip-actions { margin-left: 0; }
+}
+@media (max-width: 700px) {
+  .kv, .aff dl { grid-template-columns: 1fr; }
+}

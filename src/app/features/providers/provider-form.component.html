@@ -1,0 +1,313 @@
+<app-page
+  eyebrow="PROVIDERS"
+  [title]="editMode ? 'Edit doctor' : 'Register doctor'"
+  [description]="editMode ? 'Update the doctor\'s profile. Where they practise is managed on their page.' : 'Capture the doctor\'s profile once, then place them in one or more organizations or facilities.'"
+>
+  <div actions class="head-actions">
+    <button type="button" class="secondary" [routerLink]="editMode ? ['/providers', providerId] : ['/providers']">Cancel</button>
+    <button type="button" class="primary" (click)="save()" [disabled]="saving || loading">
+      @if (saving) { Saving... } @else if (editMode) { Save changes } @else { Register doctor }
+    </button>
+  </div>
+</app-page>
+
+@if (loading) {
+  <p class="loading">Loading doctor…</p>
+} @else {
+
+<datalist id="registration-bodies">
+  @for (b of bodies; track b) { <option [value]="b"></option> }
+</datalist>
+
+<!-- 1. BASIC DETAILS -->
+<section class="panel card">
+  <h3><span class="step">1</span> Basic details</h3>
+  <div class="form-grid">
+    <label>
+      <span>Provider type <b>*</b></span>
+      <select [(ngModel)]="f.providerType">
+        @for (t of providerTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+      </select>
+    </label>
+    <label>
+      <span>System of medicine</span>
+      <select [(ngModel)]="f.systemOfMedicine">
+        <option value="">— none —</option>
+        @for (s of systems; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
+      </select>
+    </label>
+    <label>
+      <span>Title</span>
+      <input type="text" [(ngModel)]="f.title" placeholder="Dr." maxlength="20" />
+    </label>
+    <label>
+      <span>First name <b>*</b></span>
+      <input type="text" [(ngModel)]="f.firstName" maxlength="100" autocomplete="off" />
+    </label>
+    <label>
+      <span>Middle name</span>
+      <input type="text" [(ngModel)]="f.middleName" maxlength="100" autocomplete="off" />
+    </label>
+    <label>
+      <span>Last name</span>
+      <input type="text" [(ngModel)]="f.lastName" maxlength="100" autocomplete="off" />
+    </label>
+    <label>
+      <span>Gender</span>
+      <select [(ngModel)]="f.gender">
+        <option value="">— not specified —</option>
+        @for (g of genders; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+      </select>
+    </label>
+    <label>
+      <span>Date of birth</span>
+      <input type="date" [(ngModel)]="f.dateOfBirth" />
+    </label>
+    <label>
+      <span>Nationality</span>
+      <input type="text" [(ngModel)]="f.nationality" maxlength="60" />
+    </label>
+    <label>
+      <span>Photo URL</span>
+      <input type="url" [(ngModel)]="f.photoUrl" placeholder="https://…" maxlength="500" />
+    </label>
+    <label class="full-width">
+      <span>About (shown on the doctor's public profile)</span>
+      <textarea rows="3" [(ngModel)]="f.bio" maxlength="5000"></textarea>
+    </label>
+  </div>
+</section>
+
+<!-- 2. CONTACT & ADDRESS -->
+<section class="panel card">
+  <h3><span class="step">2</span> Contact &amp; address</h3>
+  <div class="form-grid">
+    <label>
+      <span>Email</span>
+      <input type="email" [(ngModel)]="f.email" maxlength="255" autocomplete="off" />
+    </label>
+    <div class="phone-row">
+      <label class="cc">
+        <span>Code</span>
+        <input type="text" [(ngModel)]="f.phoneCountryCode" maxlength="5" />
+      </label>
+      <label>
+        <span>Mobile number</span>
+        <input type="tel" [(ngModel)]="f.phoneNumber" maxlength="20" />
+      </label>
+    </div>
+    <label>
+      <span>Alternate number</span>
+      <input type="tel" [(ngModel)]="f.alternatePhoneNumber" maxlength="20" />
+    </label>
+    <span></span>
+    <label>
+      <span>Emergency contact name</span>
+      <input type="text" [(ngModel)]="f.emergencyContactName" maxlength="150" />
+    </label>
+    <label>
+      <span>Emergency contact number</span>
+      <input type="tel" [(ngModel)]="f.emergencyContactPhone" maxlength="20" />
+    </label>
+    <label class="full-width">
+      <span>Address line 1</span>
+      <input type="text" [(ngModel)]="f.addressLine1" maxlength="255" />
+    </label>
+    <label class="full-width">
+      <span>Address line 2</span>
+      <input type="text" [(ngModel)]="f.addressLine2" maxlength="255" />
+    </label>
+    <label><span>City / town</span><input type="text" [(ngModel)]="f.city" maxlength="100" /></label>
+    <label><span>Sub-district</span><input type="text" [(ngModel)]="f.subDistrictName" maxlength="100" /></label>
+    <label><span>District</span><input type="text" [(ngModel)]="f.districtName" maxlength="100" /></label>
+    <label><span>State</span><input type="text" [(ngModel)]="f.stateName" maxlength="100" /></label>
+    <label><span>Country</span><input type="text" [(ngModel)]="f.countryName" maxlength="100" /></label>
+    <label><span>Postal code</span><input type="text" [(ngModel)]="f.postalCode" maxlength="20" /></label>
+  </div>
+</section>
+
+<!-- 3. REGISTRATIONS -->
+<section class="panel card">
+  <h3><span class="step">3</span> Council registration @if (licensed) { <b class="req">required</b> }</h3>
+  <p class="hint">A registration number can belong to one doctor only. If it already exists you'll be told who has it, so you can add an affiliation to them instead.</p>
+  @for (r of f.registrations; track $index) {
+    <div class="repeat-row">
+      <div class="form-grid cols-3">
+        <label>
+          <span>Registration body</span>
+          <input type="text" list="registration-bodies" [(ngModel)]="r.registrationBody" maxlength="100" />
+        </label>
+        <label>
+          <span>Registration number</span>
+          <input type="text" [(ngModel)]="r.registrationNumber" maxlength="60" autocomplete="off" />
+        </label>
+        <label>
+          <span>Registered in (state)</span>
+          <input type="text" [(ngModel)]="r.registeredState" maxlength="100" />
+        </label>
+        <label><span>Issued on</span><input type="date" [(ngModel)]="r.issuedOn" /></label>
+        <label><span>Valid until</span><input type="date" [(ngModel)]="r.validUntil" /></label>
+        <label class="inline-check">
+          <input type="radio" name="primaryRegistration" [checked]="r.isPrimary" (change)="markPrimaryRegistration($index)" /> Primary registration
+        </label>
+      </div>
+      <button type="button" class="link remove" (click)="remove(f.registrations, $index)">Remove</button>
+    </div>
+  }
+  <button type="button" class="secondary add" (click)="addRegistration()">+ Add registration</button>
+</section>
+
+<!-- 4. PROFESSIONAL -->
+<section class="panel card">
+  <h3><span class="step">4</span> Professional profile</h3>
+  <div class="form-grid">
+    <label>
+      <span>Practising since</span>
+      <input type="date" [(ngModel)]="f.practiceStartDate" />
+    </label>
+    <label>
+      <span>HPR ID (ABDM)</span>
+      <input type="text" [(ngModel)]="f.hprId" maxlength="50" />
+    </label>
+    <label class="full-width">
+      <span>Languages the doctor consults in <em>(comma separated)</em></span>
+      <input type="text" [(ngModel)]="f.languagesText" placeholder="Hindi, English, Urdu" />
+    </label>
+    <label>
+      <span>ID proof type</span>
+      <input type="text" [(ngModel)]="f.idProofType" placeholder="e.g. AADHAAR, PAN, PASSPORT" maxlength="30" />
+    </label>
+    <label>
+      <span>ID proof — last 4 characters only</span>
+      <input type="text" [(ngModel)]="f.idProofLast4" maxlength="4" />
+    </label>
+    <label class="full-width">
+      <span>Professional memberships</span>
+      <textarea rows="2" [(ngModel)]="f.memberships" placeholder="e.g. Indian Medical Association, IAP" maxlength="2000"></textarea>
+    </label>
+    <label class="full-width">
+      <span>Awards &amp; recognitions</span>
+      <textarea rows="2" [(ngModel)]="f.awards" maxlength="2000"></textarea>
+    </label>
+  </div>
+
+  <h4>Specialties</h4>
+  @for (s of f.specialties; track $index) {
+    <div class="repeat-row compact">
+      <div class="form-grid">
+        <label><span>Specialty</span><input type="text" [(ngModel)]="s.specialtyName" placeholder="e.g. Paediatrics" maxlength="150" /></label>
+        <label>
+          <span>Level</span>
+          <select [(ngModel)]="s.specialtyLevel">
+            @for (l of specialtyLevels; track l.value) { <option [value]="l.value">{{ l.label }}</option> }
+          </select>
+        </label>
+      </div>
+      <button type="button" class="link remove" (click)="remove(f.specialties, $index)">Remove</button>
+    </div>
+  }
+  <button type="button" class="secondary add" (click)="addSpecialty()">+ Add specialty</button>
+</section>
+
+<!-- 5. QUALIFICATIONS -->
+<section class="panel card">
+  <h3><span class="step">5</span> Qualifications</h3>
+  @for (q of f.qualifications; track $index) {
+    <div class="repeat-row">
+      <div class="form-grid cols-3">
+        <label><span>Degree</span><input type="text" [(ngModel)]="q.degree" placeholder="MBBS, MD, MS, BDS…" maxlength="100" /></label>
+        <label><span>Specialization</span><input type="text" [(ngModel)]="q.specialization" maxlength="150" /></label>
+        <label><span>Year of completion</span><input type="number" [(ngModel)]="q.yearOfCompletion" min="1900" max="2100" /></label>
+        <label><span>Institution</span><input type="text" [(ngModel)]="q.institution" maxlength="200" /></label>
+        <label><span>University</span><input type="text" [(ngModel)]="q.university" maxlength="200" /></label>
+        <label><span>Country</span><input type="text" [(ngModel)]="q.country" maxlength="100" /></label>
+      </div>
+      <button type="button" class="link remove" (click)="remove(f.qualifications, $index)">Remove</button>
+    </div>
+  }
+  <button type="button" class="secondary add" (click)="addQualification()">+ Add qualification</button>
+</section>
+
+<!-- 6. EXPERIENCE -->
+<section class="panel card">
+  <h3><span class="step">6</span> Work experience</h3>
+  @for (e of f.experiences; track $index) {
+    <div class="repeat-row">
+      <div class="form-grid cols-3">
+        <label><span>Hospital / organization</span><input type="text" [(ngModel)]="e.organizationName" maxlength="200" /></label>
+        <label><span>Designation</span><input type="text" [(ngModel)]="e.designation" maxlength="100" /></label>
+        <label><span>Department</span><input type="text" [(ngModel)]="e.department" maxlength="100" /></label>
+        <label><span>Location</span><input type="text" [(ngModel)]="e.location" maxlength="150" /></label>
+        <label><span>From</span><input type="date" [(ngModel)]="e.fromDate" /></label>
+        <label><span>To</span><input type="date" [(ngModel)]="e.toDate" [disabled]="e.isCurrent" /></label>
+        <label class="inline-check"><input type="checkbox" [(ngModel)]="e.isCurrent" /> Currently working here</label>
+        <label class="span-2"><span>Notes</span><input type="text" [(ngModel)]="e.description" maxlength="500" /></label>
+      </div>
+      <button type="button" class="link remove" (click)="remove(f.experiences, $index)">Remove</button>
+    </div>
+  }
+  <button type="button" class="secondary add" (click)="addExperience()">+ Add experience</button>
+</section>
+
+<!-- 7. DOCUMENTS -->
+<section class="panel card">
+  <h3><span class="step">7</span> Documents</h3>
+  <p class="hint">Paste the link of each uploaded file (certificates, ID proof, photo, signature). The Tenant Admin checks them when verifying the doctor.</p>
+  @for (d of f.documents; track $index) {
+    <div class="repeat-row compact">
+      <div class="form-grid cols-3">
+        <label>
+          <span>Type</span>
+          <select [(ngModel)]="d.documentType">
+            @for (t of documentTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+          </select>
+        </label>
+        <label><span>Name</span><input type="text" [(ngModel)]="d.documentName" maxlength="150" /></label>
+        <label><span>Expires on</span><input type="date" [(ngModel)]="d.expiresOn" /></label>
+        <label class="span-3"><span>File link</span><input type="url" [(ngModel)]="d.fileUrl" placeholder="https://…" maxlength="500" /></label>
+      </div>
+      <button type="button" class="link remove" (click)="remove(f.documents, $index)">Remove</button>
+    </div>
+  }
+  <button type="button" class="secondary add" (click)="addDocument()">+ Add document</button>
+</section>
+
+<!-- 8. WHERE THE DOCTOR PRACTISES (create only) -->
+@if (!editMode) {
+  <section class="panel card">
+    <h3><span class="step">8</span> Where the doctor practises</h3>
+    <p class="hint">
+      Add every organization or facility this doctor works with. The same doctor can be <strong>physical</strong> at one facility,
+      <strong>remote</strong> for another organization, and <strong>on demand</strong> somewhere else. You can add more later from the doctor's page.
+    </p>
+    @for (a of affiliations; track $index) {
+      <div class="aff-card">
+        <div class="aff-head">
+          <strong>Affiliation {{ $index + 1 }}</strong>
+          <span>
+            <label class="inline-check"><input type="radio" name="primaryAffiliation" [checked]="a.isPrimary" (change)="markPrimaryAffiliation($index)" /> Primary</label>
+            <button type="button" class="link remove" (click)="remove(affiliations, $index)">Remove</button>
+          </span>
+        </div>
+        <app-affiliation-fields [model]="a"></app-affiliation-fields>
+      </div>
+    }
+    <button type="button" class="secondary add" (click)="addAffiliation()">+ Add another organization / facility</button>
+  </section>
+} @else {
+  <section class="panel card">
+    <h3>Where the doctor practises</h3>
+    <p class="hint">Organizations, facilities and availability are managed on the doctor's page.
+      <a [routerLink]="['/providers', providerId]">Open doctor</a></p>
+  </section>
+}
+
+<div class="bottom-bar">
+  <button type="button" class="secondary" [routerLink]="editMode ? ['/providers', providerId] : ['/providers']">Cancel</button>
+  <button type="button" class="primary" (click)="save()" [disabled]="saving">
+    @if (saving) { Saving... } @else if (editMode) { Save changes } @else { Register doctor }
+  </button>
+</div>
+}
+
+<app-notification-modal #notificationModal></app-notification-modal>

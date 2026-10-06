@@ -1,0 +1,164 @@
+<div class="aff">
+  <div class="type-picker" role="radiogroup" aria-label="Availability type">
+    @for (t of availabilityTypes; track t.value) {
+      <button
+        type="button"
+        class="type-option"
+        [class.selected]="model.availabilityType === t.value"
+        role="radio"
+        [attr.aria-checked]="model.availabilityType === t.value"
+        (click)="model.availabilityType = t.value; onTypeChange()"
+      >
+        <strong>{{ t.label }}</strong>
+        <small>{{ t.hint }}</small>
+      </button>
+    }
+  </div>
+
+  <div class="form-grid">
+    <label>
+      <span>Organization <b>*</b></span>
+      <select [(ngModel)]="model.organizationId" (ngModelChange)="onOrganizationChange()">
+        <option [ngValue]="null">— select —</option>
+        @for (org of organizations; track org.organizationId) {
+          <option [ngValue]="org.organizationId">{{ org.organizationName }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      <span>Facility @if (isPhysical) { <b>*</b> } @else { <em>(optional — leave empty for the whole organization)</em> }</span>
+      <select [(ngModel)]="model.facilityId" (ngModelChange)="onFacilityChange()" [disabled]="!model.organizationId">
+        <option [ngValue]="null">— {{ isPhysical ? 'select' : 'whole organization' }} —</option>
+        @for (f of facilities; track f.facilityId) {
+          <option [ngValue]="f.facilityId">{{ f.facilityName }}</option>
+        }
+      </select>
+    </label>
+
+    @if (model.facilityId) {
+      <label>
+        <span>Department</span>
+        <select [(ngModel)]="model.departmentId">
+          <option [ngValue]="null">— none —</option>
+          @for (d of departments; track d.departmentId) {
+            <option [ngValue]="d.departmentId">{{ d.departmentName }}</option>
+          }
+        </select>
+      </label>
+    }
+
+    @if (isOther) {
+      <label>
+        <span>Kind of availability <b>*</b></span>
+        <select [(ngModel)]="model.availabilitySubtype">
+          <option value="">— select —</option>
+          @for (s of subtypes; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
+        </select>
+      </label>
+    }
+
+    @if (isPhysical) {
+      <label>
+        <span>Room / chamber</span>
+        <input type="text" [(ngModel)]="model.roomOrChamber" placeholder="e.g. OPD Room 4" maxlength="100" />
+      </label>
+    }
+
+    <label>
+      <span>Designation</span>
+      <input type="text" [(ngModel)]="model.designation" placeholder="e.g. Senior Consultant" maxlength="100" />
+    </label>
+
+    <label>
+      <span>Employment type</span>
+      <select [(ngModel)]="model.employmentType">
+        <option value="">— none —</option>
+        @for (e of employmentTypes; track e.value) { <option [value]="e.value">{{ e.label }}</option> }
+      </select>
+    </label>
+
+    <label>
+      <span>Staff / employee code</span>
+      <input type="text" [(ngModel)]="model.employeeCode" maxlength="50" />
+    </label>
+
+    @if (isRemote) {
+      <div class="full-width channel-row">
+        <span class="field-label">Remote channels <b>*</b></span>
+        <div class="check-row">
+          @for (c of channels; track c.value) {
+            <label class="check">
+              <input type="checkbox" [checked]="model.remoteChannels.includes(c.value)" (change)="toggleChannel(c.value)" />
+              {{ c.label }}
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <label>
+      <span>Consultation fee</span>
+      <input type="number" min="0" step="0.01" [(ngModel)]="model.consultationFee" />
+    </label>
+    <label>
+      <span>Follow-up fee</span>
+      <input type="number" min="0" step="0.01" [(ngModel)]="model.followUpFee" />
+    </label>
+    <label>
+      <span>Follow-up valid for (days)</span>
+      <input type="number" min="0" max="365" [(ngModel)]="model.followUpValidDays" />
+    </label>
+    <label>
+      <span>Consultation length (minutes)</span>
+      <input type="number" min="1" max="480" [(ngModel)]="model.consultationDurationMinutes" />
+    </label>
+    <label>
+      <span>Currency</span>
+      <input type="text" [(ngModel)]="model.currency" maxlength="3" />
+    </label>
+
+    <label>
+      <span>Effective from</span>
+      <input type="date" [(ngModel)]="model.effectiveFrom" />
+    </label>
+    <label>
+      <span>Effective until</span>
+      <input type="date" [(ngModel)]="model.effectiveTo" />
+    </label>
+
+    @if (model.facilityId) {
+      <div class="full-width channel-row">
+        <span class="field-label">
+          Facility services delivered here
+          @if (loadingFacilityData) { <em>(loading…)</em> }
+        </span>
+        @if (facilityServices.length === 0 && !loadingFacilityData) {
+          <p class="muted">This facility has no services yet. Add them under Facility Services first.</p>
+        }
+        <div class="check-row">
+          @for (s of facilityServices; track s.facilityServiceId) {
+            <label class="check">
+              <input type="checkbox" [checked]="model.facilityServiceIds.includes(s.facilityServiceId)" (change)="toggleService(s.facilityServiceId)" />
+              {{ s.serviceName }}@if (s.departmentName) { <small> · {{ s.departmentName }}</small> }
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="full-width check-row">
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="model.acceptsNewPatients" /> Accepting new patients
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="model.isPrimary" /> Primary affiliation
+      </label>
+    </div>
+
+    <label class="full-width">
+      <span>Notes</span>
+      <textarea rows="2" [(ngModel)]="model.notes" maxlength="500"></textarea>
+    </label>
+  </div>
+</div>

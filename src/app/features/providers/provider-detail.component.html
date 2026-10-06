@@ -1,0 +1,239 @@
+@if (loading && !provider) {
+  <p class="loading">Loading doctor…</p>
+} @else if (provider) {
+
+<app-page eyebrow="PROVIDERS" [title]="provider.displayName" [description]="provider.providerCode + ' · ' + typeLabel(provider.providerType)">
+  <div actions class="head-actions">
+    <button type="button" class="secondary" (click)="back()">← All doctors</button>
+    @if (canUpdate && !isDeleted) {
+      <button type="button" class="primary" [routerLink]="['/providers', provider.providerId, 'edit']">Edit profile</button>
+    }
+  </div>
+</app-page>
+
+<!-- STATUS STRIP -->
+<section class="panel strip">
+  <div class="strip-item">
+    <span class="label">Status</span>
+    <span class="ag-status-badge" [class]="'ag-status-badge ' + statusClass(provider.status)">{{ provider.status }}</span>
+  </div>
+  <div class="strip-item">
+    <span class="label">Verification</span>
+    <span class="ag-status-badge" [class]="'ag-status-badge ' + statusClass(provider.verificationStatus)">{{ provider.verificationStatus }}</span>
+    @if (provider.verificationRemarks) { <small>{{ provider.verificationRemarks }}</small> }
+  </div>
+  <div class="strip-item">
+    <span class="label">Primary specialty</span>
+    <strong>{{ provider.primarySpecialty || '—' }}</strong>
+  </div>
+  <div class="strip-item">
+    <span class="label">Experience</span>
+    <strong>@if (provider.experienceYears !== null) { {{ provider.experienceYears }} years } @else { — }</strong>
+  </div>
+  <div class="strip-item">
+    <span class="label">Practises at</span>
+    <strong>{{ activeAffiliations.length }} affiliation{{ activeAffiliations.length === 1 ? '' : 's' }}</strong>
+  </div>
+
+  @if (canUpdate && !isDeleted) {
+    <div class="strip-actions">
+      @if (provider.verificationStatus !== 'VERIFIED') { <button type="button" class="secondary" (click)="openVerify('VERIFIED')">Verify</button> }
+      @if (provider.verificationStatus !== 'REJECTED') { <button type="button" class="secondary" (click)="openVerify('REJECTED')">Reject</button> }
+      @if (provider.status !== 'ACTIVE') { <button type="button" class="secondary" (click)="askProviderStatus('ACTIVE')">Activate</button> }
+      @if (provider.status === 'ACTIVE') {
+        <button type="button" class="secondary" (click)="askProviderStatus('SUSPENDED')">Suspend</button>
+        <button type="button" class="secondary" (click)="askProviderStatus('INACTIVE')">Deactivate</button>
+      }
+      <button type="button" class="secondary danger" (click)="askProviderStatus('DELETED')">Delete</button>
+    </div>
+  }
+</section>
+
+<!-- AFFILIATIONS -->
+<section class="panel card">
+  <div class="card-head">
+    <h3>Where {{ provider.displayName }} practises</h3>
+    @if (canCreate && !isDeleted) {
+      <button type="button" class="primary" (click)="openAddAffiliation()">+ Add organization / facility</button>
+    }
+  </div>
+
+  @if (activeAffiliations.length === 0) {
+    <p class="empty">Not placed anywhere yet. Add the first organization or facility to make this doctor available for appointments.</p>
+  }
+
+  <div class="aff-list">
+    @for (a of activeAffiliations; track a.affiliationId) {
+      <article class="aff" [class.paused]="a.status !== 'ACTIVE'">
+        <header>
+          <span [class]="availabilityClass(a)">{{ availability(a) }}</span>
+          <div class="aff-title">
+            <strong>{{ facilityName(a.facilityId) }}</strong>
+            <small>{{ orgName(a.organizationId) }}</small>
+          </div>
+          @if (a.isPrimary) { <span class="chip chip--primary">Primary</span> }
+          <span class="ag-status-badge" [class]="'ag-status-badge ' + statusClass(a.status)">{{ a.status }}</span>
+        </header>
+
+        <dl>
+          @if (a.designation) { <div><dt>Designation</dt><dd>{{ a.designation }}</dd></div> }
+          @if (a.employmentType) { <div><dt>Employment</dt><dd>{{ employmentLabel(a.employmentType) }}</dd></div> }
+          @if (a.roomOrChamber) { <div><dt>Room</dt><dd>{{ a.roomOrChamber }}</dd></div> }
+          @if (a.remoteChannels.length) { <div><dt>Channels</dt><dd>{{ a.remoteChannels.join(', ') }}</dd></div> }
+          @if (a.consultationFee !== null) { <div><dt>Fee</dt><dd>{{ a.currency }} {{ a.consultationFee }}@if (a.followUpFee !== null) { <small> · follow-up {{ a.followUpFee }}</small> }</dd></div> }
+          @if (a.consultationDurationMinutes) { <div><dt>Consult length</dt><dd>{{ a.consultationDurationMinutes }} min</dd></div> }
+          @if (a.facilityServiceIds.length) { <div class="wide"><dt>Services</dt><dd>{{ serviceNames(a) }}</dd></div> }
+          @if (a.effectiveFrom || a.effectiveTo) { <div><dt>Valid</dt><dd>{{ a.effectiveFrom || '…' }} → {{ a.effectiveTo || 'ongoing' }}</dd></div> }
+          <div><dt>New patients</dt><dd>{{ a.acceptsNewPatients ? 'Accepting' : 'Not accepting' }}</dd></div>
+        </dl>
+
+        @if (canUpdate && !isDeleted) {
+          <footer>
+            <button type="button" class="link" (click)="openEditAffiliation(a)">Edit</button>
+            @if (a.status === 'ACTIVE') { <button type="button" class="link" (click)="askAffiliationStatus(a, 'INACTIVE')">Pause</button> }
+            @else { <button type="button" class="link" (click)="askAffiliationStatus(a, 'ACTIVE')">Re-activate</button> }
+            <button type="button" class="link danger" (click)="askAffiliationStatus(a, 'ENDED')">End</button>
+          </footer>
+        }
+      </article>
+    }
+  </div>
+
+  @if (endedAffiliations.length) {
+    <h4>Ended</h4>
+    <ul class="ended">
+      @for (a of endedAffiliations; track a.affiliationId) {
+        <li>{{ availability(a) }} · {{ facilityName(a.facilityId) }} · {{ orgName(a.organizationId) }} <small>(until {{ a.effectiveTo || '—' }})</small></li>
+      }
+    </ul>
+  }
+</section>
+
+<!-- PROFILE -->
+<div class="two-col">
+  <section class="panel card">
+    <h3>Profile</h3>
+    <dl class="kv">
+      <div><dt>Gender</dt><dd>{{ provider.gender ? genderLabel(provider.gender) : '—' }}</dd></div>
+      <div><dt>Date of birth</dt><dd>{{ provider.dateOfBirth || '—' }}</dd></div>
+      <div><dt>System of medicine</dt><dd>{{ provider.systemOfMedicine ? systemLabel(provider.systemOfMedicine) : '—' }}</dd></div>
+      <div><dt>Nationality</dt><dd>{{ provider.nationality || '—' }}</dd></div>
+      <div><dt>Practising since</dt><dd>{{ provider.practiceStartDate || '—' }}</dd></div>
+      <div><dt>HPR ID</dt><dd>{{ provider.hprId || '—' }}</dd></div>
+      <div><dt>Languages</dt><dd>{{ languages || '—' }}</dd></div>
+      <div><dt>ID proof</dt><dd>@if (provider.idProofType) { {{ provider.idProofType }} ····{{ provider.idProofLast4 }} } @else { — }</dd></div>
+    </dl>
+    @if (provider.bio) { <p class="bio">{{ provider.bio }}</p> }
+    @if (provider.memberships) { <p class="bio"><strong>Memberships:</strong> {{ provider.memberships }}</p> }
+    @if (provider.awards) { <p class="bio"><strong>Awards:</strong> {{ provider.awards }}</p> }
+  </section>
+
+  <section class="panel card">
+    <h3>Contact</h3>
+    <dl class="kv">
+      <div><dt>Email</dt><dd>{{ provider.email || '—' }}</dd></div>
+      <div><dt>Mobile</dt><dd>{{ phone || '—' }}</dd></div>
+      <div><dt>Alternate</dt><dd>{{ provider.alternatePhoneNumber || '—' }}</dd></div>
+      <div><dt>Emergency contact</dt><dd>@if (provider.emergencyContactName) { {{ provider.emergencyContactName }} · {{ provider.emergencyContactPhone }} } @else { — }</dd></div>
+      <div class="wide"><dt>Address</dt><dd>{{ address || '—' }}</dd></div>
+    </dl>
+  </section>
+</div>
+
+<div class="two-col">
+  <section class="panel card">
+    <h3>Registrations</h3>
+    @for (r of provider.registrations; track r.registrationNumber) {
+      <div class="line">
+        <strong>{{ r.registrationBody }} {{ r.registrationNumber }}</strong>
+        @if (r.isPrimary) { <span class="chip chip--primary">Primary</span> }
+        <small>{{ r.registeredState || '' }}@if (r.validUntil) { · valid until {{ r.validUntil }} }</small>
+      </div>
+    } @empty { <p class="empty">None recorded.</p> }
+
+    <h3 class="sub">Specialties</h3>
+    @for (s of provider.specialties; track s.specialtyName) {
+      <div class="line"><strong>{{ s.specialtyName }}</strong><small>{{ specialtyLevelLabel(s.specialtyLevel) }}</small></div>
+    } @empty { <p class="empty">None recorded.</p> }
+  </section>
+
+  <section class="panel card">
+    <h3>Qualifications</h3>
+    @for (q of provider.qualifications; track $index) {
+      <div class="line">
+        <strong>{{ q.degree }}@if (q.specialization) { — {{ q.specialization }} }</strong>
+        <small>{{ q.institution || q.university || '' }}@if (q.yearOfCompletion) { · {{ q.yearOfCompletion }} }</small>
+      </div>
+    } @empty { <p class="empty">None recorded.</p> }
+  </section>
+</div>
+
+<div class="two-col">
+  <section class="panel card">
+    <h3>Work experience</h3>
+    @for (e of provider.experiences; track $index) {
+      <div class="line">
+        <strong>{{ e.designation || 'Role' }} · {{ e.organizationName }}</strong>
+        <small>{{ e.fromDate || '…' }} → {{ e.isCurrent ? 'present' : e.toDate || '…' }}@if (e.location) { · {{ e.location }} }</small>
+      </div>
+    } @empty { <p class="empty">None recorded.</p> }
+  </section>
+
+  <section class="panel card">
+    <h3>Documents</h3>
+    @for (d of provider.documents; track $index) {
+      <div class="line">
+        <strong><a [href]="d.fileUrl" target="_blank" rel="noopener noreferrer">{{ d.documentName }}</a></strong>
+        <small>{{ documentTypeLabel(d.documentType) }}@if (d.expiresOn) { · expires {{ d.expiresOn }} }</small>
+      </div>
+    } @empty { <p class="empty">None uploaded.</p> }
+  </section>
+</div>
+
+}
+
+<!-- AFFILIATION MODAL -->
+@if (affiliationFormOpen) {
+  <div class="modal-backdrop" (click)="closeAffiliationForm()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>@if (affiliationModel.affiliationId) { Edit affiliation } @else { Add organization / facility }</h3>
+          <p>Where and how {{ provider?.displayName }} practises.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="closeAffiliationForm()" aria-label="Close">×</button>
+      </div>
+      <app-affiliation-fields [model]="affiliationModel"></app-affiliation-fields>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="closeAffiliationForm()">Cancel</button>
+        <button type="button" class="primary" (click)="saveAffiliation()" [disabled]="busy">@if (busy) { Saving... } @else { Save }</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- VERIFY MODAL -->
+@if (verifyOpen) {
+  <div class="modal-backdrop" (click)="verifyOpen = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>{{ verifyDecision === 'VERIFIED' ? 'Verify doctor' : verifyDecision === 'REJECTED' ? 'Reject doctor' : 'Reset verification' }}</h3>
+          <p>Confirm after checking the registration and certificates.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="verifyOpen = false" aria-label="Close">×</button>
+      </div>
+      <label class="form-grid">
+        <span>Remarks</span>
+        <textarea rows="3" [(ngModel)]="verifyRemarks" maxlength="500" placeholder="e.g. NMC number checked on the council website"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="verifyOpen = false">Cancel</button>
+        <button type="button" class="primary" (click)="submitVerify()" [disabled]="busy">Confirm</button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onConfirmed()" (cancelled)="onCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

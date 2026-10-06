@@ -1,0 +1,57 @@
+<app-page eyebrow="PROVIDERS" title="Doctors" description="Register doctors once, then place them in one or more organizations or facilities — physically, remotely or on demand.">
+  @if (canCreate) {
+    <button actions type="button" class="primary" routerLink="/providers/new">+ Register doctor</button>
+  }
+</app-page>
+
+<div class="toolbar">
+  <input type="text" [(ngModel)]="search" (keyup.enter)="load(1)" placeholder="Search name, code, email, phone or registration no." />
+  <select [(ngModel)]="providerType" (change)="load(1)">
+    <option value="">All types</option>
+    @for (t of providerTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+  </select>
+  <select [(ngModel)]="availabilityType" (change)="load(1)">
+    <option value="">Any availability</option>
+    @for (t of availabilityTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+  </select>
+  <select [(ngModel)]="organizationId" (ngModelChange)="onOrganizationChange()">
+    <option value="">All organizations</option>
+    @for (org of organizations; track org.organizationId) { <option [ngValue]="org.organizationId">{{ org.organizationName }}</option> }
+  </select>
+  <select [(ngModel)]="facilityId" (change)="load(1)">
+    <option value="">All facilities</option>
+    @for (f of facilities; track f.facilityId) { <option [ngValue]="f.facilityId">{{ f.facilityName }}</option> }
+  </select>
+  <select [(ngModel)]="verificationStatus" (change)="load(1)">
+    <option value="">Any verification</option>
+    @for (v of verificationStatuses; track v) { <option [value]="v">{{ v }}</option> }
+  </select>
+  <select [(ngModel)]="status" (change)="load(1)">
+    <option value="">Active &amp; inactive</option>
+    @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+  </select>
+  <button type="button" class="secondary" (click)="clearFilters()">Clear</button>
+  <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+    @if (loading) { Loading... } @else { Refresh }
+  </button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="providers-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No doctors found }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+<app-confirm-modal #confirmModal (confirmed)="onDeleteConfirmed()" (cancelled)="onDeleteCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

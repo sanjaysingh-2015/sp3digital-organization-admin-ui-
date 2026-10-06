@@ -23,6 +23,10 @@ export const routes: Routes = [
       { path: 'services', loadComponent: () => import('./features/services/services.component').then(m => m.ServicesComponent) },
       { path: 'facility-services', loadComponent: () => import('./features/facility-services/facility-services.component').then(m => m.FacilityServicesComponent) },
       { path: 'appointment-slot-configs', loadComponent: () => import('./features/appointment-slot-configs/appointment-slot-configs.component').then(m => m.AppointmentSlotConfigsComponent) },
+      { path: 'providers', loadComponent: () => import('./features/providers/providers.component').then(m => m.ProvidersComponent) },
+      { path: 'providers/new', loadComponent: () => import('./features/providers/provider-form.component').then(m => m.ProviderFormComponent) },
+      { path: 'providers/:id/edit', loadComponent: () => import('./features/providers/provider-form.component').then(m => m.ProviderFormComponent) },
+      { path: 'providers/:id', loadComponent: () => import('./features/providers/provider-detail.component').then(m => m.ProviderDetailComponent) },
       { path: 'facility-closures', loadComponent: () => import('./features/facility-closures/facility-closures.component').then(m => m.FacilityClosuresComponent) },
     ]
   },

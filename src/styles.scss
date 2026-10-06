@@ -1381,6 +1381,7 @@ textarea:focus {
 
 /* two-line name cell: bold title + muted subtitle */
 .ag-tenant-cell,
+.ag-provider-cell,
 .ag-user-cell,
 .ag-organization-cell,
 .ag-slot-config-cell,
@@ -1560,4 +1561,35 @@ textarea:focus {
 
   .modal-backdrop { padding: 12px; }
   .modal { max-height: calc(100vh - 24px); padding: 18px; }
+}
+
+
+/* ---------- Provider grid bits (chips for availability type) ----------
+   Rendered inside AG Grid cells, so they must be global. Colors follow the
+   dashboard tones: physical = indigo, remote = sky, other = emerald. */
+
+.ag-muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 700;
+
+  &--physical { background: var(--tone-indigo-soft); color: var(--tone-indigo); }
+  &--remote   { background: var(--tone-sky-soft);    color: var(--tone-sky); }
+  &--other    { background: var(--tone-emerald-soft); color: var(--tone-emerald); }
 }

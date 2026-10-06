@@ -1,0 +1,20 @@
+// Shared card / toolbar / grid / pager / badge styling lives in
+// src/styles.scss ("SHARED CARD + LIST-PAGE THEME"). Only page-specific
+// layout belongs here. Providers use amber, the one tone the dashboard
+// groups (indigo / emerald / sky) leave free.
+:host {
+  display: block;
+  --tone: var(--tone-amber);
+  --tone-soft: var(--tone-amber-soft);
+}
+
+.providers-grid {
+  width: 100%;
+  height: 620px;
+}
+
+@media (max-width: 700px) {
+  .providers-grid {
+    height: 550px;
+  }
+}

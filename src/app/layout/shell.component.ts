@@ -50,6 +50,13 @@ export class ShellComponent {
       ],
     },
     {
+      label: 'Providers',
+      icon: '✚',
+      links: [
+        { label: 'Doctors', route: '/providers', icon: '✚' },
+      ],
+    },
+    {
       label: 'Schedules',
       icon: '▤',
       links: [
