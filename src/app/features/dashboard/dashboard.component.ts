@@ -2,22 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, finalize, map } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 
 import { ApiService } from '../../core/api.service';
 import { AppointmentApiService } from '../../core/appointment-api.service';
 import { AuthService } from '../../core/auth.service';
 import { UserService } from '../../core/user.service';
 import { PageComponent } from '../../shared/page.component';
-
-interface CountResponse {
-  count?: number;
-  total?: number;
-  data?: {
-    count?: number;
-    total?: number;
-  };
-}
 
 // Same values as facility-closures.component.ts's CLOSURE_TYPE_LABELS.
 const CLOSURE_TYPE_LABELS: Record<string, string> = {
@@ -28,62 +19,49 @@ const CLOSURE_TYPE_LABELS: Record<string, string> = {
   OTHER: 'Other',
 };
 
-interface DashboardStat {
+type Tone = 'indigo' | 'emerald' | 'sky';
+type PillTone = 'good' | 'warning' | 'danger' | 'neutral' | 'tone';
+
+interface Tile {
+  key: string;
   label: string;
-  value: number;
   icon: string;
   route: string;
-  // Purely decorative — these are counts, not statuses, so this is a
-  // rotating accent palette rather than --good/--warn/--danger.
-  color: "indigo" | "sky" | "emerald" | "amber";
+  // Shown under the label for child entities, e.g. "in Facilities".
+  hint?: string;
+  // Columns taken on the 4-column tile grid (default 1).
+  span?: 1 | 2;
 }
 
-interface TeamMemberPreview {
+interface PreviewRow {
   id: number | string;
-  name: string;
-  secondary: string;
-  userType: string;
-  status: string;
+  title: string;
+  subtitle: string;
+  pill: string;
+  pillTone: PillTone;
+  // Initials shown in a round avatar (people lists only).
+  avatar?: string;
 }
 
-interface FacilityPreview {
-  facilityId: number | string;
-  facilityName: string;
-  facilityType: string;
-  cityName: string;
-  status: string;
+interface PreviewPanel {
+  key: string;
+  title: string;
+  route: string;
+  empty: string;
 }
 
-interface DepartmentPreview {
-  departmentId: number | string;
-  departmentName: string;
-  departmentType: string;
-  facilityName: string;
-  status: string;
-}
-
-interface SchedulePreview {
-  id: number | string;
-  serviceName: string;
-  recurrenceLabel: string;
-  timeRange: string;
-  capacity: number;
-  status: string;
-}
-
-interface ClosurePreview {
-  id: number | string;
-  scope: string;
-  typeLabel: string;
-  dateLabel: string;
-  reason: string;
-}
-
-interface ServicePreview {
-  id: number | string;
-  name: string;
-  scope: string;
-  status: string;
+interface Group {
+  key: string;
+  title: string;
+  // One tone per group; everything inside the group inherits it.
+  tone: Tone;
+  route: string;
+  // Entity hierarchy, shown under the group title.
+  hierarchy: string;
+  // Optional headline count for the group's root entity (Organizations).
+  rootCountKey?: string;
+  tiles: Tile[];
+  panels: PreviewPanel[];
 }
 
 @Component({
@@ -96,54 +74,66 @@ interface ServicePreview {
 export class DashboardComponent implements OnInit {
   loading = true;
 
-  readonly stats: DashboardStat[] = [
+  // Entity hierarchy:
+  //   Organizations: Users, Facilities (Departments, Facility Services)
+  //   Services:      Service Categories, Services
+  //   Schedule:      Weekly Offs / Holidays, Slots
+  readonly groups: Group[] = [
     {
-      label: 'Organizations',
-      value: 0,
-      icon: '◉',
+      key: 'organizations',
+      title: 'Organizations',
+      tone: 'indigo',
       route: '/organizations',
-      color: 'indigo',
+      hierarchy: 'Users · Facilities › Departments, Facility Services',
+      rootCountKey: 'organizations',
+      tiles: [
+        { key: 'users', label: 'Users', icon: '◉', route: '/users' },
+        { key: 'facilities', label: 'Facilities', icon: '◈', route: '/facilities' },
+        { key: 'departments', label: 'Departments', icon: '◆', route: '/departments', hint: 'in Facilities' },
+        { key: 'facilityServices', label: 'Facility Services', icon: '◇', route: '/facility-services', hint: 'in Facilities' },
+      ],
+      panels: [
+        { key: 'team', title: 'Team', route: '/users', empty: 'No users yet.' },
+        { key: 'facilities', title: 'Facilities', route: '/facilities', empty: 'No facilities yet.' },
+        { key: 'departments', title: 'Departments', route: '/departments', empty: 'No departments yet.' },
+        { key: 'facilityServices', title: 'Facility Services', route: '/facility-services', empty: 'No facility services yet.' },
+      ],
     },
     {
-      label: 'Facilities',
-      value: 0,
-      icon: '◈',
-      route: '/facilities',
-      color: 'sky',
+      key: 'services',
+      title: 'Services',
+      tone: 'emerald',
+      route: '/services',
+      hierarchy: 'Service Categories · Services',
+      tiles: [
+        { key: 'serviceCategories', label: 'Service Categories', icon: '◉', route: '/service-categories', span: 2 },
+        { key: 'services', label: 'Services', icon: '◈', route: '/services', span: 2 },
+      ],
+      panels: [
+        { key: 'serviceCategories', title: 'Service Categories', route: '/service-categories', empty: 'No service categories yet.' },
+        { key: 'services', title: 'Services', route: '/services', empty: 'No services configured yet.' },
+      ],
     },
     {
-      label: 'Departments',
-      value: 0,
-      icon: '◆',
-      route: '/departments',
-      color: 'emerald',
-    },
-    {
-      label: 'Facility Services',
-      value: 0,
-      icon: '◇',
-      route: '/facility-services',
-      color: 'amber',
+      key: 'schedule',
+      title: 'Schedule',
+      tone: 'sky',
+      route: '/appointment-slot-configs',
+      hierarchy: 'Weekly Offs / Holidays · Slots',
+      tiles: [
+        { key: 'closures', label: 'Weekly Offs & Holidays', icon: '◉', route: '/facility-closures', span: 2 },
+        { key: 'slots', label: 'Slots', icon: '◈', route: '/appointment-slot-configs', span: 2 },
+      ],
+      panels: [
+        { key: 'closures', title: 'Weekly Offs & Holidays', route: '/facility-closures', empty: 'No upcoming closures.' },
+        { key: 'slots', title: 'Slots', route: '/appointment-slot-configs', empty: 'No active slots yet.' },
+      ],
     },
   ];
 
-  facility: FacilityPreview[] = [];
-  facilityLoading = true;
-
-  department: DepartmentPreview[] = [];
-  departmentLoading = true;
-
-  team: TeamMemberPreview[] = [];
-  teamLoading = true;
-
-  schedule: SchedulePreview[] = [];
-  scheduleLoading = true;
-
-  closures: ClosurePreview[] = [];
-  closuresLoading = true;
-
-  services: ServicePreview[] = [];
-  servicesLoading = true;
+  counts: Record<string, number> = {};
+  previews: Record<string, PreviewRow[]> = {};
+  previewLoading: Record<string, boolean> = {};
 
   constructor(
     private readonly api: ApiService,
@@ -153,12 +143,15 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadDashboardStats();
+    this.loadCounts();
+    this.loadTeam();
     this.loadFacilities();
     this.loadDepartments();
-    this.loadTeam();
-    this.loadFacilityServicesAndSchedule();
-    this.loadFacilitiesAndClosures();
+    this.loadFacilityServices();
+    this.loadServiceCategories();
+    this.loadServices();
+    this.loadClosures();
+    this.loadSlots();
   }
 
   initialsFor(name: string): string {
@@ -168,164 +161,275 @@ export class DashboardComponent implements OnInit {
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   }
 
-  private loadFacilities(): void {
-    this.facilityLoading = true;
-    this.api
-      .get<any>("/facilities", {page: 1, limit: 5, search: '', status: '', 
-      })
-      .pipe(
-        map((response: any) => {
-          const rows = this.extractFacilityRows(response);
-          return rows.map((facility: any): FacilityPreview => {
-            const name =
-              facility.facilityName ||
-              'Unknown facility';
-            return {
-              facilityId: facility.facilityId ?? facility.userUuid ?? name,
-              facilityName: facility.facilityName,
-              facilityType: facility.facilityType || '',
-              cityName: facility.cityName + ", "+ facility.stateName || '—',
-              status: facility.status || '—',
-            };
-          });
-        }),
-        catchError(() => of([])),
-        finalize(() => (this.facilityLoading = false)),
-      )
-      .subscribe((facility) => (this.facility = facility));
+  countFor(key: string): string {
+    if (this.loading) return '—';
+    return String(this.counts[key] ?? 0);
   }
 
-  private loadDepartments(): void {
-    this.departmentLoading = true;
-    this.api
-      .get<any>("/departments", {page: 1, limit: 5, search: '', status: '', 
-      })
+  isPreviewLoading(key: string): boolean {
+    return this.previewLoading[key] !== false;
+  }
+
+  previewRows(key: string): PreviewRow[] {
+    return this.previews[key] ?? [];
+  }
+
+  get hasNoOrganizations(): boolean {
+    return !this.loading && (this.counts['organizations'] ?? 0) === 0;
+  }
+
+  // ---- headline counts --------------------------------------------------
+
+  private loadCounts(): void {
+    this.loading = true;
+
+    forkJoin({
+      organizations: this.getCount(this.api.get<any>('/organizations/list')),
+      facilities: this.getCount(this.api.get<any>('/facilities/list')),
+      departments: this.getCount(this.api.get<any>('/departments/list')),
+      facilityServices: this.getCount(this.api.get<any>('/facility-services/list')),
+      users: this.getCount(this.userApi.getUsers({ page: 1, limit: 1, search: '', status: '' })),
+      serviceCategories: this.getCount(this.api.get<any>('/service-categories', { page: 1, limit: 1 })),
+      services: this.getCount(this.api.get<any>('/services', { page: 1, limit: 1 })),
+      closures: this.getCount(this.appointmentApi.get<any>('/facility-closures', { page: 1, limit: 1, status: 'ACTIVE' })),
+      slots: this.getCount(this.appointmentApi.get<any>('/slot-configs', { page: 1, limit: 1, status: 'ACTIVE' })),
+    })
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe((counts) => (this.counts = counts));
+  }
+
+  private getCount(source: Observable<any>): Observable<number> {
+    return source.pipe(
+      map((response) => this.extractCount(response)),
+      catchError(() => of(0)),
+    );
+  }
+
+  private extractCount(response: any): number {
+    const count =
+      response?.pagination?.totalItems ??
+      response?.count ??
+      response?.total ??
+      response?.data?.count ??
+      response?.data?.total ??
+      (Array.isArray(response?.data) ? response.data.length : 0);
+
+    const numericCount = Number(count);
+    return Number.isFinite(numericCount) && numericCount >= 0 ? numericCount : 0;
+  }
+
+  // ---- previews (first five rows of each list) ---------------------------
+
+  private loadPreview(
+    key: string,
+    source: Observable<any>,
+    toRows: (response: any) => PreviewRow[],
+  ): void {
+    this.previewLoading[key] = true;
+    source
       .pipe(
-        map((response: any) => {
-          const rows = this.extractFacilityRows(response);
-          return rows.map((department: any): DepartmentPreview => {
-            const name =
-              department.departmentName ||
-              'Unknown department';
-            return {
-              departmentId: department.departmentId ?? department.departmentUuid ?? name,
-              departmentName: department.departmentName,
-              departmentType: department.departmentType || '',
-              facilityName: department.facilityName || '',
-              status: department.status || '—',
-            };
-          });
-        }),
-        catchError(() => of([])),
-        finalize(() => (this.departmentLoading = false)),
+        map((response) => toRows(response).slice(0, 5)),
+        catchError(() => of([] as PreviewRow[])),
+        finalize(() => (this.previewLoading[key] = false)),
       )
-      .subscribe((department) => (this.department = department));
+      .subscribe((rows) => (this.previews[key] = rows));
+  }
+
+  private statusTone(status: string): PillTone {
+    switch (status) {
+      case 'ACTIVE':
+        return 'good';
+      case 'DISABLED':
+        return 'warning';
+      case 'INACTIVE':
+      case 'DELETED':
+        return 'danger';
+      default:
+        return 'neutral';
+    }
   }
 
   private loadTeam(): void {
-    this.teamLoading = true;
-    this.userApi
-      .getUsers({ page: 1, limit: 5, search: '', status: '' })
-      .pipe(
-        map((response: any) => {
-          const rows = this.extractUserRows(response);
-          return rows.map((user: any): TeamMemberPreview => {
-            const name =
-              user.displayName ||
-              `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
-              user.username ||
-              'Unknown user';
-            return {
-              id: user.userId ?? user.userUuid ?? name,
-              name,
-              secondary: user.username || user.email || '',
-              userType: user.userType || '—',
-              status: user.status || '—',
-            };
-          });
+    this.loadPreview(
+      'team',
+      this.userApi.getUsers({ page: 1, limit: 5, search: '', status: '' }),
+      (response) =>
+        this.extractUserRows(response).map((user: any): PreviewRow => {
+          const name =
+            user.displayName ||
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+            user.username ||
+            'Unknown user';
+          return {
+            id: user.userId ?? user.userUuid ?? name,
+            title: name,
+            subtitle: user.username || user.email || '',
+            pill: user.userType || '—',
+            pillTone: 'neutral',
+            avatar: this.initialsFor(name),
+          };
         }),
-        catchError(() => of([])),
-        finalize(() => (this.teamLoading = false)),
-      )
-      .subscribe((team) => (this.team = team));
+    );
   }
 
-  private loadFacilityServicesAndSchedule(): void {
-    this.servicesLoading = true;
-    this.scheduleLoading = true;
+  private loadFacilities(): void {
+    this.loadPreview(
+      'facilities',
+      this.api.get<any>('/facilities', { page: 1, limit: 5, search: '', status: '' }),
+      (response) =>
+        this.extractUserRows(response).map((facility: any): PreviewRow => {
+          const name = facility.facilityName || 'Unknown facility';
+          return {
+            id: facility.facilityId ?? name,
+            title: name,
+            subtitle:
+              [facility.facilityType, [facility.cityName, facility.stateName].filter(Boolean).join(', ')]
+                .filter(Boolean)
+                .join(' · ') || '—',
+            pill: facility.status || '—',
+            pillTone: this.statusTone(facility.status),
+            avatar: this.initialsFor(name),
+          };
+        }),
+    );
+  }
 
-    this.api
-      .get<any>('/facility-services/list')
-      .pipe(catchError(() => of({ data: [] })))
-      .subscribe((response) => {
-        const facilityServices = response?.data || [];
-        const nameById = new Map<number, string>(
-          facilityServices.map((fs: any) => [fs.facilityServiceId, fs.serviceName]),
-        );
+  private loadDepartments(): void {
+    this.loadPreview(
+      'departments',
+      this.api.get<any>('/departments', { page: 1, limit: 5, search: '', status: '' }),
+      (response) =>
+        this.extractUserRows(response).map((department: any): PreviewRow => {
+          const name = department.departmentName || 'Unknown department';
+          return {
+            id: department.departmentId ?? department.departmentUuid ?? name,
+            title: name,
+            subtitle:
+              [department.departmentType, department.facilityName].filter(Boolean).join(' · ') || '—',
+            pill: department.status || '—',
+            pillTone: this.statusTone(department.status),
+            avatar: this.initialsFor(name),
+          };
+        }),
+    );
+  }
 
-        this.services = facilityServices.slice(0, 5).map((fs: any): ServicePreview => ({
+  // Facility service data: which service runs at which facility / department.
+  private loadFacilityServices(): void {
+    this.loadPreview(
+      'facilityServices',
+      this.api.get<any>('/facility-services/list'),
+      (response) =>
+        (response?.data || []).map((fs: any): PreviewRow => ({
           id: fs.facilityServiceId,
-          name: fs.serviceName || `Facility service #${fs.facilityServiceId}`,
-          scope: fs.facilityName || fs.categoryName || '—',
-          status: fs.status || '—',
-        }));
-        this.servicesLoading = false;
-
-        this.appointmentApi
-          .get<any>('/slot-configs', { page: 1, limit: 5, status: 'ACTIVE' })
-          .pipe(
-            map((response: any) => {
-              const rows = response?.data || [];
-              return rows.map((row: any): SchedulePreview => ({
-                id: row.slotConfigId,
-                serviceName: nameById.get(row.facilityServiceId) || `Facility service #${row.facilityServiceId}`,
-                recurrenceLabel: this.recurrenceLabel(row),
-                timeRange: `${row.startTime?.slice(0, 5) || ''}–${row.endTime?.slice(0, 5) || ''}`,
-                capacity: row.capacityPerSlot,
-                status: row.status || '—',
-              }));
-            }),
-            catchError(() => of([])),
-            finalize(() => (this.scheduleLoading = false)),
-          )
-          .subscribe((schedule) => (this.schedule = schedule));
-      });
+          title: fs.serviceName || `Facility service #${fs.facilityServiceId}`,
+          subtitle: [fs.facilityName, fs.departmentName].filter(Boolean).join(' · ') || '—',
+          pill: fs.status || '—',
+          pillTone: this.statusTone(fs.status),
+        })),
+    );
   }
 
-  private loadFacilitiesAndClosures(): void {
-    this.closuresLoading = true;
+  private loadServiceCategories(): void {
+    this.loadPreview(
+      'serviceCategories',
+      this.api.get<any>('/service-categories', { page: 1, limit: 5 }),
+      (response) =>
+        (response?.data || []).map((row: any): PreviewRow => ({
+          id: row.serviceCategoryId,
+          title: row.serviceCategoryName || `Category #${row.serviceCategoryId}`,
+          subtitle: row.description || '—',
+          pill: row.status || '—',
+          pillTone: this.statusTone(row.status),
+        })),
+    );
+  }
 
-    this.api
-      .get<any>('/facilities/list')
-      .pipe(catchError(() => of({ data: [] })))
-      .subscribe((response) => {
-        const facilities = response?.data || [];
+  private loadServices(): void {
+    this.loadPreview(
+      'services',
+      this.api.get<any>('/services', { page: 1, limit: 5 }),
+      (response) =>
+        (response?.data || []).map((row: any): PreviewRow => ({
+          id: row.serviceId,
+          title: row.serviceName || `Service #${row.serviceId}`,
+          subtitle: row.description || '—',
+          pill: row.status || '—',
+          pillTone: this.statusTone(row.status),
+        })),
+    );
+  }
+
+  private loadClosures(): void {
+    // Closures only carry a facility id, so resolve names from the facility list.
+    const source = this.api.get<any>('/facilities/list').pipe(
+      catchError(() => of({ data: [] })),
+      switchMap((facilityResponse) => {
         const nameById = new Map<number, string>(
-          facilities.map((f: any) => [f.facilityId, f.facilityName]),
+          (facilityResponse?.data || []).map((f: any) => [f.facilityId, f.facilityName]),
         );
-
-        this.appointmentApi
+        return this.appointmentApi
           .get<any>('/facility-closures', { page: 1, limit: 5, status: 'ACTIVE' })
-          .pipe(
-            map((response: any) => {
-              const rows = response?.data || [];
-              return rows.map((row: any): ClosurePreview => ({
-                id: row.closureId,
-                scope: row.facilityId ? nameById.get(row.facilityId) || `Facility #${row.facilityId}` : 'All facilities',
-                typeLabel: CLOSURE_TYPE_LABELS[row.closureType] || row.closureType || '—',
-                dateLabel: row.closureDate
-                  ? row.closureDate
-                  : row.dayOfWeek
-                    ? this.dayLabel(row.dayOfWeek)
-                    : 'Recurring',
-                reason: row.reason || '—',
-              }));
-            }),
-            catchError(() => of([])),
-            finalize(() => (this.closuresLoading = false)),
-          )
-          .subscribe((closures) => (this.closures = closures));
-      });
+          .pipe(map((response) => ({ response, nameById })));
+      }),
+    );
+
+    this.previewLoading['closures'] = true;
+    source
+      .pipe(
+        map(({ response, nameById }) =>
+          (response?.data || []).slice(0, 5).map((row: any): PreviewRow => ({
+            id: row.closureId,
+            title: row.facilityId
+              ? nameById.get(row.facilityId) || `Facility #${row.facilityId}`
+              : 'All facilities',
+            subtitle: `${
+              row.closureDate
+                ? row.closureDate
+                : row.dayOfWeek
+                  ? this.dayLabel(row.dayOfWeek)
+                  : 'Recurring'
+            } · ${row.reason || '—'}`,
+            pill: CLOSURE_TYPE_LABELS[row.closureType] || row.closureType || '—',
+            pillTone: 'tone',
+          })),
+        ),
+        catchError(() => of([] as PreviewRow[])),
+        finalize(() => (this.previewLoading['closures'] = false)),
+      )
+      .subscribe((rows) => (this.previews['closures'] = rows));
+  }
+
+  private loadSlots(): void {
+    // Slot configs only carry a facility-service id, so resolve names first.
+    const source = this.api.get<any>('/facility-services/list').pipe(
+      catchError(() => of({ data: [] })),
+      switchMap((fsResponse) => {
+        const nameById = new Map<number, string>(
+          (fsResponse?.data || []).map((fs: any) => [fs.facilityServiceId, fs.serviceName]),
+        );
+        return this.appointmentApi
+          .get<any>('/slot-configs', { page: 1, limit: 5, status: 'ACTIVE' })
+          .pipe(map((response) => ({ response, nameById })));
+      }),
+    );
+
+    this.previewLoading['slots'] = true;
+    source
+      .pipe(
+        map(({ response, nameById }) =>
+          (response?.data || []).slice(0, 5).map((row: any): PreviewRow => ({
+            id: row.slotConfigId,
+            title: nameById.get(row.facilityServiceId) || `Facility service #${row.facilityServiceId}`,
+            subtitle: `${this.recurrenceLabel(row)} · ${row.startTime?.slice(0, 5) || ''}–${row.endTime?.slice(0, 5) || ''} · cap ${row.capacityPerSlot}`,
+            pill: row.status || '—',
+            pillTone: this.statusTone(row.status),
+          })),
+        ),
+        catchError(() => of([] as PreviewRow[])),
+        finalize(() => (this.previewLoading['slots'] = false)),
+      )
+      .subscribe((rows) => (this.previews['slots'] = rows));
   }
 
   private recurrenceLabel(row: any): string {
@@ -352,91 +456,8 @@ export class DashboardComponent implements OnInit {
     return [];
   }
 
-  // Same extraction logic as users.component.ts — the list endpoint's
-  // envelope shape varies (data as array vs. data.items vs. top-level items/rows).
-  private extractFacilityRows(response: any): any[] {
-    if (!response) return [];
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data && 'items' in response.data) return response.data.items ?? [];
-    if (response.items) return response.items;
-    if (response.rows) return response.rows;
-    return [];
-  }
-
   private dayLabel(dayOfWeek: number): string {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[dayOfWeek === 7 ? 0 : dayOfWeek] || '—';
-  }
-
-  get organizationCount(): number {
-    return this.getStatValue('Organizations');
-  }
-
-  get facilityCount(): number {
-    return this.getStatValue('Facilities');
-  }
-
-  get departmentCount(): number {
-    return this.getStatValue('Departments');
-  }
-
-  get serviceCount(): number {
-    return this.getStatValue('Facility Services');
-  }
-
-  get hasNoOrganizations(): boolean {
-    return !this.loading && this.organizationCount === 0;
-  }
-
-  private loadDashboardStats(): void {
-    this.loading = true;
-
-    forkJoin({
-      organizations: this.getCount('/organizations/list'),
-      facilities: this.getCount('/facilities/list'),
-      departments: this.getCount('/departments/list'),
-      services: this.getCount('/facility-services/list'),
-    })
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe((counts) => {
-        this.updateStat('Organizations', counts.organizations);
-        this.updateStat('Facilities', counts.facilities);
-        this.updateStat('Departments', counts.departments);
-        this.updateStat('Facility Services', counts.services);
-      });
-  }
-
-  private getCount(endpoint: string): Observable<number> {
-    return this.api.get<CountResponse>(endpoint).pipe(
-      map((response) => this.extractCount(response)),
-      catchError(() => of(0)),
-    );
-  }
-
-  private extractCount(response: CountResponse | null | undefined): number {
-    const count =
-      response?.count ??
-      response?.total ??
-      response?.data?.count ??
-      response?.data?.total ??
-      0;
-
-    const numericCount = Number(count);
-
-    return Number.isFinite(numericCount) && numericCount >= 0
-      ? numericCount
-      : 0;
-  }
-
-  private updateStat(label: string, value: number): void {
-    const stat = this.stats.find((item) => item.label === label);
-
-    if (stat) {
-      stat.value = value;
-    }
-  }
-
-  private getStatValue(label: string): number {
-    return this.stats.find((item) => item.label === label)?.value ?? 0;
   }
 }

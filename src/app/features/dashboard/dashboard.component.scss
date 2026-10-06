@@ -59,9 +59,10 @@
 
 // ---------------------------------------------------------
 // Tone system
-// Each tone sets two variables; every card reads them the same way.
-// Color intensity steps down the page: stat cards (accent bar + chip)
-// -> quick links (chip only) -> overview panels (dot + link only).
+// One tone per group (Organizations = indigo, Services = emerald,
+// Schedule = sky). Everything inside a group reads --tone / --tone-soft,
+// so a group is always one color and the three groups share one anatomy:
+// header -> 4-column tile row -> 2-column preview row.
 // ---------------------------------------------------------
 $card-radius: 14px;
 $card-border: 1px solid var(--line);
@@ -70,20 +71,87 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 .tone--indigo { --tone: var(--tone-indigo); --tone-soft: var(--tone-indigo-soft); }
 .tone--sky     { --tone: var(--tone-sky);     --tone-soft: var(--tone-sky-soft); }
 .tone--emerald { --tone: var(--tone-emerald); --tone-soft: var(--tone-emerald-soft); }
-.tone--amber   { --tone: var(--tone-amber);   --tone-soft: var(--tone-amber-soft); }
 
-// Four equal columns -> two equal columns -> two equal columns.
-.stats {
+.group {
+  margin: 0 0 32px;
+}
+
+.group__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.group__dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+  background: var(--tone);
+}
+
+.group__title {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+
+  h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  small {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.group__count {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.group__link,
+.preview header a {
+  color: var(--tone);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ---- tiles: a 4-column grid; two-tile groups span 2 columns each ----------
+
+.tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  margin: 0 0 16px;
 }
 
-.stat-card {
+.tile {
   position: relative;
   display: flex;
   min-width: 0;
-  min-height: 96px;
+  min-height: 84px;
   align-items: center;
   gap: 14px;
   padding: 18px;
@@ -92,7 +160,13 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   background: #fff;
   box-shadow: $card-shadow;
   box-sizing: border-box;
+  color: inherit;
   overflow: hidden;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
 
   // The one strong color moment on the card.
   &::before {
@@ -102,9 +176,24 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
     height: 3px;
     background: var(--tone);
   }
+
+  &:hover {
+    border-color: var(--tone);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+  }
 }
 
-.stat-card__icon {
+.tile--span-2 {
+  grid-column: span 2;
+}
+
+.tile__icon {
   display: grid;
   width: 44px;
   height: 44px;
@@ -117,51 +206,47 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   line-height: 1;
 }
 
-.stat-card__content {
+.tile__content {
   display: flex;
   min-width: 0;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
-  gap: 6px;
+  gap: 3px;
 }
 
-.stat-card__label {
-  display: block;
+.tile__label {
   overflow: hidden;
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--ink);
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.stat-card__value {
-  display: block;
+.tile__hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tile__value {
+  flex: 0 0 auto;
   color: var(--ink);
   font-size: 24px;
   font-weight: 700;
   line-height: 1;
 }
 
-// =========================================================
-// OVERVIEW PANELS — Team / Schedule / Weekly Offs & Holidays / Services
-// Same four tones, same order as the stat row above.
-// =========================================================
+// ---- previews: always two equal columns -----------------------------------
 
-.overview-grid {
+.previews {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  margin: 24px 0;
-
-  @media (max-width: 860px) {
-    grid-template-columns: 1fr;
-  }
 }
 
-.overview-panel {
+.preview {
+  min-width: 0;
   padding: 18px;
   border: $card-border;
   border-radius: $card-radius;
@@ -173,9 +258,9 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 
-    h2 {
+    h3 {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -192,28 +277,16 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
         background: var(--tone);
       }
     }
-
-    a {
-      color: var(--tone);
-      font-size: 12px;
-      font-weight: 600;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
   }
 }
 
-.overview-empty {
+.preview__empty {
   margin: 8px 0;
   color: #98a2b3;
   font-size: 13px;
 }
 
-.team-list,
-.simple-list {
+.preview__list {
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -233,7 +306,7 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   }
 }
 
-.team-avatar {
+.preview__avatar {
   display: grid;
   width: 32px;
   height: 32px;
@@ -246,8 +319,7 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   font-weight: 700;
 }
 
-.team-info,
-.simple-list__main {
+.preview__main {
   display: flex;
   min-width: 0;
   flex: 1;
@@ -272,6 +344,7 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   }
 }
 
+// Status pills carry meaning (green / amber / red); "tone" and "neutral" don't.
 .pill {
   flex: 0 0 auto;
   padding: 3px 10px;
@@ -282,122 +355,24 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   white-space: nowrap;
 }
 
-.pill--neutral {
-  background: #f2f4f7;
-  color: #475467;
-}
-
-.pill--good {
-  background: var(--goodbg);
-  color: var(--good);
-}
-
-.pill--tone {
-  background: var(--tone-soft);
-  color: var(--tone);
-}
-
-.quick-links {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.quick-link {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 14px;
-  min-height: 76px;
-  padding: 14px 16px;
-  border: $card-border;
-  border-radius: $card-radius;
-  background: #fff;
-  box-shadow: $card-shadow;
-  color: inherit;
-  text-decoration: none;
-  box-sizing: border-box;
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    box-shadow 150ms ease,
-    transform 150ms ease;
-}
-
-.quick-link:hover {
-  border-color: var(--tone);
-  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
-  transform: translateY(-1px);
-}
-
-.quick-link:focus-visible {
-  outline: 2px solid var(--tone);
-  outline-offset: 2px;
-}
-
-.quick-link__icon {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--tone-soft);
-  color: var(--tone);
-  font-size: 16px;
-}
-
-.quick-link__content {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.quick-link__content strong {
-  overflow: hidden;
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.quick-link__content small {
-  overflow: hidden;
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.quick-link__arrow {
-  flex: 0 0 auto;
-  color: #667085;
-  font-size: 16px;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease;
-}
-
-.quick-link:hover .quick-link__arrow,
-.quick-link:focus-visible .quick-link__arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
+.pill--neutral { background: #f2f4f7; color: #475467; }
+.pill--good    { background: var(--goodbg);   color: var(--good); }
+.pill--warning { background: var(--warnbg);   color: var(--warn); }
+.pill--danger  { background: var(--dangerbg); color: #991b1b; }
+.pill--tone    { background: var(--tone-soft); color: var(--tone); }
 
 @media (max-width: 1100px) {
-  .stats {
+  .tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .quick-links {
+  .tile--span-2 {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 860px) {
+  .previews {
     grid-template-columns: 1fr;
   }
 }
@@ -407,15 +382,15 @@ $card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
     padding: 20px;
   }
 
-  .stats {
+  .tiles {
     grid-template-columns: 1fr;
   }
 
-  .stat-card {
-    min-height: 84px;
+  .group__title small {
+    white-space: normal;
   }
 
-  .quick-link__content small {
-    white-space: normal;
+  .group__count {
+    display: none;
   }
 }
