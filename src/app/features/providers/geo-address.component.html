@@ -1,0 +1,51 @@
+@if (model.legacyText) {
+  <p class="legacy">
+    Saved earlier as text: <strong>{{ model.legacyText }}</strong>. Pick from the lists below to replace it.
+  </p>
+}
+<div class="form-grid">
+  <label>
+    <span>Country</span>
+    <select [(ngModel)]="model.countryId" (change)="onCountryChange()">
+      <option [ngValue]="null">@if (loading.countries) { Loading... } @else { — select — }</option>
+      @for (c of countries; track c.countryId) { <option [ngValue]="c.countryId">{{ c.name }}</option> }
+    </select>
+  </label>
+  <label>
+    <span>State</span>
+    <select [(ngModel)]="model.stateId" (change)="onStateChange()" [disabled]="!model.countryId || loading.states">
+      <option [ngValue]="null">@if (loading.states) { Loading... } @else { — select — }</option>
+      @for (s of states; track s.stateId) { <option [ngValue]="s.stateId">{{ s.name }}</option> }
+    </select>
+  </label>
+  <label>
+    <span>District</span>
+    <select [(ngModel)]="model.districtId" (change)="onDistrictChange()" [disabled]="!model.stateId || loading.districts">
+      <option [ngValue]="null">@if (loading.districts) { Loading... } @else { — select — }</option>
+      @for (d of districts; track d.districtId) { <option [ngValue]="d.districtId">{{ d.name }}</option> }
+    </select>
+  </label>
+  <label>
+    <span>Sub-district / Taluk</span>
+    <select [(ngModel)]="model.subDistrictId" (change)="onSubDistrictChange()" [disabled]="!model.districtId || loading.subDistricts">
+      <option [ngValue]="null">@if (loading.subDistricts) { Loading... } @else { — select — }</option>
+      @for (s of subDistricts; track s.subDistrictId) { <option [ngValue]="s.subDistrictId">{{ s.name }}</option> }
+    </select>
+  </label>
+  <label>
+    <span>City / Village</span>
+    <select [(ngModel)]="model.cityId" (change)="onCityChange()" [disabled]="!model.subDistrictId || loading.cities">
+      <option [ngValue]="null">@if (loading.cities) { Loading... } @else { — select — }</option>
+      @for (c of cities; track c.cityId) { <option [ngValue]="c.cityId">{{ c.name }}</option> }
+    </select>
+  </label>
+  <label>
+    <span>Postal code</span>
+    <select [(ngModel)]="model.postalCodeId" (change)="onPostalCodeChange()" [disabled]="!model.cityId || loading.postalCodes || postalCodes.length === 0">
+      <option [ngValue]="null">
+        @if (loading.postalCodes) { Loading... } @else if (model.cityId && postalCodes.length === 0) { — none for this city — } @else { — select — }
+      </option>
+      @for (p of postalCodes; track p.postalCodeId) { <option [ngValue]="p.postalCodeId">{{ p.code }}</option> }
+    </select>
+  </label>
+</div>

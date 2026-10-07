@@ -143,12 +143,7 @@
       <span>Address line 2</span>
       <input type="text" [(ngModel)]="f.addressLine2" maxlength="255" />
     </label>
-    <label><span>City / town</span><input type="text" [(ngModel)]="f.city" maxlength="100" /></label>
-    <label><span>Sub-district</span><input type="text" [(ngModel)]="f.subDistrictName" maxlength="100" /></label>
-    <label><span>District</span><input type="text" [(ngModel)]="f.districtName" maxlength="100" /></label>
-    <label><span>State</span><input type="text" [(ngModel)]="f.stateName" maxlength="100" /></label>
-    <label><span>Country</span><input type="text" [(ngModel)]="f.countryName" maxlength="100" /></label>
-    <label><span>Postal code</span><input type="text" [(ngModel)]="f.postalCode" maxlength="20" /></label>
+    <app-geo-address style="grid-column: 1 / -1" [model]="f"></app-geo-address>
   </div>
 </section>
 
@@ -348,7 +343,7 @@
       <dl>
         <div><dt>Email</dt><dd>{{ f.email || '—' }}</dd></div>
         <div><dt>Mobile</dt><dd>{{ f.phoneNumber ? f.phoneCountryCode + ' ' + f.phoneNumber : '—' }}</dd></div>
-        <div><dt>City / state</dt><dd>{{ [f.city, f.stateName].filter(Boolean).join(', ') || '—' }}</dd></div>
+        <div><dt>City / state</dt><dd>{{ [f.labels.city, f.labels.state].filter(Boolean).join(', ') || '—' }}</dd></div>
       </dl>
     </div>
 

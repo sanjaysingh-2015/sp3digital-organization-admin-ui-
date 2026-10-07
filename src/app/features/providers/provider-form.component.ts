@@ -9,6 +9,7 @@ import { UiService } from '../../core/ui.service';
 import { PageComponent } from '../../shared/page.component';
 import { NotificationModalComponent } from '../../shared/components/notification-modal/notification-modal';
 import { AffiliationFieldsComponent } from './affiliation-fields.component';
+import { GeoAddressComponent, emptyGeoLabels } from './geo-address.component';
 import {
   AffiliationModel,
   DOCUMENT_TYPES,
@@ -30,7 +31,7 @@ const text = (value: string | null | undefined) => (value && value.trim() ? valu
 @Component({
   selector: 'app-provider-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageComponent, NotificationModalComponent, AffiliationFieldsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PageComponent, NotificationModalComponent, AffiliationFieldsComponent, GeoAddressComponent],
   templateUrl: './provider-form.component.html',
   styleUrls: ['./provider-form.component.scss'],
 })
@@ -173,7 +174,9 @@ export class ProviderFormComponent implements OnInit {
       providerType: 'DOCTOR', systemOfMedicine: '', title: 'Dr.', firstName: '', middleName: '', lastName: '',
       gender: '', dateOfBirth: '', nationality: '', photoUrl: '', bio: '',
       email: '', phoneCountryCode: '+91', phoneNumber: '', alternatePhoneNumber: '', emergencyContactName: '', emergencyContactPhone: '',
-      addressLine1: '', addressLine2: '', city: '', subDistrictName: '', districtName: '', stateName: '', countryName: '', postalCode: '',
+      addressLine1: '', addressLine2: '', countryId: null as number | null, stateId: null as number | null, districtId: null as number | null,
+      subDistrictId: null as number | null, cityId: null as number | null, postalCodeId: null as number | null,
+      labels: emptyGeoLabels(), legacyText: '',
       hprId: '', practiceStartDate: '', memberships: '', awards: '', idProofType: '', idProofLast4: '',
       languagesText: '',
       registrations: [] as any[],
@@ -196,6 +199,14 @@ export class ProviderFormComponent implements OnInit {
         for (const key of Object.keys(f) as (keyof typeof f)[]) {
           if (key in p && typeof f[key] === 'string') (f as any)[key] = p[key] ?? '';
         }
+        f.countryId = p.countryId ?? null; f.stateId = p.stateId ?? null; f.districtId = p.districtId ?? null;
+        f.subDistrictId = p.subDistrictId ?? null; f.cityId = p.cityId ?? null; f.postalCodeId = p.postalCodeId ?? null;
+        f.labels = {
+          country: p.countryName ?? '', state: p.stateName ?? '', district: p.districtName ?? '',
+          subDistrict: p.subDistrictName ?? '', city: p.city ?? '', postalCode: p.postalCode ?? '',
+        };
+        const hasIds = f.countryId || f.stateId || f.districtId || f.subDistrictId || f.cityId || f.postalCodeId;
+        f.legacyText = hasIds ? '' : [p.city, p.subDistrictName, p.districtName, p.stateName, p.countryName, p.postalCode].filter(Boolean).join(', ');
         f.languagesText = (p.languages || []).map((l: any) => l.languageName).join(', ');
         f.registrations = (p.registrations || []).map((r: any) => ({
           registrationBody: r.registrationBody, registrationNumber: r.registrationNumber, registeredState: r.registeredState ?? '',
@@ -251,8 +262,8 @@ export class ProviderFormComponent implements OnInit {
       photoUrl: text(f.photoUrl), bio: text(f.bio),
       email: text(f.email), phoneCountryCode: text(f.phoneCountryCode), phoneNumber: text(f.phoneNumber),
       alternatePhoneNumber: text(f.alternatePhoneNumber), emergencyContactName: text(f.emergencyContactName), emergencyContactPhone: text(f.emergencyContactPhone),
-      addressLine1: text(f.addressLine1), addressLine2: text(f.addressLine2), city: text(f.city), subDistrictName: text(f.subDistrictName),
-      districtName: text(f.districtName), stateName: text(f.stateName), countryName: text(f.countryName), postalCode: text(f.postalCode),
+      addressLine1: text(f.addressLine1), addressLine2: text(f.addressLine2), countryId: f.countryId, stateId: f.stateId, districtId: f.districtId,
+      subDistrictId: f.subDistrictId, cityId: f.cityId, postalCodeId: f.postalCodeId,
       hprId: text(f.hprId), practiceStartDate: f.practiceStartDate || null, memberships: text(f.memberships), awards: text(f.awards),
       idProofType: text(f.idProofType), idProofLast4: text(f.idProofLast4),
       registrations: f.registrations
