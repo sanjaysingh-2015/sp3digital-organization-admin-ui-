@@ -5,9 +5,11 @@
 >
   <div actions class="head-actions">
     <button type="button" class="secondary" [routerLink]="editMode ? ['/providers', providerId] : ['/providers']">Cancel</button>
-    <button type="button" class="primary" (click)="save()" [disabled]="saving || loading">
-      @if (saving) { Saving... } @else if (editMode) { Save changes } @else { Register doctor }
-    </button>
+    @if (editMode) {
+      <button type="button" class="primary" (click)="save()" [disabled]="saving || loading">
+        @if (saving) { Saving... } @else { Save changes }
+      </button>
+    }
   </div>
 </app-page>
 
@@ -19,9 +21,32 @@
   @for (b of bodies; track b) { <option [value]="b"></option> }
 </datalist>
 
-<!-- 1. BASIC DETAILS -->
+<!-- STEPPER -->
+<nav class="stepper" aria-label="Registration steps">
+  @for (s of steps; track s.key; let i = $index) {
+    <button
+      type="button"
+      class="step-btn"
+      [class.active]="i === stepIndex"
+      [class.done]="completed.has(s.key) && i !== stepIndex"
+      [attr.aria-current]="i === stepIndex ? 'step' : null"
+      (click)="goTo(i)"
+    >
+      <span class="num">@if (completed.has(s.key) && i !== stepIndex) { ✓ } @else { {{ i + 1 }} }</span>
+      <span class="label">
+        <strong>{{ s.label }}</strong>
+        <small>{{ s.hint }}</small>
+      </span>
+    </button>
+  }
+</nav>
+<div class="progress" aria-hidden="true"><div class="bar" [style.width.%]="progressPercent"></div></div>
+<p class="step-count">Step {{ stepIndex + 1 }} of {{ steps.length }}</p>
+
+@switch (currentKey) {
+  @case ('basic') {
 <section class="panel card">
-  <h3><span class="step">1</span> Basic details</h3>
+  <h3>Basic details</h3>
   <div class="form-grid">
     <label>
       <span>Provider type <b>*</b></span>
@@ -78,9 +103,10 @@
   </div>
 </section>
 
-<!-- 2. CONTACT & ADDRESS -->
+  }
+  @case ('contact') {
 <section class="panel card">
-  <h3><span class="step">2</span> Contact &amp; address</h3>
+  <h3>Contact &amp; address</h3>
   <div class="form-grid">
     <label>
       <span>Email</span>
@@ -126,9 +152,10 @@
   </div>
 </section>
 
-<!-- 3. REGISTRATIONS -->
+  }
+  @case ('registration') {
 <section class="panel card">
-  <h3><span class="step">3</span> Council registration @if (licensed) { <b class="req">required</b> }</h3>
+  <h3>Council registration @if (licensed) { <b class="req">required</b> }</h3>
   <p class="hint">A registration number can belong to one doctor only. If it already exists you'll be told who has it, so you can add an affiliation to them instead.</p>
   @for (r of f.registrations; track $index) {
     <div class="repeat-row">
@@ -157,9 +184,10 @@
   <button type="button" class="secondary add" (click)="addRegistration()">+ Add registration</button>
 </section>
 
-<!-- 4. PROFESSIONAL -->
+  }
+  @case ('professional') {
 <section class="panel card">
-  <h3><span class="step">4</span> Professional profile</h3>
+  <h3>Professional profile</h3>
   <div class="form-grid">
     <label>
       <span>Practising since</span>
@@ -209,9 +237,10 @@
   <button type="button" class="secondary add" (click)="addSpecialty()">+ Add specialty</button>
 </section>
 
-<!-- 5. QUALIFICATIONS -->
+  }
+  @case ('qualifications') {
 <section class="panel card">
-  <h3><span class="step">5</span> Qualifications</h3>
+  <h3>Qualifications</h3>
   @for (q of f.qualifications; track $index) {
     <div class="repeat-row">
       <div class="form-grid cols-3">
@@ -228,9 +257,10 @@
   <button type="button" class="secondary add" (click)="addQualification()">+ Add qualification</button>
 </section>
 
-<!-- 6. EXPERIENCE -->
+  }
+  @case ('experience') {
 <section class="panel card">
-  <h3><span class="step">6</span> Work experience</h3>
+  <h3>Work experience</h3>
   @for (e of f.experiences; track $index) {
     <div class="repeat-row">
       <div class="form-grid cols-3">
@@ -249,9 +279,10 @@
   <button type="button" class="secondary add" (click)="addExperience()">+ Add experience</button>
 </section>
 
-<!-- 7. DOCUMENTS -->
+  }
+  @case ('documents') {
 <section class="panel card">
-  <h3><span class="step">7</span> Documents</h3>
+  <h3>Documents</h3>
   <p class="hint">Paste the link of each uploaded file (certificates, ID proof, photo, signature). The Tenant Admin checks them when verifying the doctor.</p>
   @for (d of f.documents; track $index) {
     <div class="repeat-row compact">
@@ -272,10 +303,10 @@
   <button type="button" class="secondary add" (click)="addDocument()">+ Add document</button>
 </section>
 
-<!-- 8. WHERE THE DOCTOR PRACTISES (create only) -->
-@if (!editMode) {
+  }
+  @case ('locations') {
   <section class="panel card">
-    <h3><span class="step">8</span> Where the doctor practises</h3>
+    <h3>Where the doctor practises</h3>
     <p class="hint">
       Add every organization or facility this doctor works with. The same doctor can be <strong>physical</strong> at one facility,
       <strong>remote</strong> for another organization, and <strong>on demand</strong> somewhere else. You can add more later from the doctor's page.
@@ -294,19 +325,93 @@
     }
     <button type="button" class="secondary add" (click)="addAffiliation()">+ Add another organization / facility</button>
   </section>
-} @else {
-  <section class="panel card">
-    <h3>Where the doctor practises</h3>
-    <p class="hint">Organizations, facilities and availability are managed on the doctor's page.
-      <a [routerLink]="['/providers', providerId]">Open doctor</a></p>
-  </section>
+  }
+  @case ('review') {
+<section class="panel card review">
+  <h3>Review &amp; submit</h3>
+  <p class="hint">Check everything below. Use <strong>Edit</strong> to jump back to a step. @if (!editMode) { The doctor is created with verification <em>pending</em>; verify them from their page once you've checked the certificates. }</p>
+
+  <div class="review-grid">
+    <div class="review-block">
+      <header><h4>Basic details</h4><button type="button" class="link" (click)="goToKey('basic')">Edit</button></header>
+      <dl>
+        <div><dt>Name</dt><dd>{{ fullName || '—' }}</dd></div>
+        <div><dt>Type</dt><dd>{{ typeLabel(f.providerType) }}</dd></div>
+        <div><dt>System of medicine</dt><dd>{{ f.systemOfMedicine ? systemLabel(f.systemOfMedicine) : '—' }}</dd></div>
+        <div><dt>Gender</dt><dd>{{ f.gender ? genderLabel(f.gender) : '—' }}</dd></div>
+        <div><dt>Date of birth</dt><dd>{{ f.dateOfBirth || '—' }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="review-block">
+      <header><h4>Contact</h4><button type="button" class="link" (click)="goToKey('contact')">Edit</button></header>
+      <dl>
+        <div><dt>Email</dt><dd>{{ f.email || '—' }}</dd></div>
+        <div><dt>Mobile</dt><dd>{{ f.phoneNumber ? f.phoneCountryCode + ' ' + f.phoneNumber : '—' }}</dd></div>
+        <div><dt>City / state</dt><dd>{{ [f.city, f.stateName].filter(Boolean).join(', ') || '—' }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="review-block">
+      <header><h4>Registration</h4><button type="button" class="link" (click)="goToKey('registration')">Edit</button></header>
+      @for (r of filledRegistrations; track $index) {
+        <p class="row">{{ r.registrationBody }} {{ r.registrationNumber }}@if (r.isPrimary) { <span class="tag">Primary</span> }</p>
+      } @empty { <p class="muted">None added.</p> }
+    </div>
+
+    <div class="review-block">
+      <header><h4>Professional profile</h4><button type="button" class="link" (click)="goToKey('professional')">Edit</button></header>
+      <dl>
+        <div><dt>Practising since</dt><dd>{{ f.practiceStartDate || '—' }}</dd></div>
+        <div><dt>Specialties</dt><dd>@for (s of filledSpecialties; track $index) { {{ s.specialtyName }}@if (!$last) { , } } @empty { — }</dd></div>
+        <div><dt>Languages</dt><dd>{{ languageList.join(', ') || '—' }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="review-block">
+      <header><h4>Qualifications</h4><button type="button" class="link" (click)="goToKey('qualifications')">Edit</button></header>
+      @for (q of filledQualifications; track $index) {
+        <p class="row">{{ q.degree }}@if (q.specialization) { — {{ q.specialization }} }@if (q.yearOfCompletion) { <small> · {{ q.yearOfCompletion }}</small> }</p>
+      } @empty { <p class="muted">None added.</p> }
+    </div>
+
+    <div class="review-block">
+      <header><h4>Experience &amp; documents</h4><button type="button" class="link" (click)="goToKey('experience')">Edit</button></header>
+      <p class="row">{{ filledExperiences.length }} work experience{{ filledExperiences.length === 1 ? '' : 's' }}</p>
+      <p class="row">{{ filledDocuments.length }} document{{ filledDocuments.length === 1 ? '' : 's' }}</p>
+    </div>
+
+    @if (!editMode) {
+      <div class="review-block wide">
+        <header><h4>Where the doctor practises</h4><button type="button" class="link" (click)="goToKey('locations')">Edit</button></header>
+        @for (a of affiliations; track $index) {
+          <p class="row">
+            <span class="chip" [class]="'chip chip--' + a.availabilityType.toLowerCase()">{{ availability(a) }}</span>
+            {{ facilityName(a.facilityId) }} <small>· {{ orgName(a.organizationId) }}</small>
+            @if (a.isPrimary) { <span class="tag">Primary</span> }
+          </p>
+        } @empty { <p class="muted">Not placed anywhere yet — you can add organizations and facilities from the doctor's page.</p> }
+      </div>
+    }
+  </div>
+</section>
+  }
 }
 
 <div class="bottom-bar">
   <button type="button" class="secondary" [routerLink]="editMode ? ['/providers', providerId] : ['/providers']">Cancel</button>
-  <button type="button" class="primary" (click)="save()" [disabled]="saving">
-    @if (saving) { Saving... } @else if (editMode) { Save changes } @else { Register doctor }
-  </button>
+  <span class="spacer"></span>
+  <button type="button" class="secondary" (click)="back()" [disabled]="isFirstStep">← Back</button>
+  @if (editMode && !isLastStep) {
+    <button type="button" class="secondary" (click)="save()" [disabled]="saving">@if (saving) { Saving... } @else { Save changes }</button>
+  }
+  @if (!isLastStep) {
+    <button type="button" class="primary" (click)="next()">Next →</button>
+  } @else {
+    <button type="button" class="primary" (click)="save()" [disabled]="saving">
+      @if (saving) { Saving... } @else if (editMode) { Save changes } @else { Register doctor }
+    </button>
+  }
 </div>
 }
 

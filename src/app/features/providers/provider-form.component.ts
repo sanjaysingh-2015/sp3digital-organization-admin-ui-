@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { OrgDirectoryService } from '../../core/org-directory.service';
 import { ProviderApiService } from '../../core/provider-api.service';
 import { UiService } from '../../core/ui.service';
 import { PageComponent } from '../../shared/page.component';
@@ -18,6 +19,8 @@ import {
   SPECIALTY_LEVELS,
   SYSTEMS_OF_MEDICINE,
   affiliationPayload,
+  availabilityLabel,
+  labelOf,
   newAffiliation,
   validateAffiliation,
 } from './provider-model';
@@ -53,12 +56,106 @@ export class ProviderFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private ui: UiService,
+    private directory: OrgDirectoryService,
   ) {}
 
   get editMode(): boolean { return this.providerId !== null; }
   get licensed(): boolean { return LICENSED_TYPES.includes(this.f.providerType); }
 
+  // ---- stepped workflow ------------------------------------------------------
+  private readonly allSteps: { key: string; label: string; hint: string }[] = [
+    { key: 'basic', label: 'Basic details', hint: 'Name, type, gender' },
+    { key: 'contact', label: 'Contact & address', hint: 'Phone, email, address' },
+    { key: 'registration', label: 'Registration', hint: 'Council / licence number' },
+    { key: 'professional', label: 'Professional profile', hint: 'Specialties, languages' },
+    { key: 'qualifications', label: 'Qualifications', hint: 'Degrees' },
+    { key: 'experience', label: 'Experience', hint: 'Work history' },
+    { key: 'documents', label: 'Documents', hint: 'Certificates, ID' },
+    { key: 'locations', label: 'Where they practise', hint: 'Organizations & facilities' },
+    { key: 'review', label: 'Review', hint: 'Check and submit' },
+  ];
+
+  stepIndex = 0;
+  /** Steps the user has moved past with valid data — shown with a tick. */
+  completed = new Set<string>();
+
+  organizationNames = new Map<number, string>();
+  facilityNames = new Map<number, string>();
+
+  /** Editing an existing doctor skips "where they practise" — that lives on the doctor's page. */
+  get steps() { return this.editMode ? this.allSteps.filter((step) => step.key !== 'locations') : this.allSteps; }
+  get currentKey(): string { return this.steps[Math.min(this.stepIndex, this.steps.length - 1)].key; }
+  get isFirstStep(): boolean { return this.stepIndex === 0; }
+  get isLastStep(): boolean { return this.stepIndex === this.steps.length - 1; }
+  get progressPercent(): number { return Math.round(((this.stepIndex + 1) / this.steps.length) * 100); }
+
+  goToKey(key: string): void {
+    const index = this.steps.findIndex((step) => step.key === key);
+    if (index >= 0) this.goTo(index);
+  }
+
+  /** Going back is always free; going forward checks every step on the way. */
+  goTo(index: number): void {
+    if (index === this.stepIndex || index < 0 || index >= this.steps.length) return;
+    if (index > this.stepIndex && !this.editMode) {
+      for (let i = this.stepIndex; i < index; i++) {
+        const problem = this.validateStep(this.steps[i].key);
+        if (problem) {
+          this.stepIndex = i;
+          this.ui.show(problem);
+          this.scrollToTop();
+          return;
+        }
+        this.completed.add(this.steps[i].key);
+      }
+    }
+    this.stepIndex = index;
+    this.scrollToTop();
+  }
+
+  next(): void {
+    const key = this.currentKey;
+    const problem = this.validateStep(key);
+    if (problem) {
+      this.ui.show(problem);
+      return;
+    }
+    this.completed.add(key);
+    if (!this.isLastStep) {
+      this.stepIndex += 1;
+      this.scrollToTop();
+    }
+  }
+
+  back(): void {
+    if (this.stepIndex > 0) {
+      this.stepIndex -= 1;
+      this.scrollToTop();
+    }
+  }
+
+  private scrollToTop(): void {
+    setTimeout(() => document.querySelector('.stepper')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  // ---- review-step helpers ---------------------------------------------------
+  typeLabel(value: string) { return labelOf(PROVIDER_TYPES, value); }
+  systemLabel(value: string) { return labelOf(SYSTEMS_OF_MEDICINE, value); }
+  genderLabel(value: string) { return labelOf(GENDERS, value); }
+  availability(a: AffiliationModel) { return availabilityLabel(a); }
+  orgName(id: number | null) { return id ? this.organizationNames.get(id) || `Organization #${id}` : '—'; }
+  facilityName(id: number | null) { return id ? this.facilityNames.get(id) || `Facility #${id}` : 'Whole organization'; }
+  get fullName(): string { return [this.f.title, this.f.firstName, this.f.middleName, this.f.lastName].map((v) => v.trim()).filter(Boolean).join(' '); }
+  get filledRegistrations() { return this.f.registrations.filter((r) => r.registrationNumber.trim()); }
+  get filledSpecialties() { return this.f.specialties.filter((s) => s.specialtyName.trim()); }
+  get filledQualifications() { return this.f.qualifications.filter((q) => q.degree.trim()); }
+  get filledExperiences() { return this.f.experiences.filter((e) => e.organizationName.trim()); }
+  get filledDocuments() { return this.f.documents.filter((d) => d.documentName.trim() && d.fileUrl.trim()); }
+  get languageList(): string[] { return this.f.languagesText.split(',').map((v) => v.trim()).filter(Boolean); }
+
   ngOnInit(): void {
+    this.directory.organizations().subscribe((rows) => rows.forEach((o) => this.organizationNames.set(o.organizationId, o.organizationName)));
+    this.directory.facilities().subscribe((rows) => rows.forEach((f) => this.facilityNames.set(f.facilityId, f.facilityName)));
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.providerId = Number(id);
@@ -184,29 +281,62 @@ export class ProviderFormComponent implements OnInit {
     };
   }
 
-  private validate(): string | null {
-    if (!this.f.firstName.trim()) return 'First name is required';
-    if (this.licensed && !this.f.registrations.some((r) => r.registrationNumber.trim())) {
-      return 'Add at least one council / licence registration number';
+  /** One check per step, so the message always matches the screen the user is on. */
+  private validateStep(key: string): string | null {
+    const f = this.f;
+    switch (key) {
+      case 'basic':
+        if (!f.firstName.trim()) return 'First name is required';
+        return null;
+      case 'registration': {
+        const rows = f.registrations.filter((r) => r.registrationNumber.trim() || r.registeredState.trim());
+        if (rows.some((r) => !r.registrationBody.trim() || !r.registrationNumber.trim())) return 'Each registration needs a body and a number';
+        if (this.licensed && !rows.some((r) => r.registrationNumber.trim())) return 'Add at least one council / licence registration number';
+        return null;
+      }
+      case 'professional':
+        if (f.specialties.filter((s) => s.specialtyName.trim() && s.specialtyLevel === 'PRIMARY').length > 1) return 'Only one specialty can be the primary specialty';
+        if (f.idProofLast4.trim() && f.idProofLast4.trim().length !== 4) return 'ID proof: enter exactly the last 4 characters';
+        return null;
+      case 'qualifications':
+        if (f.qualifications.some((q) => !q.degree.trim() && (q.institution.trim() || q.university.trim() || q.specialization.trim() || q.yearOfCompletion))) return 'Each qualification needs a degree';
+        return null;
+      case 'experience':
+        if (f.experiences.some((e) => !e.organizationName.trim() && (e.designation.trim() || e.fromDate))) return 'Each work experience needs a hospital / organization';
+        if (f.experiences.some((e) => !e.isCurrent && e.fromDate && e.toDate && e.toDate < e.fromDate)) return 'Work experience: the end date is before the start date';
+        return null;
+      case 'documents':
+        if (f.documents.some((d) => !!d.documentName.trim() !== !!d.fileUrl.trim())) return 'Each document needs both a name and a file link';
+        if (f.documents.some((d) => d.fileUrl.trim() && !/^https?:\/\//i.test(d.fileUrl.trim()))) return 'Document links must start with http:// or https://';
+        return null;
+      case 'locations':
+        if (this.editMode) return null;
+        for (let i = 0; i < this.affiliations.length; i++) {
+          const problem = validateAffiliation(this.affiliations[i]);
+          if (problem) return `Affiliation ${i + 1}: ${problem}`;
+        }
+        return null;
+      default:
+        return null;
     }
-    if (this.f.specialties.filter((s) => s.specialtyName.trim() && s.specialtyLevel === 'PRIMARY').length > 1) {
-      return 'Only one specialty can be the primary specialty';
-    }
-    if (!this.editMode) {
-      for (let i = 0; i < this.affiliations.length; i++) {
-        const problem = validateAffiliation(this.affiliations[i]);
-        if (problem) return `Affiliation ${i + 1}: ${problem}`;
+  }
+
+  /** Every step, in order; jumps to the first step with a problem. */
+  private validateAll(): boolean {
+    for (let i = 0; i < this.steps.length; i++) {
+      const problem = this.validateStep(this.steps[i].key);
+      if (problem) {
+        this.stepIndex = i;
+        this.ui.show(problem);
+        this.scrollToTop();
+        return false;
       }
     }
-    return null;
+    return true;
   }
 
   save(): void {
-    const problem = this.validate();
-    if (problem) {
-      this.ui.show(problem);
-      return;
-    }
+    if (!this.validateAll()) return;
     this.saving = true;
 
     const body: Record<string, unknown> = this.payload();
