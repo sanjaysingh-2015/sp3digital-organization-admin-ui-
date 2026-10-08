@@ -122,6 +122,19 @@ export class ProviderDetailComponent implements OnInit {
   statusClass(status: string): string {
     return { ACTIVE: 'good', VERIFIED: 'good', SUSPENDED: 'warning', PENDING: 'warning', INACTIVE: 'danger', DELETED: 'danger', REJECTED: 'danger', ENDED: 'danger' }[status] || '';
   }
+  /** Whether this placement can be given slot rules, and if not, what is missing. */
+  bookable(a: any): { ok: boolean; text: string } {
+    const p = this.provider;
+    if (p.status !== 'ACTIVE') return { ok: false, text: `Doctor is ${String(p.status).toLowerCase()} — no slots` };
+    if (p.verificationStatus !== 'VERIFIED') return { ok: false, text: 'Verify the doctor to allow slots' };
+    if (a.status !== 'ACTIVE') return { ok: false, text: 'Placement is not active — no slots' };
+    if (a.availabilityType === 'OTHER') return { ok: false, text: 'On-demand style availability — no fixed slots' };
+    if (!a.facilityId) return { ok: false, text: 'Place the doctor at a facility to allow slots' };
+    if (!a.facilityServiceIds?.length) return { ok: false, text: 'Add the services this doctor delivers to allow slots' };
+    const n = a.facilityServiceIds.length;
+    return { ok: true, text: `Can be given slots for ${n} service${n === 1 ? '' : 's'}` };
+  }
+
   get phone(): string { return [this.provider?.phoneCountryCode, this.provider?.phoneNumber].filter(Boolean).join(' '); }
   get address(): string {
     const p = this.provider;

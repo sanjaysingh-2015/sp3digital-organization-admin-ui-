@@ -65,13 +65,35 @@
     <div class="form-grid">
       <label>
         <span>Facility</span>
-        <select [(ngModel)]="form.facilityId">
+        <select [(ngModel)]="form.facilityId" (ngModelChange)="onFormFacilityChange()">
           <option [ngValue]="null">All facilities</option>
           @for (facility of facilityOptions; track facility.facilityId) {
             <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option>
           }
         </select>
       </label>
+      @if (form.facilityId) {
+        <label>
+          <span>Service <em>(optional — leave empty for the whole facility)</em></span>
+          <select [(ngModel)]="form.facilityServiceId" (ngModelChange)="onFormServiceChange()">
+            <option [ngValue]="null">— whole facility —</option>
+            @for (service of formServiceOptions; track service.facilityServiceId) {
+              <option [ngValue]="service.facilityServiceId">{{ service.serviceName }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (form.facilityServiceId) {
+        <label>
+          <span>Doctor <em>(optional — for a doctor's leave)</em></span>
+          <select [(ngModel)]="form.providerAffiliationId" [disabled]="doctorsLoading">
+            <option [ngValue]="null">@if (doctorsLoading) { Loading doctors... } @else { — everyone for this service — }</option>
+            @for (doctor of formDoctorOptions; track doctor.affiliationId) {
+              <option [ngValue]="doctor.affiliationId" [disabled]="doctor.disabled">{{ doctor.label }}</option>
+            }
+          </select>
+        </label>
+      }
       <label>
         <span>Closure type <b>*</b></span>
         <select [(ngModel)]="form.closureType">

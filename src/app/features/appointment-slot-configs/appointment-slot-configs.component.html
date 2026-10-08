@@ -15,6 +15,14 @@
       <option [ngValue]="service.facilityServiceId">{{ service.serviceName }} ({{ service.facilityName }})</option>
     }
   </select>
+  @if (doctorFilterOptions.length) {
+    <select [(ngModel)]="providerId" (change)="onFilterChange()">
+      <option [ngValue]="''">All doctors</option>
+      @for (doctor of doctorFilterOptions; track doctor.providerId) {
+        <option [ngValue]="doctor.providerId">{{ doctor.displayName }}</option>
+      }
+    </select>
+  }
   <select [(ngModel)]="recurrenceType" (change)="onFilterChange()">
     <option value="">All recurrences</option>
     @for (option of recurrenceOptions; track option.value) {
@@ -94,12 +102,28 @@
       </label>
       <label>
         <span>Facility service <b>*</b></span>
-        <select [(ngModel)]="form.facilityServiceId" [disabled]="editMode || !form.facilityId">
+        <select [(ngModel)]="form.facilityServiceId" (ngModelChange)="onFormServiceChange()" [disabled]="editMode || !form.facilityId">
           <option [ngValue]="null">— select —</option>
           @for (service of formFacilityServiceOptions; track service.facilityServiceId) {
             <option [ngValue]="service.facilityServiceId">{{ service.serviceName }}</option>
           }
         </select>
+      </label>
+      <label class="full-width">
+        <span>Doctor <em>(optional — leave empty to schedule the whole service)</em></span>
+        <select [(ngModel)]="form.providerAffiliationId" [disabled]="!form.facilityServiceId || doctorsLoading">
+          <option [ngValue]="null">
+            @if (doctorsLoading) { Loading doctors... } @else { — whole service, no specific doctor — }
+          </option>
+          @for (doctor of formDoctorOptions; track doctor.affiliationId) {
+            <option [ngValue]="doctor.affiliationId" [disabled]="doctor.disabled">{{ doctor.label }}</option>
+          }
+        </select>
+        @if (form.facilityServiceId && !doctorsLoading && formDoctorOptions.length === 0) {
+          <small class="muted">
+            No doctor is set up for this service at this facility yet. Add the service to a doctor's placement under Providers → Doctors.
+          </small>
+        }
       </label>
       <label>
         <span>Recurrence <b>*</b></span>

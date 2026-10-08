@@ -14,6 +14,7 @@ import {
 
 import { ApiService } from "../../core/api.service";
 import { AppointmentApiService } from "../../core/appointment-api.service";
+import { ProviderApiService } from "../../core/provider-api.service";
 import { AuthService } from "../../core/auth.service";
 import { UiService } from "../../core/ui.service";
 import { PageComponent } from "../../shared/page.component";
@@ -92,6 +93,9 @@ export class FacilityClosuresComponent implements OnInit {
   form = {
     closureId: null as number | null,
     facilityId: null as number | null,
+    // Narrow the closure to one service, or to one doctor within it (doctor leave).
+    facilityServiceId: null as number | null,
+    providerAffiliationId: null as number | null,
     closureType: "HOLIDAY",
     recurrenceType: "ANNUAL" as "ONE_TIME" | "WEEKLY" | "ANNUAL",
     closureDate: "" as string | null,
@@ -99,6 +103,12 @@ export class FacilityClosuresComponent implements OnInit {
     closureName: "",
     reason: "",
   };
+
+  formServiceOptions: any[] = [];
+  formDoctorOptions: { affiliationId: number; label: string; disabled: boolean }[] = [];
+  doctorsLoading = false;
+  private allServiceOptions: any[] = [];
+  private original = { facilityId: null as number | null, facilityServiceId: null as number | null, providerAffiliationId: null as number | null };
 
   private gridApi!: GridApi;
 
@@ -110,7 +120,11 @@ export class FacilityClosuresComponent implements OnInit {
       cellRenderer: (params: ICellRendererParams) => {
         const row = params.data;
         const scope = row?.facilityId ? this.facilityFor(row.facilityId)?.facilityName || `Facility #${row.facilityId}` : "All facilities";
-        return `<div class="ag-closure-cell"><strong>${this.escapeHtml(row?.closureName)}</strong><small>${this.escapeHtml(scope)}</small></div>`;
+        const service = row?.facilityServiceId
+          ? this.allServiceOptions.find((o) => o.facilityServiceId === row.facilityServiceId)?.serviceName || `Service #${row.facilityServiceId}`
+          : "";
+        const where = [scope, service, row?.resourceName].filter(Boolean).join(" · ");
+        return `<div class="ag-closure-cell"><strong>${this.escapeHtml(row?.closureName)}</strong><small>${this.escapeHtml(where)}</small></div>`;
       },
     },
     {
@@ -173,6 +187,7 @@ export class FacilityClosuresComponent implements OnInit {
   constructor(
     private api: ApiService,
     private appointmentApi: AppointmentApiService,
+    private providerApi: ProviderApiService,
     public auth: AuthService,
     private ui: UiService,
   ) {}
@@ -194,6 +209,7 @@ export class FacilityClosuresComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.loadFacilityOptions();
+    this.loadAllServiceOptions();
   }
 
   onGridReady(event: GridReadyEvent): void {
@@ -240,6 +256,17 @@ export class FacilityClosuresComponent implements OnInit {
     this.api.get<any>("/facilities/list").subscribe({
       next: (response) => (this.facilityOptions = response?.data || []),
       error: () => (this.facilityOptions = []),
+    });
+  }
+
+  /** Service names for the grid's "where" line. */
+  loadAllServiceOptions(): void {
+    this.api.get<any>("/facility-services/list").subscribe({
+      next: (response) => {
+        this.allServiceOptions = response?.data || [];
+        this.gridApi?.refreshCells({ force: true });
+      },
+      error: () => (this.allServiceOptions = []),
     });
   }
 
@@ -290,6 +317,8 @@ export class FacilityClosuresComponent implements OnInit {
     this.form = {
       closureId: row.closureId,
       facilityId: row.facilityId ?? null,
+      facilityServiceId: row.facilityServiceId ?? null,
+      providerAffiliationId: row.providerAffiliationId ?? null,
       closureType: row.closureType,
       recurrenceType: row.recurrenceType,
       closureDate: row.closureDate || "",
@@ -297,7 +326,61 @@ export class FacilityClosuresComponent implements OnInit {
       closureName: row.closureName || "",
       reason: row.reason || "",
     };
+    this.original = {
+      facilityId: this.form.facilityId,
+      facilityServiceId: this.form.facilityServiceId,
+      providerAffiliationId: this.form.providerAffiliationId,
+    };
     this.formOpen = true;
+    this.loadFormServices();
+    this.loadDoctorOptions();
+  }
+
+  /** Facility changed: the service and doctor chosen under the old one no longer apply. */
+  onFormFacilityChange(): void {
+    this.form.facilityServiceId = null;
+    this.form.providerAffiliationId = null;
+    this.formDoctorOptions = [];
+    this.loadFormServices();
+  }
+
+  /** Service changed: the doctor chosen under the old one no longer applies. */
+  onFormServiceChange(): void {
+    this.form.providerAffiliationId = null;
+    this.loadDoctorOptions();
+  }
+
+  loadFormServices(): void {
+    this.formServiceOptions = [];
+    if (!this.form.facilityId) return;
+    this.api.get<any>("/facility-services/list", { facilityId: this.form.facilityId }).subscribe({
+      next: (response) => (this.formServiceOptions = response?.data || []),
+      error: () => (this.formServiceOptions = []),
+    });
+  }
+
+  /** Doctors placed at this facility who deliver this service (any availability type — leave applies to all). */
+  loadDoctorOptions(): void {
+    this.formDoctorOptions = [];
+    const { facilityId, facilityServiceId } = this.form;
+    if (!facilityId || !facilityServiceId) return;
+
+    this.doctorsLoading = true;
+    this.providerApi.get<any>("/affiliations", { facilityId, facilityServiceId, status: "ACTIVE", limit: 100 }).subscribe({
+      next: (response) => {
+        this.formDoctorOptions = (response?.data || []).map((a: any) => {
+          const p = a.provider || {};
+          const mode = a.availabilityType === "REMOTE" ? "Remote" : a.availabilityType === "PHYSICAL" ? "Physical" : "On demand / other";
+          const reason = p.status !== "ACTIVE" ? String(p.status || "").toLowerCase() : p.verificationStatus !== "VERIFIED" ? "not verified yet" : "";
+          return { affiliationId: a.affiliationId, label: `${p.displayName || "Doctor"} · ${mode}${reason ? " — " + reason : ""}`, disabled: !!reason };
+        });
+        this.doctorsLoading = false;
+      },
+      error: () => {
+        this.formDoctorOptions = [];
+        this.doctorsLoading = false;
+      },
+    });
   }
 
   /**
@@ -337,8 +420,17 @@ export class FacilityClosuresComponent implements OnInit {
       closureName: this.form.closureName,
       reason: this.form.reason || null,
     };
+    if (!this.editMode) {
+      if (this.form.facilityServiceId) request.facilityServiceId = this.form.facilityServiceId;
+      if (this.form.providerAffiliationId) request.providerAffiliationId = this.form.providerAffiliationId;
+    }
 
     if (this.editMode) {
+      // Only send the scope fields that actually changed: a doctor's closure is
+      // re-checked against the provider service whenever its scope is sent.
+      if (request.facilityId === this.original.facilityId) delete request.facilityId;
+      if ((this.form.facilityServiceId ?? null) !== this.original.facilityServiceId) request.facilityServiceId = this.form.facilityServiceId ?? null;
+      if ((this.form.providerAffiliationId ?? null) !== this.original.providerAffiliationId) request.providerAffiliationId = this.form.providerAffiliationId ?? null;
       this.appointmentApi.patch<any>(`/facility-closures/${this.form.closureId}`, request).subscribe({
         next: () => {
           this.saving = false;
@@ -442,9 +534,14 @@ export class FacilityClosuresComponent implements OnInit {
   }
 
   resetForm(): void {
+    this.formServiceOptions = [];
+    this.formDoctorOptions = [];
+    this.original = { facilityId: null, facilityServiceId: null, providerAffiliationId: null };
     this.form = {
       closureId: null,
       facilityId: null,
+      facilityServiceId: null,
+      providerAffiliationId: null,
       closureType: "HOLIDAY",
       recurrenceType: "ANNUAL",
       closureDate: "",

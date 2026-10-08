@@ -20,6 +20,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 import { ApiService } from "../../core/api.service";
 import { AppointmentApiService } from "../../core/appointment-api.service";
+import { ProviderApiService } from "../../core/provider-api.service";
 import { AuthService } from "../../core/auth.service";
 import { UiService } from "../../core/ui.service";
 import { SLOT_CONFIG_PERMISSIONS } from "../../core/appointment-permissions";
@@ -131,10 +132,22 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   formOpen = false;
   editMode = false;
 
+  // Doctors who can be given this rule: active placements at the chosen
+  // facility that deliver the chosen service (from provider-admin-service).
+  formDoctorOptions: { affiliationId: number; label: string; disabled: boolean; reason: string }[] = [];
+  doctorsLoading = false;
+  private originalProviderAffiliationId: number | null = null;
+
+  // Toolbar filter: only rules for one doctor.
+  providerId: number | "" = "";
+  doctorFilterOptions: any[] = [];
+
   form = {
     slotConfigId: null as number | null,
     facilityId: null as number | null,
     facilityServiceId: null as number | null,
+    // The doctor placement (provider affiliation) this rule is for; null = the whole service.
+    providerAffiliationId: null as number | null,
     recurrenceType: "WEEKLY" as "DAILY" | "WEEKLY" | "MONTHLY",
     dayOfWeek: 1 as number | null,
     dayOfMonth: null as number | null,
@@ -243,6 +256,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   constructor(
     private api: ApiService,
     private appointmentApi: AppointmentApiService,
+    private providerApi: ProviderApiService,
     public auth: AuthService,
     private ui: UiService,
   ) {}
@@ -266,6 +280,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     this.load();
     this.loadFacilityOptions();
     this.loadAllFacilityServiceOptions();
+    this.loadDoctorFilterOptions();
   }
 
   onGridReady(event: GridReadyEvent): void {
@@ -283,6 +298,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
         limit: this.limit,
         facilityId: this.facilityId || undefined,
         facilityServiceId: this.facilityServiceId || undefined,
+        providerId: this.providerId || undefined,
         recurrenceType: this.recurrenceType,
         approvalStatus: this.approvalStatus,
         status: this.status,
@@ -395,6 +411,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
         limit: 100,
         facilityId: this.facilityId || undefined,
         facilityServiceId: this.facilityServiceId || undefined,
+        providerId: this.providerId || undefined,
         recurrenceType: this.recurrenceType,
         approvalStatus: this.approvalStatus,
         status: this.status,
@@ -431,7 +448,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
 
     for (const row of this.calendarRows) {
       const color = this.colorFor(row);
-      const title = `${this.serviceLabel(row)} (${row.capacityPerSlot})`;
+      const title = `${this.serviceLabel(row)}${row.resourceName ? " · " + row.resourceName : ""} (${row.capacityPerSlot})`;
       const startRecur = row.effectiveFrom || undefined;
       const endRecur = row.effectiveTo || undefined;
 
@@ -510,6 +527,7 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       slotConfigId: row.slotConfigId,
       facilityId: row.facilityId ?? null,
       facilityServiceId: row.facilityServiceId ?? null,
+      providerAffiliationId: row.providerAffiliationId ?? null,
       recurrenceType: row.recurrenceType || "WEEKLY",
       dayOfWeek: row.dayOfWeek ?? null,
       dayOfMonth: row.dayOfMonth ?? null,
@@ -520,7 +538,9 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       effectiveFrom: row.effectiveFrom || "",
       effectiveTo: row.effectiveTo || "",
     };
+    this.originalProviderAffiliationId = row.providerAffiliationId ?? null;
     this.formOpen = true;
+    this.loadDoctorOptions();
 
     if (this.form.facilityId) {
       this.api.get<any>("/facility-services/list", { facilityId: this.form.facilityId }).subscribe({
@@ -533,6 +553,8 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   /** Called when the facility select changes inside the create/edit form. */
   onFormFacilityChange(): void {
     this.form.facilityServiceId = null;
+    this.form.providerAffiliationId = null;
+    this.formDoctorOptions = [];
     this.formFacilityServiceOptions = [];
 
     if (!this.form.facilityId) return;
@@ -540,6 +562,55 @@ export class AppointmentSlotConfigsComponent implements OnInit {
     this.api.get<any>("/facility-services/list", { facilityId: this.form.facilityId }).subscribe({
       next: (response) => (this.formFacilityServiceOptions = response?.data || []),
       error: () => (this.formFacilityServiceOptions = []),
+    });
+  }
+
+  /** The service changed, so the previously chosen doctor may no longer apply. */
+  onFormServiceChange(): void {
+    this.form.providerAffiliationId = null;
+    this.loadDoctorOptions();
+  }
+
+  /** Active placements at this facility that deliver this service, slot-based only. */
+  loadDoctorOptions(): void {
+    this.formDoctorOptions = [];
+    const { facilityId, facilityServiceId } = this.form;
+    if (!facilityId || !facilityServiceId) return;
+
+    this.doctorsLoading = true;
+    this.providerApi
+      .get<any>("/affiliations", { facilityId, facilityServiceId, status: "ACTIVE", limit: 100 })
+      .subscribe({
+        next: (response) => {
+          this.formDoctorOptions = (response?.data || [])
+            .filter((a: any) => a.availabilityType === "PHYSICAL" || a.availabilityType === "REMOTE")
+            .map((a: any) => {
+              const p = a.provider || {};
+              const mode = a.availabilityType === "REMOTE" ? "Remote" : "Physical";
+              let reason = "";
+              if (p.status !== "ACTIVE") reason = `${String(p.status || "").toLowerCase()}`;
+              else if (p.verificationStatus !== "VERIFIED") reason = "not verified yet";
+              return {
+                affiliationId: a.affiliationId,
+                label: `${p.displayName || "Doctor"} · ${mode}${reason ? " — " + reason : ""}`,
+                disabled: !!reason,
+                reason,
+              };
+            });
+          this.doctorsLoading = false;
+        },
+        // No permission to see doctors (or provider service down): the rule can still be made for the whole service.
+        error: () => {
+          this.formDoctorOptions = [];
+          this.doctorsLoading = false;
+        },
+      });
+  }
+
+  loadDoctorFilterOptions(): void {
+    this.providerApi.get<any>("/providers/list").subscribe({
+      next: (response) => (this.doctorFilterOptions = response?.data || []),
+      error: () => (this.doctorFilterOptions = []),
     });
   }
 
@@ -577,6 +648,10 @@ export class AppointmentSlotConfigsComponent implements OnInit {
       effectiveTo: this.form.effectiveTo || null,
     };
 
+    if (!this.editMode && this.form.providerAffiliationId) {
+      request.providerAffiliationId = this.form.providerAffiliationId;
+    }
+
     if (this.editMode) {
       // facilityId/facilityServiceId aren't part of the edit contract —
       // appointment-admin-service's updateSchema doesn't accept them (a
@@ -593,6 +668,11 @@ export class AppointmentSlotConfigsComponent implements OnInit {
         effectiveFrom: request.effectiveFrom,
         effectiveTo: request.effectiveTo,
       };
+      // Only when the doctor was actually changed (null = take the doctor off),
+      // so an unrelated edit never touches the rule's resource.
+      if ((this.form.providerAffiliationId ?? null) !== this.originalProviderAffiliationId) {
+        patch.providerAffiliationId = this.form.providerAffiliationId ?? null;
+      }
       this.appointmentApi.patch<any>(`/slot-configs/${this.form.slotConfigId}`, patch).subscribe({
         next: () => {
           this.saving = false;
@@ -814,10 +894,13 @@ export class AppointmentSlotConfigsComponent implements OnInit {
   }
 
   resetForm(): void {
+    this.formDoctorOptions = [];
+    this.originalProviderAffiliationId = null;
     this.form = {
       slotConfigId: null,
       facilityId: null,
       facilityServiceId: null,
+      providerAffiliationId: null,
       recurrenceType: "WEEKLY",
       dayOfWeek: 1,
       dayOfMonth: null,

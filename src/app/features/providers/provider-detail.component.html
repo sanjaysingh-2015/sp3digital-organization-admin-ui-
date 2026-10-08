@@ -87,6 +87,8 @@
           <div><dt>New patients</dt><dd>{{ a.acceptsNewPatients ? 'Accepting' : 'Not accepting' }}</dd></div>
         </dl>
 
+        <p class="bookable" [class.ok]="bookable(a).ok">{{ bookable(a).ok ? '✓' : '○' }} {{ bookable(a).text }}</p>
+
         @if (canUpdate && !isDeleted) {
           <footer>
             <button type="button" class="link" (click)="openEditAffiliation(a)">Edit</button>
