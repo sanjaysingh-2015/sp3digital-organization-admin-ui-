@@ -7,8 +7,12 @@ import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { ApiService } from '../../core/api.service';
 import { AppointmentApiService } from '../../core/appointment-api.service';
 import { AuthService } from '../../core/auth.service';
+import { OrgDirectoryService } from '../../core/org-directory.service';
+import { ProviderApiService } from '../../core/provider-api.service';
+import { PROVIDER_PERMISSIONS } from '../../core/provider-permissions';
 import { UserService } from '../../core/user.service';
 import { PageComponent } from '../../shared/page.component';
+import { availabilityLabel } from '../providers/provider-model';
 
 // Same values as facility-closures.component.ts's CLOSURE_TYPE_LABELS.
 const CLOSURE_TYPE_LABELS: Record<string, string> = {
@@ -19,7 +23,7 @@ const CLOSURE_TYPE_LABELS: Record<string, string> = {
   OTHER: 'Other',
 };
 
-type Tone = 'indigo' | 'emerald' | 'sky';
+type Tone = 'indigo' | 'emerald' | 'sky' | 'amber';
 type PillTone = 'good' | 'warning' | 'danger' | 'neutral' | 'tone';
 
 interface Tile {
@@ -27,6 +31,8 @@ interface Tile {
   label: string;
   icon: string;
   route: string;
+  // Query params the target page understands, e.g. { availabilityType: 'REMOTE' }.
+  query?: Record<string, string>;
   // Shown under the label for child entities, e.g. "in Facilities".
   hint?: string;
   // Columns taken on the 4-column tile grid (default 1).
@@ -60,6 +66,8 @@ interface Group {
   hierarchy: string;
   // Optional headline count for the group's root entity (Organizations).
   rootCountKey?: string;
+  // The group is hidden (and its data not fetched) unless the user holds this permission.
+  permission?: string;
   tiles: Tile[];
   panels: PreviewPanel[];
 }
@@ -77,6 +85,7 @@ export class DashboardComponent implements OnInit {
   // Entity hierarchy:
   //   Organizations: Users, Facilities (Departments, Facility Services)
   //   Services:      Service Categories, Services
+  //   Doctors:       Doctors, placements by availability (Physical / Remote / Other)
   //   Schedule:      Weekly Offs / Holidays, Slots
   readonly groups: Group[] = [
     {
@@ -115,6 +124,24 @@ export class DashboardComponent implements OnInit {
       ],
     },
     {
+      key: 'providers',
+      title: 'Doctors',
+      tone: 'amber',
+      route: '/providers',
+      hierarchy: 'Doctors · Placements by availability: Physical, Remote, Other',
+      permission: PROVIDER_PERMISSIONS.READ,
+      tiles: [
+        { key: 'doctors', label: 'Doctors', icon: '✚', route: '/providers' },
+        { key: 'physical', label: 'Physical', icon: '◉', route: '/providers', query: { availabilityType: 'PHYSICAL' }, hint: 'doctors in person' },
+        { key: 'remote', label: 'Remote', icon: '◈', route: '/providers', query: { availabilityType: 'REMOTE' }, hint: 'doctors online' },
+        { key: 'otherAvailability', label: 'On demand & other', icon: '◇', route: '/providers', query: { availabilityType: 'OTHER' }, hint: 'doctors' },
+      ],
+      panels: [
+        { key: 'doctors', title: 'Doctors', route: '/providers', empty: 'No doctors registered yet.' },
+        { key: 'placements', title: 'Placements', route: '/providers', empty: 'No doctor placements yet.' },
+      ],
+    },
+    {
       key: 'schedule',
       title: 'Schedule',
       tone: 'sky',
@@ -139,6 +166,8 @@ export class DashboardComponent implements OnInit {
     private readonly api: ApiService,
     private readonly appointmentApi: AppointmentApiService,
     private readonly userApi: UserService,
+    private readonly providerApi: ProviderApiService,
+    private readonly directory: OrgDirectoryService,
     public readonly auth: AuthService,
   ) {}
 
@@ -152,6 +181,10 @@ export class DashboardComponent implements OnInit {
     this.loadServices();
     this.loadClosures();
     this.loadSlots();
+    if (this.canSeeProviders) {
+      this.loadDoctors();
+      this.loadPlacements();
+    }
   }
 
   initialsFor(name: string): string {
@@ -174,6 +207,15 @@ export class DashboardComponent implements OnInit {
     return this.previews[key] ?? [];
   }
 
+  get canSeeProviders(): boolean {
+    return this.auth.hasPermission(PROVIDER_PERMISSIONS.READ);
+  }
+
+  /** Groups the user may see: Doctors needs the provider read permission. */
+  get visibleGroups(): Group[] {
+    return this.groups.filter((group) => !group.permission || this.auth.hasPermission(group.permission));
+  }
+
   get hasNoOrganizations(): boolean {
     return !this.loading && (this.counts['organizations'] ?? 0) === 0;
   }
@@ -183,7 +225,20 @@ export class DashboardComponent implements OnInit {
   private loadCounts(): void {
     this.loading = true;
 
-    forkJoin({
+    // Doctor counts come from provider-admin-service and are skipped without its read permission.
+    // "Physical / Remote / Other" count DOCTORS with an active placement of that type, so the
+    // number matches what the Doctors list shows when the tile is clicked.
+    const providerCounts: Record<string, Observable<number>> = this.canSeeProviders
+      ? {
+          doctors: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1 })),
+          physical: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, availabilityType: 'PHYSICAL' })),
+          remote: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, availabilityType: 'REMOTE' })),
+          otherAvailability: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, availabilityType: 'OTHER' })),
+        }
+      : {};
+
+    const requests: Record<string, Observable<number>> = {
+      ...providerCounts,
       organizations: this.getCount(this.api.get<any>('/organizations/list')),
       facilities: this.getCount(this.api.get<any>('/facilities/list')),
       departments: this.getCount(this.api.get<any>('/departments/list')),
@@ -193,7 +248,9 @@ export class DashboardComponent implements OnInit {
       services: this.getCount(this.api.get<any>('/services', { page: 1, limit: 1 })),
       closures: this.getCount(this.appointmentApi.get<any>('/facility-closures', { page: 1, limit: 1, status: 'ACTIVE' })),
       slots: this.getCount(this.appointmentApi.get<any>('/slot-configs', { page: 1, limit: 1, status: 'ACTIVE' })),
-    })
+    };
+
+    forkJoin(requests)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe((counts) => (this.counts = counts));
   }
@@ -358,6 +415,49 @@ export class DashboardComponent implements OnInit {
           pillTone: this.statusTone(row.status),
         })),
     );
+  }
+
+  private loadDoctors(): void {
+    this.loadPreview(
+      'doctors',
+      this.providerApi.get<any>('/providers', { page: 1, limit: 5 }),
+      (response) =>
+        (response?.data || []).map((doctor: any): PreviewRow => ({
+          id: doctor.providerId,
+          title: doctor.displayName || 'Unnamed doctor',
+          subtitle: [doctor.primarySpecialty, doctor.registrationNumber].filter(Boolean).join(' · ') || doctor.providerCode || '—',
+          // Verified is the goal; pending / rejected are what the admin has to act on.
+          pill: doctor.verificationStatus || '—',
+          pillTone: ({ VERIFIED: 'good', PENDING: 'warning', REJECTED: 'danger' } as Record<string, PillTone>)[doctor.verificationStatus] ?? 'neutral',
+          avatar: this.initialsFor(doctor.displayName || '?'),
+        })),
+    );
+  }
+
+  /** Recent placements: which doctor, where, and how (physical / remote / other). */
+  private loadPlacements(): void {
+    this.previewLoading['placements'] = true;
+    forkJoin({
+      organizations: this.directory.organizations(),
+      facilities: this.directory.facilities(),
+      placements: this.providerApi.get<any>('/affiliations', { page: 1, limit: 5, status: 'ACTIVE' }).pipe(catchError(() => of({ data: [] }))),
+    })
+      .pipe(
+        map(({ organizations, facilities, placements }) => {
+          const orgName = new Map<number, string>(organizations.map((o: any): [number, string] => [o.organizationId, o.organizationName]));
+          const facilityName = new Map<number, string>(facilities.map((f: any): [number, string] => [f.facilityId, f.facilityName]));
+          return (placements?.data || []).slice(0, 5).map((a: any): PreviewRow => ({
+            id: a.affiliationId,
+            title: a.provider?.displayName || `Doctor #${a.providerId}`,
+            subtitle: `${a.facilityId ? facilityName.get(a.facilityId) || `Facility #${a.facilityId}` : 'Whole organization'} · ${orgName.get(a.organizationId) || `Organization #${a.organizationId}`}`,
+            pill: availabilityLabel(a),
+            pillTone: 'tone',
+          }));
+        }),
+        catchError(() => of([] as PreviewRow[])),
+        finalize(() => (this.previewLoading['placements'] = false)),
+      )
+      .subscribe((rows) => (this.previews['placements'] = rows));
   }
 
   private loadClosures(): void {

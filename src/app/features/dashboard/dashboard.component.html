@@ -24,7 +24,7 @@
   </section>
 }
 
-@for (group of groups; track group.key) {
+@for (group of visibleGroups; track group.key) {
   <section class="group" [class]="'group tone--' + group.tone" [attr.aria-label]="group.title">
     <header class="group__header">
       <span class="group__dot" aria-hidden="true"></span>
@@ -47,6 +47,7 @@
           class="tile"
           [class.tile--span-2]="tile.span === 2"
           [routerLink]="tile.route"
+          [queryParams]="tile.query"
         >
           <span class="tile__icon" aria-hidden="true">{{ tile.icon }}</span>
 

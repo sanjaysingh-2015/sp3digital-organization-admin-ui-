@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, GridApi, GridReadyEvent, ICellRendererParams, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
@@ -58,6 +58,7 @@ export class ProvidersComponent implements OnInit {
     private directory: OrgDirectoryService,
     private auth: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   get canCreate(): boolean { return this.auth.hasPermission(PROVIDER_PERMISSIONS.CREATE); }
@@ -159,6 +160,13 @@ export class ProvidersComponent implements OnInit {
   gridOptions = { rowHeight: 64, headerHeight: 44, suppressCellFocus: true, animateRows: true };
 
   ngOnInit(): void {
+    // Dashboard tiles link here with a ready-made filter, e.g. /providers?availabilityType=REMOTE.
+    const query = this.route.snapshot.queryParamMap;
+    const availability = query.get('availabilityType');
+    if (availability && AVAILABILITY_TYPES.some((t) => t.value === availability)) this.availabilityType = availability;
+    const verification = query.get('verificationStatus');
+    if (verification && VERIFICATION_STATUSES.includes(verification)) this.verificationStatus = verification;
+
     this.directory.organizations().subscribe((rows) => (this.organizations = rows));
     this.directory.facilities().subscribe((rows) => (this.allFacilities = rows));
     this.load();
