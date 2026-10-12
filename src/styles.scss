@@ -56,6 +56,8 @@
   --tone-emerald-soft: #d1fae5;
   --tone-amber: #d97706;
   --tone-amber-soft: #fef3c7;
+  --tone-rose: #be185d;
+  --tone-rose-soft: #fce7f3;
 
   --good: #15803d;
   --goodbg: #dcfce7;
@@ -1382,6 +1384,7 @@ textarea:focus {
 /* two-line name cell: bold title + muted subtitle */
 .ag-tenant-cell,
 .ag-provider-cell,
+.ag-patient-cell,
 .ag-user-cell,
 .ag-organization-cell,
 .ag-slot-config-cell,
@@ -1592,4 +1595,12 @@ textarea:focus {
   &--physical { background: var(--tone-indigo-soft); color: var(--tone-indigo); }
   &--remote   { background: var(--tone-sky-soft);    color: var(--tone-sky); }
   &--other    { background: var(--tone-emerald-soft); color: var(--tone-emerald); }
+}
+
+
+/* Patient grid: a small tag for minors (guardian required). */
+.ag-chip--minor {
+  margin-left: 6px;
+  background: var(--tone-amber-soft);
+  color: var(--tone-amber);
 }

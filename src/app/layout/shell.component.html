@@ -18,7 +18,7 @@
           </a>
         }
 
-        @for (group of groups; track group.label) {
+        @for (group of visibleGroups; track group.label) {
           <div class="nav-dropdown" [class.open]="openGroup() === group.label">
             <button
               type="button"

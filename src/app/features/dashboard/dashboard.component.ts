@@ -211,6 +211,11 @@ export class DashboardComponent implements OnInit {
     return this.auth.hasPermission(PROVIDER_PERMISSIONS.READ);
   }
 
+  /** Doctors registered but not yet verified (0 until loaded, or without permission). */
+  get pendingDoctors(): number {
+    return this.canSeeProviders && !this.loading ? (this.counts['pendingVerification'] ?? 0) : 0;
+  }
+
   /** Groups the user may see: Doctors needs the provider read permission. */
   get visibleGroups(): Group[] {
     return this.groups.filter((group) => !group.permission || this.auth.hasPermission(group.permission));
@@ -234,6 +239,8 @@ export class DashboardComponent implements OnInit {
           physical: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, availabilityType: 'PHYSICAL' })),
           remote: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, availabilityType: 'REMOTE' })),
           otherAvailability: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, availabilityType: 'OTHER' })),
+          // Doctors an admin still has to check — shown as a notice at the top of the page.
+          pendingVerification: this.getCount(this.providerApi.get<any>('/providers', { page: 1, limit: 1, verificationStatus: 'PENDING' })),
         }
       : {};
 

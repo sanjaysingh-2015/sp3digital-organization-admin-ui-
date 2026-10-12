@@ -1,0 +1,29 @@
+<div class="picker">
+  <input type="search" [(ngModel)]="query" (ngModelChange)="onType()" [placeholder]="placeholder" autocomplete="off" />
+
+  @if (searching) {
+    <p class="hint">Searching…</p>
+  } @else if (failed) {
+    <p class="hint error">Could not search patients. Check that you may view patients and try again.</p>
+  } @else if (searched && results.length === 0) {
+    <p class="hint">No active patient matches. Register them first, then come back.</p>
+  }
+
+  @if (results.length) {
+    <ul class="results" role="listbox">
+      @for (p of results; track p.patientId) {
+        <li>
+          <button type="button" role="option" (click)="choose(p)">
+            <span class="main">
+              <strong>{{ p.displayName }}</strong>
+              <small>{{ p.patientNumber }} · {{ p.username }}</small>
+            </span>
+            <span class="side">
+              <small>@if (p.age !== null) { {{ p.age }}{{ p.ageIsEstimated ? ' (est.)' : '' }} yrs · } {{ p.phoneMasked }}</small>
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -4,6 +4,17 @@
   description="Overview of your organization, its services and schedule."
 ></app-page>
 
+@if (pendingDoctors > 0) {
+  <a class="notice" routerLink="/providers" [queryParams]="{ verificationStatus: 'PENDING' }">
+    <span class="notice__icon" aria-hidden="true">!</span>
+    <span class="notice__text">
+      <strong>{{ pendingDoctors }} {{ pendingDoctors === 1 ? 'doctor is' : 'doctors are' }} waiting for verification</strong>
+      <small>Check their registration and certificates, then verify. Unverified doctors cannot be given slots.</small>
+    </span>
+    <span class="notice__action">Review →</span>
+  </a>
+}
+
 @if (hasNoOrganizations) {
   <section class="getting-started panel" aria-labelledby="getting-started-title">
     <div class="getting-started__content">

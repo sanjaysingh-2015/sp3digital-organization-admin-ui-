@@ -3,17 +3,21 @@ import { NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } f
 
 import { AuthService } from '../core/auth.service';
 import { UiService } from '../core/ui.service';
+import { PATIENT_PERMISSIONS } from '../core/patient-permissions';
 
 interface NavLink {
   label: string;
   route: string;
   icon: string;
+  // Hidden unless the signed-in user holds this permission.
+  permission?: string;
 }
 
 interface NavGroup {
   label: string;
   icon: string;
   links: NavLink[];
+  permission?: string;
 }
 
 @Component({
@@ -57,6 +61,14 @@ export class ShellComponent {
       ],
     },
     {
+      label: 'Patients',
+      icon: '♡',
+      permission: PATIENT_PERMISSIONS.READ,
+      links: [
+        { label: 'Patients', route: '/patients', icon: '♡', permission: PATIENT_PERMISSIONS.READ },
+      ],
+    },
+    {
       label: 'Schedules',
       icon: '▤',
       links: [
@@ -65,6 +77,14 @@ export class ShellComponent {
       ],
     },
   ];
+
+  /** Groups (and links) the signed-in user may see; patient data is hidden without its permission. */
+  get visibleGroups(): NavGroup[] {
+    return this.groups
+      .filter((group) => !group.permission || this.auth.hasPermission(group.permission))
+      .map((group) => ({ ...group, links: group.links.filter((link) => !link.permission || this.auth.hasPermission(link.permission)) }))
+      .filter((group) => group.links.length > 0);
+  }
 
   readonly openGroup = signal<string | null>(null);
 

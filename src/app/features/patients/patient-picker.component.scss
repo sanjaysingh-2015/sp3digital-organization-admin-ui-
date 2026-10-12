@@ -1,0 +1,32 @@
+:host {
+  display: block;
+  --tone: var(--tone-rose);
+  --tone-soft: var(--tone-rose-soft);
+}
+.picker { position: relative; }
+.hint { margin: 6px 0 0; color: var(--muted); font-size: 13px; &.error { color: var(--danger); } }
+.results {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  li + li { border-top: 1px solid #f2f4f7; }
+  button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    &:hover, &:focus-visible { background: var(--tone-soft); outline: none; }
+  }
+  .main { display: flex; flex-direction: column; min-width: 0; strong { color: var(--ink); font-size: 14px; } small { color: var(--muted); font-size: 12px; } }
+  .side small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+}

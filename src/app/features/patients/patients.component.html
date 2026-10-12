@@ -1,0 +1,67 @@
+<app-page eyebrow="PATIENTS" title="Patients" description="Register patients once, find them quickly, and use them when booking. Phone numbers are masked here; open a patient to see the full record.">
+  <div actions class="head-actions">
+    @if (canConfigure) {
+      <button type="button" class="secondary" (click)="openSettings()">Retention</button>
+    }
+    @if (canCreate) {
+      <button type="button" class="primary" routerLink="/patients/new">+ Register patient</button>
+    }
+  </div>
+</app-page>
+
+<div class="toolbar">
+  <input type="search" [(ngModel)]="search" (keyup.enter)="load(1)" placeholder="Search name, patient number, username or phone" autocomplete="off" />
+  <select [(ngModel)]="facilityId" (ngModelChange)="load(1)">
+    <option value="">All facilities</option>
+    @for (f of facilities; track f.facilityId) { <option [ngValue]="f.facilityId">{{ f.facilityName }}</option> }
+  </select>
+  <select [(ngModel)]="status" (change)="load(1)">
+    <option value="">Active &amp; inactive</option>
+    @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+  </select>
+  <button type="button" class="secondary" (click)="load(1)" [disabled]="loading">Search</button>
+  <button type="button" class="secondary" (click)="clearFilters()">Clear</button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="patients-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No patients found }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+@if (settingsOpen) {
+  <div class="modal-backdrop" (click)="settingsOpen = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Retention period</h3>
+          <p>How long inactive or deleted patients are kept before their personal details are anonymized.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="settingsOpen = false" aria-label="Close">×</button>
+      </div>
+      <label class="form-grid">
+        <span>Months (1–120)</span>
+        <input type="number" min="1" max="120" [(ngModel)]="retentionMonths" />
+      </label>
+      <p class="hint">Applies to this tenant. Anonymizing runs as a scheduled job on the patient service.</p>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="settingsOpen = false">Cancel</button>
+        <button type="button" class="primary" (click)="saveSettings()" [disabled]="settingsSaving">@if (settingsSaving) { Saving... } @else { Save }</button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onDeleteConfirmed()" (cancelled)="onDeleteCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

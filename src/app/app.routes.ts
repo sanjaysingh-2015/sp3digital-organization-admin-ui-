@@ -27,6 +27,10 @@ export const routes: Routes = [
       { path: 'providers/new', loadComponent: () => import('./features/providers/provider-form.component').then(m => m.ProviderFormComponent) },
       { path: 'providers/:id/edit', loadComponent: () => import('./features/providers/provider-form.component').then(m => m.ProviderFormComponent) },
       { path: 'providers/:id', loadComponent: () => import('./features/providers/provider-detail.component').then(m => m.ProviderDetailComponent) },
+      { path: 'patients', loadComponent: () => import('./features/patients/patients.component').then(m => m.PatientsComponent) },
+      { path: 'patients/new', loadComponent: () => import('./features/patients/patient-form.component').then(m => m.PatientFormComponent) },
+      { path: 'patients/:id/edit', loadComponent: () => import('./features/patients/patient-form.component').then(m => m.PatientFormComponent) },
+      { path: 'patients/:id', loadComponent: () => import('./features/patients/patient-detail.component').then(m => m.PatientDetailComponent) },
       { path: 'facility-closures', loadComponent: () => import('./features/facility-closures/facility-closures.component').then(m => m.FacilityClosuresComponent) },
     ]
   },

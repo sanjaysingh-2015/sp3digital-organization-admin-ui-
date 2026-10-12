@@ -1,0 +1,263 @@
+<app-page
+  eyebrow="PATIENTS"
+  [title]="editMode ? 'Edit patient' : 'Register patient'"
+  [description]="editMode ? 'Update the patient\'s details. Changes are recorded in the access log (field names only).' : 'Name, phone number and username are required; everything else can be added later.'"
+>
+  <div actions class="head-actions">
+    <button type="button" class="secondary" [routerLink]="editMode ? ['/patients', patientId] : ['/patients']">Cancel</button>
+    @if (editMode) {
+      <button type="button" class="primary" (click)="save()" [disabled]="saving || loading">
+        @if (saving) { Saving... } @else { Save changes }
+      </button>
+    }
+  </div>
+</app-page>
+
+@if (loading) {
+  <p class="loading">Loading patient…</p>
+} @else {
+
+<nav class="stepper" aria-label="Registration steps">
+  @for (s of steps; track s.key; let i = $index) {
+    <button type="button" class="step-btn" [class.active]="i === stepIndex" [class.done]="completed.has(s.key) && i !== stepIndex"
+      [attr.aria-current]="i === stepIndex ? 'step' : null" (click)="goTo(i)">
+      <span class="num">@if (completed.has(s.key) && i !== stepIndex) { ✓ } @else { {{ i + 1 }} }</span>
+      <span class="label"><strong>{{ s.label }}</strong><small>{{ s.hint }}</small></span>
+    </button>
+  }
+</nav>
+<div class="progress" aria-hidden="true"><div class="bar" [style.width.%]="progressPercent"></div></div>
+<p class="step-count">Step {{ stepIndex + 1 }} of {{ steps.length }}</p>
+
+@switch (currentKey) {
+
+  @case ('identity') {
+    <section class="panel card">
+      <h3>Identity</h3>
+      <div class="form-grid">
+        @if (!editMode) {
+          <label class="full-width">
+            <span>Registering facility <b>*</b> <em>(issues the patient number)</em></span>
+            <select [(ngModel)]="f.registrationFacilityId">
+              <option [ngValue]="null">— select —</option>
+              @for (facility of facilities; track facility.facilityId) { <option [ngValue]="facility.facilityId">{{ facility.facilityName }}</option> }
+            </select>
+          </label>
+        }
+        <label>
+          <span>Title</span>
+          <input type="text" [(ngModel)]="f.title" maxlength="20" placeholder="Mr., Ms., Master…" />
+        </label>
+        <label>
+          <span>First name <b>*</b></span>
+          <input type="text" [(ngModel)]="f.firstName" (ngModelChange)="onNameChange()" maxlength="100" autocomplete="off" />
+        </label>
+        <label>
+          <span>Middle name</span>
+          <input type="text" [(ngModel)]="f.middleName" maxlength="100" autocomplete="off" />
+        </label>
+        <label>
+          <span>Last name</span>
+          <input type="text" [(ngModel)]="f.lastName" (ngModelChange)="onNameChange()" maxlength="100" autocomplete="off" />
+        </label>
+        <label class="full-width">
+          <span>Username <b>*</b> <em>(unique; the patient's login handle later)</em></span>
+          <input type="text" [(ngModel)]="f.username" (ngModelChange)="onUsernameInput()" maxlength="50" autocomplete="off" />
+          @switch (usernameState) {
+            @case ('checking') { <small class="muted">Checking…</small> }
+            @case ('free') { <small class="ok">✓ Available</small> }
+            @case ('taken') { <small class="bad">Already used by another patient — add a number or initial</small> }
+          }
+        </label>
+        <label>
+          <span>Gender</span>
+          <select [(ngModel)]="f.gender">
+            <option value="">— not specified —</option>
+            @for (g of genders; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+          </select>
+        </label>
+        <label>
+          <span>Preferred language</span>
+          <input type="text" [(ngModel)]="f.preferredLanguage" maxlength="40" />
+        </label>
+
+        <div class="full-width age-box">
+          <span class="field-label">Age</span>
+          <div class="seg">
+            <label class="check"><input type="radio" name="ageMode" value="dob" [(ngModel)]="f.ageMode" /> I know the date of birth</label>
+            <label class="check"><input type="radio" name="ageMode" value="estimate" [(ngModel)]="f.ageMode" /> Estimate the age</label>
+          </div>
+          @if (f.ageMode === 'dob') {
+            <input type="date" [(ngModel)]="f.dateOfBirth" />
+          } @else {
+            <input type="number" min="0" max="130" [(ngModel)]="f.estimatedAgeYears" placeholder="Age in years" />
+          }
+          @if (age !== null) {
+            <small class="muted">{{ age }} years{{ f.ageMode === 'estimate' ? ' (estimated)' : '' }}@if (isMinor) { — <strong>a guardian will be required</strong> }</small>
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  @case ('contact') {
+    <section class="panel card">
+      <h3>Contact &amp; address</h3>
+      <div class="form-grid">
+        <div class="phone-row">
+          <label class="cc"><span>Code</span><input type="text" [(ngModel)]="f.phoneCountryCode" maxlength="5" /></label>
+          <label><span>Mobile number <b>*</b></span><input type="tel" [(ngModel)]="f.phoneNumber" maxlength="20" autocomplete="off" /></label>
+        </div>
+        <label><span>Alternate number</span><input type="tel" [(ngModel)]="f.alternatePhoneNumber" maxlength="20" /></label>
+        <label class="full-width"><span>Email <em>(used for appointment reminders)</em></span><input type="email" [(ngModel)]="f.email" maxlength="255" autocomplete="off" /></label>
+        <label class="full-width"><span>Address line 1</span><input type="text" [(ngModel)]="f.addressLine1" maxlength="255" /></label>
+        <label class="full-width"><span>Address line 2</span><input type="text" [(ngModel)]="f.addressLine2" maxlength="255" /></label>
+        <app-geo-address style="grid-column: 1 / -1" [model]="f"></app-geo-address>
+      </div>
+    </section>
+  }
+
+  @case ('guardian') {
+    <section class="panel card">
+      <h3>Guardian @if (isMinor) { <b class="req">required</b> }</h3>
+      @if (isMinor) {
+        <p class="hint">This patient is under {{ minorAge }}. Choose a guardian who is already a registered patient. If they are not registered yet, register them first.</p>
+      } @else {
+        <p class="hint">Only needed for a patient under {{ minorAge }}, or when an adult cannot decide for themselves.</p>
+      }
+      @if (guardian) {
+        <div class="chosen">
+          <span><strong>{{ guardian.displayName }}</strong> <small>{{ guardian.patientNumber }} · {{ guardian.phoneMasked }}</small></span>
+          <button type="button" class="link" (click)="clearGuardian()">Change</button>
+        </div>
+        <div class="form-grid">
+          <label>
+            <span>Relationship</span>
+            <select [(ngModel)]="f.guardianRelationship">
+              <option value="">— select —</option>
+              @for (r of relationships; track r) { <option [value]="r">{{ r }}</option> }
+            </select>
+          </label>
+        </div>
+      } @else {
+        <app-patient-picker [excludePatientId]="patientId" (picked)="onGuardianPicked($event)"></app-patient-picker>
+      }
+    </section>
+
+    <section class="panel card">
+      <h3>Emergency contact</h3>
+      <div class="form-grid">
+        <label><span>Name</span><input type="text" [(ngModel)]="f.emergencyContactName" maxlength="150" /></label>
+        <label>
+          <span>Relationship</span>
+          <select [(ngModel)]="f.emergencyContactRelationship">
+            <option value="">— select —</option>
+            @for (r of relationships; track r) { <option [value]="r">{{ r }}</option> }
+          </select>
+        </label>
+        <label><span>Phone</span><input type="tel" [(ngModel)]="f.emergencyContactPhone" maxlength="20" /></label>
+      </div>
+    </section>
+
+    <section class="panel card">
+      <h3>Other details</h3>
+      <div class="form-grid">
+        <label><span>ABHA number <em>(stored, not verified)</em></span><input type="text" [(ngModel)]="f.abhaNumber" maxlength="17" placeholder="14 digits" /></label>
+        <label><span>ABHA address</span><input type="text" [(ngModel)]="f.abhaAddress" maxlength="100" /></label>
+        <label><span>ID proof type</span><input type="text" [(ngModel)]="f.idProofType" maxlength="30" placeholder="AADHAAR, PAN, PASSPORT…" /></label>
+        <label><span>ID proof — last 4 characters only</span><input type="text" [(ngModel)]="f.idProofLast4" maxlength="4" /></label>
+        <label class="full-width">
+          <span>Administrative notes</span>
+          <textarea rows="2" [(ngModel)]="f.notes" maxlength="500"></textarea>
+          <small class="warn">Do not enter diagnoses, symptoms or other medical information here.</small>
+        </label>
+      </div>
+    </section>
+  }
+
+  @case ('review') {
+    <section class="panel card review">
+      <h3>Review</h3>
+      @if (!editMode) { <p class="hint">A patient number is issued by <strong>{{ facilityName }}</strong> when you register.</p> }
+      <div class="review-grid">
+        <div class="review-block">
+          <header><h4>Identity</h4><button type="button" class="link" (click)="goToKey('identity')">Edit</button></header>
+          <dl>
+            <div><dt>Name</dt><dd>{{ fullName || '—' }}</dd></div>
+            <div><dt>Username</dt><dd>{{ f.username || '—' }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ f.gender ? genderLabel(f.gender) : '—' }}</dd></div>
+            <div><dt>Age</dt><dd>@if (age !== null) { {{ age }} years{{ f.ageMode === 'estimate' ? ' (est.)' : '' }} } @else { — }</dd></div>
+          </dl>
+        </div>
+        <div class="review-block">
+          <header><h4>Contact</h4><button type="button" class="link" (click)="goToKey('contact')">Edit</button></header>
+          <dl>
+            <div><dt>Mobile</dt><dd>{{ f.phoneCountryCode }} {{ f.phoneNumber }}</dd></div>
+            <div><dt>Email</dt><dd>{{ f.email || '—' }}</dd></div>
+            <div class="wide"><dt>Address</dt><dd>{{ [f.addressLine1, f.labels.city, f.labels.district, f.labels.state, f.labels.postalCode].filter(Boolean).join(', ') || '—' }}</dd></div>
+          </dl>
+        </div>
+        <div class="review-block">
+          <header><h4>Guardian</h4><button type="button" class="link" (click)="goToKey('guardian')">Edit</button></header>
+          @if (guardian) {
+            <p class="row">{{ guardian.displayName }} <small>{{ guardian.patientNumber }}@if (f.guardianRelationship) { · {{ f.guardianRelationship }} }</small></p>
+          } @else if (isMinor) {
+            <p class="row bad">Required — choose a guardian</p>
+          } @else {
+            <p class="row muted">None</p>
+          }
+        </div>
+        <div class="review-block">
+          <header><h4>Emergency contact</h4><button type="button" class="link" (click)="goToKey('guardian')">Edit</button></header>
+          <p class="row">{{ f.emergencyContactName || '—' }} @if (f.emergencyContactPhone) { <small>· {{ f.emergencyContactPhone }}</small> }</p>
+        </div>
+      </div>
+    </section>
+  }
+}
+
+<div class="bottom-bar">
+  <button type="button" class="secondary" [routerLink]="editMode ? ['/patients', patientId] : ['/patients']">Cancel</button>
+  <span class="spacer"></span>
+  <button type="button" class="secondary" (click)="back()" [disabled]="stepIndex === 0">← Back</button>
+  @if (editMode && !isLastStep) {
+    <button type="button" class="secondary" (click)="save()" [disabled]="saving">@if (saving) { Saving... } @else { Save changes }</button>
+  }
+  @if (!isLastStep) {
+    <button type="button" class="primary" (click)="next()">Next →</button>
+  } @else {
+    <button type="button" class="primary" (click)="save()" [disabled]="saving">
+      @if (saving) { Saving... } @else if (editMode) { Save changes } @else { Register patient }
+    </button>
+  }
+</div>
+}
+
+@if (duplicates) {
+  <div class="modal-backdrop" (click)="cancelDuplicate()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>This patient may already be registered</h3>
+          <p>Same phone number and a similar name (or the same date of birth). Open the existing patient if it is the same person.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="cancelDuplicate()" aria-label="Close">×</button>
+      </div>
+      <ul class="dupes">
+        @for (d of duplicates; track d.patientId) {
+          <li>
+            <span><strong>{{ d.displayName }}</strong>
+              <small>{{ d.patientNumber }} · @if (d.age !== null) { {{ d.age }} yrs · } {{ d.phoneMasked }} · {{ d.status }}</small></span>
+            <a [routerLink]="['/patients', d.patientId]" target="_blank" rel="noopener">Open</a>
+          </li>
+        }
+      </ul>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="cancelDuplicate()">Go back</button>
+        <button type="button" class="primary" (click)="confirmDuplicate()" [disabled]="saving">It's a different person — register</button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-notification-modal #notificationModal></app-notification-modal>

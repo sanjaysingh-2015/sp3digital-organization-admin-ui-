@@ -10,5 +10,7 @@ export const environment = {
   // sp3digital-provider-admin-service — doctors / providers and their
   // organization / facility affiliations. Same JWT, same pattern as above.
   providerApiBaseUrl: 'http://localhost:3300/api/v1/provider-admin',
+  // sp3digital-patient-admin-service — patient registry (per-facility patient numbers).
+  patientApiBaseUrl: 'http://localhost:3400/api/v1/patient-admin',
   internalServiceToken: 'cvLLdJv2EV1ZvA5NM1Jr5CY1WfzUc-CN8bs8m4El39nW7a1t8pewr4SfgSjvz1wr'
 };

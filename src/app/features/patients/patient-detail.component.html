@@ -1,0 +1,164 @@
+@if (loading && !patient) {
+  <p class="loading">Loading patient…</p>
+} @else if (patient) {
+
+<app-page eyebrow="PATIENTS" [title]="patient.displayName" [description]="patient.patientNumber + ' · ' + patient.username">
+  <div actions class="head-actions">
+    <button type="button" class="secondary" (click)="back()">← All patients</button>
+    @if (canUpdate && editable) {
+      <button type="button" class="primary" [routerLink]="['/patients', patient.patientId, 'edit']">Edit</button>
+    }
+  </div>
+</app-page>
+
+<section class="panel strip">
+  <div class="strip-item">
+    <span class="label">Status</span>
+    <span class="ag-status-badge" [class]="'ag-status-badge ' + statusClass(patient.status)">{{ patient.status }}</span>
+    @if (patient.mergedIntoPatientId) {
+      <small><a [routerLink]="['/patients', patient.mergedIntoPatientId]">Merged into another record</a></small>
+    }
+  </div>
+  <div class="strip-item">
+    <span class="label">Age</span>
+    <strong>@if (patient.age !== null) { {{ patient.age }} years{{ patient.ageIsEstimated ? ' (est.)' : '' }} } @else { — }
+      @if (patient.isMinor) { <span class="tag">Minor</span> }</strong>
+  </div>
+  <div class="strip-item"><span class="label">Gender</span><strong>{{ patient.gender ? genderLabel(patient.gender) : '—' }}</strong></div>
+  <div class="strip-item"><span class="label">Registered at</span><strong>{{ facilityName(patient.registrationFacilityId) }}</strong></div>
+
+  @if (canUpdate && editable) {
+    <div class="strip-actions">
+      @if (patient.status === 'ACTIVE') {
+        <button type="button" class="secondary" (click)="askStatus('INACTIVE')">Deactivate</button>
+      } @else {
+        <button type="button" class="secondary" (click)="askStatus('ACTIVE')">Activate</button>
+      }
+      @if (canMerge) { <button type="button" class="secondary" (click)="openMerge()">Merge a duplicate</button> }
+      <button type="button" class="secondary danger" (click)="askStatus('DELETED')">Delete</button>
+    </div>
+  }
+</section>
+
+<div class="two-col">
+  <section class="panel card">
+    <h3>Contact</h3>
+    <dl class="kv">
+      <div><dt>Mobile</dt><dd>{{ phone || '—' }}</dd></div>
+      <div><dt>Alternate</dt><dd>{{ patient.alternatePhoneNumber || '—' }}</dd></div>
+      <div><dt>Email</dt><dd>{{ patient.email || '—' }}</dd></div>
+      <div><dt>Language</dt><dd>{{ patient.preferredLanguage || '—' }}</dd></div>
+      <div class="wide"><dt>Address</dt><dd>{{ address || '—' }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel card">
+    <h3>Patient numbers</h3>
+    <p class="hint">Each facility issues its own number.</p>
+    @for (n of patient.facilityNumbers; track n.facilityId) {
+      <div class="line"><strong>{{ n.patientNumber }}</strong><small>{{ facilityName(n.facilityId) }}</small></div>
+    } @empty { <p class="empty">None.</p> }
+
+    @if (canUpdate && editable && facilitiesWithoutNumber.length) {
+      <div class="issue">
+        <select [(ngModel)]="newNumberFacilityId">
+          <option [ngValue]="null">Issue a number at…</option>
+          @for (f of facilitiesWithoutNumber; track f.facilityId) { <option [ngValue]="f.facilityId">{{ f.facilityName }}</option> }
+        </select>
+        <button type="button" class="secondary" (click)="issueNumber()" [disabled]="!newNumberFacilityId || busy">Issue</button>
+      </div>
+    }
+  </section>
+</div>
+
+<div class="two-col">
+  <section class="panel card">
+    <h3>Guardian &amp; emergency contact</h3>
+    <dl class="kv">
+      <div class="wide">
+        <dt>Guardian</dt>
+        <dd>
+          @if (patient.guardian) {
+            <a [routerLink]="['/patients', patient.guardian.patientId]">{{ patient.guardian.displayName }}</a>
+            <small>{{ patient.guardian.patientNumber }}@if (patient.guardian.relationship) { · {{ patient.guardian.relationship }} }</small>
+          } @else { — }
+        </dd>
+      </div>
+      <div><dt>Emergency contact</dt><dd>{{ patient.emergencyContactName || '—' }}</dd></div>
+      <div><dt>Relationship</dt><dd>{{ patient.emergencyContactRelationship || '—' }}</dd></div>
+      <div><dt>Phone</dt><dd>{{ patient.emergencyContactPhone || '—' }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel card">
+    <h3>Identifiers</h3>
+    <dl class="kv">
+      <div><dt>ABHA number</dt><dd>{{ patient.abhaNumber || '—' }} @if (patient.abhaNumber) { <small>not verified</small> }</dd></div>
+      <div><dt>ABHA address</dt><dd>{{ patient.abhaAddress || '—' }}</dd></div>
+      <div><dt>ID proof</dt><dd>@if (patient.idProofType) { {{ patient.idProofType }} ····{{ patient.idProofLast4 }} } @else { — }</dd></div>
+      <div class="wide"><dt>Notes</dt><dd>{{ patient.notes || '—' }}</dd></div>
+    </dl>
+  </section>
+</div>
+
+@if (canAudit) {
+  <section class="panel card">
+    <h3>Access log</h3>
+    <p class="hint">Who looked at or changed this record. Changes list the fields, never their values.</p>
+    @if (auditLoading) { <p class="empty">Loading…</p> }
+    <table class="log">
+      <tbody>
+        @for (e of audit; track e.logId) {
+          <tr>
+            <td class="when">{{ e.createdOn | date: 'd MMM y, HH:mm' }}</td>
+            <td><span class="act">{{ e.action }}</span></td>
+            <td class="who">User {{ e.userId ?? '—' }}</td>
+            <td class="det">{{ e.details || '' }}</td>
+          </tr>
+        } @empty { <tr><td class="empty">No entries yet.</td></tr> }
+      </tbody>
+    </table>
+    @if (auditTotalPages > 1) {
+      <div class="log-pager">
+        <button type="button" class="secondary" (click)="loadAudit(auditPage - 1)" [disabled]="auditPage <= 1 || auditLoading">Newer</button>
+        <span>Page {{ auditPage }} of {{ auditTotalPages }}</span>
+        <button type="button" class="secondary" (click)="loadAudit(auditPage + 1)" [disabled]="auditPage >= auditTotalPages || auditLoading">Older</button>
+      </div>
+    }
+  </section>
+}
+
+}
+
+@if (mergeOpen) {
+  <div class="modal-backdrop" (click)="mergeOpen = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Merge a duplicate into {{ patient?.displayName }}</h3>
+          <p>The duplicate is marked <strong>merged</strong> and points here. Nothing is deleted; its facility numbers and anyone it guards move to this patient.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="mergeOpen = false" aria-label="Close">×</button>
+      </div>
+      @if (mergeSource) {
+        <div class="chosen">
+          <span><strong>{{ mergeSource.displayName }}</strong> <small>{{ mergeSource.patientNumber }} · {{ mergeSource.phoneMasked }}</small></span>
+          <button type="button" class="link" (click)="mergeSource = null">Change</button>
+        </div>
+      } @else {
+        <app-patient-picker placeholder="Find the duplicate record" [excludePatientId]="patient?.patientId" (picked)="mergeSource = $event"></app-patient-picker>
+      }
+      <label class="form-grid">
+        <span>Reason <em>(optional)</em></span>
+        <input type="text" [(ngModel)]="mergeReason" maxlength="300" placeholder="e.g. registered twice at the front desk" />
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="mergeOpen = false">Cancel</button>
+        <button type="button" class="primary" (click)="submitMerge()" [disabled]="!mergeSource || busy">Merge</button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onConfirmed()" (cancelled)="onCancelled()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>
