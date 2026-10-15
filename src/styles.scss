@@ -1385,6 +1385,7 @@ textarea:focus {
 .ag-tenant-cell,
 .ag-provider-cell,
 .ag-patient-cell,
+.ag-appt-cell,
 .ag-user-cell,
 .ag-organization-cell,
 .ag-slot-config-cell,
@@ -1603,4 +1604,12 @@ textarea:focus {
   margin-left: 6px;
   background: var(--tone-amber-soft);
   color: var(--tone-amber);
+}
+
+
+/* Appointment grid: the token number chip. */
+.ag-chip--token {
+  background: var(--tone-sky-soft);
+  color: var(--tone-sky);
+  letter-spacing: 0.04em;
 }

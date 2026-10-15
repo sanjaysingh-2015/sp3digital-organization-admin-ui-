@@ -10,3 +10,20 @@ export const SLOT_CONFIG_PERMISSIONS = {
   UPDATE: 'appointment-admin:slot-config:update',
   APPROVE: 'appointment-admin:slot-config:approve',
 };
+
+/**
+ * Booking. Must match appointment-admin-service's utils/permissions.js
+ * (seeded by database/seeds/identity-admin-booking-rbac.sql):
+ *   Tenant admin: all  ·  Front desk: read, create, update  ·  Tenant user: read, create
+ */
+export const APPOINTMENT_PERMISSIONS = {
+  READ: 'appointment-admin:appointment:read',
+  CREATE: 'appointment-admin:appointment:create', // book
+  UPDATE: 'appointment-admin:appointment:update', // cancel / reschedule
+};
+
+export const SLOT_PERMISSIONS = {
+  READ: 'appointment-admin:slot:read',
+  GENERATE: 'appointment-admin:slot:generate',
+};
+

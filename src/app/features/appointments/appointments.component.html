@@ -1,0 +1,73 @@
+<app-page eyebrow="APPOINTMENTS" title="Appointments" description="Booked appointments by day. Phone numbers are masked here.">
+  <div actions class="head-actions">
+    @if (canBook) { <button type="button" class="primary" routerLink="/appointments/book">+ Book appointment</button> }
+  </div>
+</app-page>
+
+<div class="toolbar">
+  <input type="search" [(ngModel)]="search" (keyup.enter)="load(1)" placeholder="Search patient name, phone or token" autocomplete="off" />
+  <select [(ngModel)]="facilityId" (ngModelChange)="load(1)">
+    <option value="">All facilities</option>
+    @for (f of facilities; track f.facilityId) { <option [ngValue]="f.facilityId">{{ f.facilityName }}</option> }
+  </select>
+  <select [(ngModel)]="status" (change)="load(1)">
+    <option value="">All statuses</option>
+    @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+  </select>
+  <input type="date" [(ngModel)]="dateFrom" (change)="load(1)" aria-label="From date" />
+  <input type="date" [(ngModel)]="dateTo" (change)="load(1)" aria-label="To date" />
+  <button type="button" class="secondary" (click)="setRange('today')">Today</button>
+  <button type="button" class="secondary" (click)="setRange('week')">Next 7 days</button>
+  <button type="button" class="secondary" (click)="setRange('all')">All dates</button>
+  <button type="button" class="secondary" (click)="clearFilters()">Clear</button>
+</div>
+
+<div class="panel grid-panel">
+  <ag-grid-angular class="appointments-grid" [rowData]="rows" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef"
+    [gridOptions]="gridOptions" (gridReady)="onGridReady($event)">
+  </ag-grid-angular>
+
+  <div class="pager">
+    <span class="pager-summary">
+      @if (totalItems > 0) { Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} } @else { No appointments in this period }
+    </span>
+    <div class="pager-controls">
+      <button type="button" class="secondary" (click)="goToPage(page - 1)" [disabled]="!hasPreviousPage || loading">Previous</button>
+      <span class="pager-page">Page {{ page }} of {{ totalPages }}</span>
+      <button type="button" class="secondary" (click)="goToPage(page + 1)" [disabled]="!hasNextPage || loading">Next</button>
+    </div>
+  </div>
+</div>
+
+@if (cancelTarget) {
+  <div class="modal-backdrop" (click)="cancelTarget = null">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Cancel appointment</h3>
+          <p>{{ cancelTarget.patientName }} · {{ cancelTarget.appointmentDate | date: 'EEE d MMM' }}, {{ cancelTarget.startTime?.slice(0, 5) }}. The place goes back to the slot.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="cancelTarget = null" aria-label="Close">×</button>
+      </div>
+      <div class="form-grid">
+        <label class="full-width">
+          <span>Reason <b>*</b></span>
+          <select [(ngModel)]="reasonId">
+            <option [ngValue]="null">— select —</option>
+            @for (r of reasons; track r.reasonId) { <option [ngValue]="r.reasonId">{{ r.reasonLabel }}</option> }
+          </select>
+        </label>
+        <label class="full-width">
+          <span>Note <em>(optional — no medical details)</em></span>
+          <input type="text" [(ngModel)]="cancelNotes" maxlength="500" />
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="secondary" (click)="cancelTarget = null">Keep appointment</button>
+        <button type="button" class="primary" (click)="confirmCancel()" [disabled]="!reasonId || cancelling">@if (cancelling) { Cancelling... } @else { Cancel appointment }</button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-notification-modal #notificationModal></app-notification-modal>

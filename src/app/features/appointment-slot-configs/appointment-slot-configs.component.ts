@@ -23,7 +23,7 @@ import { AppointmentApiService } from "../../core/appointment-api.service";
 import { ProviderApiService } from "../../core/provider-api.service";
 import { AuthService } from "../../core/auth.service";
 import { UiService } from "../../core/ui.service";
-import { SLOT_CONFIG_PERMISSIONS } from "../../core/appointment-permissions";
+import { SLOT_CONFIG_PERMISSIONS, SLOT_PERMISSIONS } from "../../core/appointment-permissions";
 import { PageComponent } from "../../shared/page.component";
 import { ConfirmModalComponent } from "../../shared/components/confirm-modal/confirm-modal";
 import { NotificationModalComponent } from "../../shared/components/notification-modal/notification-modal";
@@ -270,6 +270,38 @@ export class AppointmentSlotConfigsComponent implements OnInit {
 
   get canEdit(): boolean {
     return this.auth.hasPermission(SLOT_CONFIG_PERMISSIONS.UPDATE);
+  }
+
+  get canGenerateSlots(): boolean {
+    return this.auth.hasPermission(SLOT_PERMISSIONS.GENERATE);
+  }
+
+  generating = false;
+
+  /**
+   * Turns the approved rules into dated, bookable slots for the next 30 days (the same
+   * thing the nightly job does). Safe to repeat; slots that already have bookings are
+   * never changed.
+   */
+  generateSlots(): void {
+    this.generating = true;
+    this.appointmentApi.post<any>("/slots/generate", { days: 30 }).subscribe({
+      next: (r) => {
+        this.generating = false;
+        const lines = [
+          `Slots created: ${r.created}`,
+          `Reopened: ${r.reopened}`,
+          `Closed (rule changed or closure): ${r.closed}`,
+          r.conflicts ? `Needs attention: ${r.conflicts} booked slot(s) no longer match their rule or fall on a closure` : "",
+          `Period: ${r.fromDate} to ${r.toDate}`,
+        ].filter(Boolean);
+        this.notificationModal.open({ type: r.conflicts ? "WARNING" : "SUCCESS", title: "Slots generated", message: lines.join("\n"), contentType: "TEXT", autoCloseAfter: 0 });
+      },
+      error: (error) => {
+        this.generating = false;
+        this.notificationModal.open({ type: "ERROR", title: "Could not generate slots", message: error, contentType: "TEXT", autoCloseAfter: 5000 });
+      },
+    });
   }
 
   get canApprove(): boolean {

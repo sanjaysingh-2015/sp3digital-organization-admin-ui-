@@ -1,0 +1,65 @@
+<div class="modal-backdrop" (click)="closed.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3>Register a new patient</h3>
+        <p>Name, phone number and username are all that is needed now. The rest can be added later.</p>
+      </div>
+      <button type="button" class="modal-close" (click)="closed.emit()" aria-label="Close">×</button>
+    </div>
+
+    @if (candidates) {
+      <p class="warn">This patient may already be registered (same phone number and a similar name). Choose the existing patient, or confirm this is someone else.</p>
+      <ul class="dupes">
+        @for (c of candidates; track c.patientId) {
+          <li>
+            <span><strong>{{ c.displayName }}</strong>
+              <small>{{ c.patientNumber }} · @if (c.age !== null) { {{ c.age }} yrs · } {{ c.phoneMasked }}</small></span>
+            <button type="button" class="secondary" (click)="useExisting(c)">Use this patient</button>
+          </li>
+        }
+      </ul>
+      <div class="actions">
+        <button type="button" class="secondary" (click)="cancelDuplicates()">Back</button>
+        <button type="button" class="primary" (click)="save(true)" [disabled]="saving">It's someone else — register</button>
+      </div>
+    } @else {
+      <div class="form-grid">
+        <label><span>First name <b>*</b></span><input type="text" [(ngModel)]="f.firstName" (ngModelChange)="onNameChange()" maxlength="100" autocomplete="off" /></label>
+        <label><span>Last name</span><input type="text" [(ngModel)]="f.lastName" (ngModelChange)="onNameChange()" maxlength="100" autocomplete="off" /></label>
+        <div class="phone-row">
+          <label class="cc"><span>Code</span><input type="text" [(ngModel)]="f.phoneCountryCode" maxlength="5" /></label>
+          <label><span>Mobile number <b>*</b></span><input type="tel" [(ngModel)]="f.phoneNumber" maxlength="20" autocomplete="off" /></label>
+        </div>
+        <label>
+          <span>Username <b>*</b></span>
+          <input type="text" [(ngModel)]="f.username" (ngModelChange)="onUsernameInput()" maxlength="50" autocomplete="off" />
+          @switch (usernameState) {
+            @case ('checking') { <small class="muted">Checking…</small> }
+            @case ('free') { <small class="ok">✓ Available</small> }
+            @case ('taken') { <small class="bad">Already used — add a number or initial</small> }
+          }
+        </label>
+        <label>
+          <span>Gender</span>
+          <select [(ngModel)]="f.gender">
+            <option value="">— not specified —</option>
+            <option value="MALE">Male</option><option value="FEMALE">Female</option>
+            <option value="OTHER">Other</option><option value="UNDISCLOSED">Prefer not to say</option>
+          </select>
+        </label>
+        <label><span>Age <em>(optional)</em></span><input type="number" min="0" max="130" [(ngModel)]="f.age" /></label>
+      </div>
+
+      @if (isMinor) {
+        <p class="warn">Patients under {{ minorAge }} need a registered guardian. <a routerLink="/patients/new" target="_blank" rel="noopener">Open the full registration form</a>, then come back and search for them.</p>
+      }
+      @if (error) { <p class="bad">{{ error }}</p> }
+
+      <div class="actions">
+        <button type="button" class="secondary" (click)="closed.emit()">Cancel</button>
+        <button type="button" class="primary" (click)="save()" [disabled]="saving || isMinor">@if (saving) { Registering... } @else { Register patient }</button>
+      </div>
+    }
+  </div>
+</div>

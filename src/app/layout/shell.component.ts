@@ -4,6 +4,7 @@ import { NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } f
 import { AuthService } from '../core/auth.service';
 import { UiService } from '../core/ui.service';
 import { PATIENT_PERMISSIONS } from '../core/patient-permissions';
+import { APPOINTMENT_PERMISSIONS } from '../core/appointment-permissions';
 
 interface NavLink {
   label: string;
@@ -72,6 +73,8 @@ export class ShellComponent {
       label: 'Schedules',
       icon: '▤',
       links: [
+        { label: 'Book appointment', route: '/appointments/book', icon: '✚', permission: APPOINTMENT_PERMISSIONS.CREATE },
+        { label: 'Appointments', route: '/appointments', icon: '▥', permission: APPOINTMENT_PERMISSIONS.READ },
         { label: 'Slots', route: '/appointment-slot-configs', icon: '▤' },
         { label: 'Holidays / Weekly Offs', route: '/facility-closures', icon: '▧' },
       ],

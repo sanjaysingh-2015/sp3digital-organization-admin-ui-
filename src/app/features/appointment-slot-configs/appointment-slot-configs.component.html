@@ -1,5 +1,12 @@
 <app-page eyebrow="SCHEDULES" title="Appointment Slot Configuration" description="Recurring slot schedules per facility service — Daily, Weekly, or Monthly. TENANT_USER submissions need TENANT_ADMIN approval before they take effect.">
-  <button actions type="button" class="primary" (click)="openCreate()">+ Create slot</button>
+  <span actions class="head-actions">
+    @if (canGenerateSlots) {
+      <button type="button" class="secondary" (click)="generateSlots()" [disabled]="generating" title="Create the bookable, dated slots for the next 30 days from the approved rules">
+        @if (generating) { Generating... } @else { Generate slots }
+      </button>
+    }
+    <button type="button" class="primary" (click)="openCreate()">+ Create slot</button>
+  </span>
 </app-page>
 
 <div class="toolbar">

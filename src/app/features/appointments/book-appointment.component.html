@@ -1,0 +1,161 @@
+<app-page
+  eyebrow="APPOINTMENTS"
+  [title]="rescheduling ? 'Reschedule appointment' : 'Book appointment'"
+  [description]="rescheduling ? 'Choose a new slot for the same service. The patient stays the same.' : 'Pick a service, a day and a slot, then the patient. Only slots that have not started yet can be booked.'"
+>
+  <div actions class="head-actions">
+    <button type="button" class="secondary" routerLink="/appointments">All appointments</button>
+  </div>
+</app-page>
+
+@if (booked) {
+  <section class="panel card done">
+    <div class="done-badge" aria-hidden="true">✓</div>
+    <h3>{{ rescheduling ? 'Appointment rescheduled' : 'Appointment booked' }}</h3>
+    <div class="token">
+      <span class="label">Token</span>
+      <strong>{{ booked.tokenNumber }}</strong>
+    </div>
+    <dl class="summary">
+      <div><dt>Patient</dt><dd>{{ booked.patientName }}</dd></div>
+      <div><dt>When</dt><dd>{{ fmtDate(booked.appointmentDate) }}, {{ hhmm(booked.startTime) }}–{{ hhmm(booked.endTime) }}</dd></div>
+      <div><dt>Service</dt><dd>{{ serviceName || '—' }}</dd></div>
+      <div><dt>Doctor</dt><dd>{{ booked.resourceName || 'No specific doctor' }}</dd></div>
+      <div><dt>Where</dt><dd>{{ facilityName || '—' }}</dd></div>
+    </dl>
+    <div class="done-actions">
+      @if (!rescheduling) { <button type="button" class="primary" (click)="bookAnother()">Book another</button> }
+      <button type="button" class="secondary" (click)="goToAppointments()">View appointments</button>
+    </div>
+  </section>
+} @else {
+
+  <!-- 1. WHERE AND WHEN -->
+  <section class="panel card">
+    <h3><span class="step">1</span> Where and when</h3>
+    <div class="form-grid">
+      <label>
+        <span>Facility <b>*</b></span>
+        <select [(ngModel)]="facilityId" (ngModelChange)="onFacilityChange()" [disabled]="rescheduling">
+          <option [ngValue]="null">— select —</option>
+          @for (f of facilities; track f.facilityId) { <option [ngValue]="f.facilityId">{{ f.facilityName }}</option> }
+        </select>
+      </label>
+      <label>
+        <span>Service <b>*</b></span>
+        <select [(ngModel)]="facilityServiceId" (ngModelChange)="onServiceChange()" [disabled]="!facilityId || rescheduling">
+          <option [ngValue]="null">— select —</option>
+          @for (s of services; track s.facilityServiceId) { <option [ngValue]="s.facilityServiceId">{{ s.serviceName }}</option> }
+        </select>
+      </label>
+      <div class="date-box">
+        <span class="field-label">Date <b>*</b></span>
+        <div class="date-row">
+          <button type="button" class="secondary icon" (click)="shiftDay(-1)" [disabled]="date <= today" aria-label="Previous day">‹</button>
+          <input type="date" [(ngModel)]="date" [min]="today" (change)="onDateChange()" />
+          <button type="button" class="secondary icon" (click)="shiftDay(1)" aria-label="Next day">›</button>
+          <button type="button" class="secondary" (click)="date = today; onDateChange()" [disabled]="date === today">Today</button>
+        </div>
+        <small class="muted">{{ fmtDate(date) }}</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. SLOTS -->
+  <section class="panel card">
+    <div class="card-head">
+      <h3><span class="step">2</span> Choose a slot</h3>
+      @if (doctorOptions.length > 1) {
+        <select class="doctor-filter" [(ngModel)]="doctorFilter">
+          <option value="">All doctors</option>
+          @for (name of doctorOptions; track name) { <option [value]="name">{{ name }}</option> }
+        </select>
+      }
+    </div>
+
+    @if (!facilityId || !facilityServiceId) {
+      <p class="empty">Choose a facility and a service to see the open slots.</p>
+    } @else if (loadingSlots) {
+      <p class="empty">Loading slots…</p>
+    } @else if (slotsLoaded && groups.length === 0) {
+      <div class="none">
+        <p class="empty">No open slots on {{ fmtDate(date) }}. They may be full, closed, or already past for today.</p>
+        <button type="button" class="secondary" (click)="findNextAvailable()" [disabled]="finding">
+          @if (finding) { Looking… } @else { Find the next day with open slots }
+        </button>
+      </div>
+    }
+
+    @for (g of visibleGroups; track g.key) {
+      <div class="doctor-group">
+        <div class="doctor-name">{{ g.name }} <small>{{ g.slots.length }} open</small></div>
+        <div class="chips">
+          @for (s of g.slots; track s.slotId) {
+            <button type="button" class="chip" [class.selected]="selected?.slotId === s.slotId" (click)="pick(s)"
+              [attr.aria-pressed]="selected?.slotId === s.slotId">
+              {{ s.startTime }}
+              @if (s.capacity > 1) { <small>{{ s.remaining }} left</small> }
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- 3. PATIENT -->
+  <section class="panel card" [class.locked]="!selected">
+    <h3><span class="step">3</span> Patient</h3>
+    @if (!selected) {
+      <p class="empty">Pick a slot first.</p>
+    } @else if (patient) {
+      <div class="chosen">
+        <span><strong>{{ patient.displayName }}</strong>
+          <small>@if (patient.patientNumber) { {{ patient.patientNumber }} · } {{ patient.phoneMasked }}@if (patient.age !== null && patient.age !== undefined) { · {{ patient.age }} yrs }</small></span>
+        @if (!rescheduling) { <button type="button" class="link" (click)="clearPatient()">Change</button> }
+      </div>
+    } @else {
+      @if (canSearchPatients) {
+        <app-patient-picker placeholder="Search by name, patient number, username or phone" (picked)="onPatientPicked($event)"></app-patient-picker>
+      } @else {
+        <p class="empty">You do not have permission to search patients.</p>
+      }
+      @if (canRegister && facilityId) {
+        <p class="register-line">Not registered yet? <button type="button" class="link" (click)="quickOpen = true">Register a new patient</button></p>
+      }
+    }
+  </section>
+
+  <!-- 4. CONFIRM -->
+  <section class="panel card" [class.locked]="!readyToBook && !booking">
+    <h3><span class="step">4</span> Confirm</h3>
+    @if (selected && patient) {
+      <dl class="summary">
+        <div><dt>Patient</dt><dd>{{ patient.displayName }}</dd></div>
+        <div><dt>When</dt><dd>{{ fmtDate(selected.slotDate) }}, {{ selected.startTime }}–{{ selected.endTime }}</dd></div>
+        <div><dt>Service</dt><dd>{{ serviceName }}</dd></div>
+        <div><dt>Doctor</dt><dd>{{ selected.resourceName || 'No specific doctor' }}</dd></div>
+        <div><dt>Where</dt><dd>{{ facilityName }}</dd></div>
+      </dl>
+      <label class="notes">
+        <span>Note for the appointment <em>(optional — no medical details)</em></span>
+        <input type="text" [(ngModel)]="notes" maxlength="1000" />
+      </label>
+      @if (canBook) {
+        <button type="button" class="primary book" (click)="book()" [disabled]="booking">
+          @if (booking) { Working... } @else if (rescheduling) { Reschedule appointment } @else { Book appointment }
+        </button>
+      } @else {
+        <p class="empty">You do not have permission to {{ rescheduling ? 'reschedule' : 'book' }} appointments.</p>
+      }
+    } @else {
+      <p class="empty">Choose a slot and a patient to continue.</p>
+    }
+  </section>
+}
+
+@if (quickOpen && facilityId) {
+  <app-quick-register [facilityId]="facilityId" (registered)="onRegistered($event)" (closed)="quickOpen = false"></app-quick-register>
+}
+
+<app-confirm-modal #confirmModal (confirmed)="onSameDayConfirmed()"></app-confirm-modal>
+<app-notification-modal #notificationModal></app-notification-modal>

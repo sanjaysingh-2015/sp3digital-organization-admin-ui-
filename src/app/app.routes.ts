@@ -27,6 +27,8 @@ export const routes: Routes = [
       { path: 'providers/new', loadComponent: () => import('./features/providers/provider-form.component').then(m => m.ProviderFormComponent) },
       { path: 'providers/:id/edit', loadComponent: () => import('./features/providers/provider-form.component').then(m => m.ProviderFormComponent) },
       { path: 'providers/:id', loadComponent: () => import('./features/providers/provider-detail.component').then(m => m.ProviderDetailComponent) },
+      { path: 'appointments', loadComponent: () => import('./features/appointments/appointments.component').then(m => m.AppointmentsComponent) },
+      { path: 'appointments/book', loadComponent: () => import('./features/appointments/book-appointment.component').then(m => m.BookAppointmentComponent) },
       { path: 'patients', loadComponent: () => import('./features/patients/patients.component').then(m => m.PatientsComponent) },
       { path: 'patients/new', loadComponent: () => import('./features/patients/patient-form.component').then(m => m.PatientFormComponent) },
       { path: 'patients/:id/edit', loadComponent: () => import('./features/patients/patient-form.component').then(m => m.PatientFormComponent) },

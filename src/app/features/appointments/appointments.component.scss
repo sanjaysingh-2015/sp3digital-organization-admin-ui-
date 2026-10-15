@@ -1,0 +1,7 @@
+// Shared card / toolbar / grid / pager / badge styling lives in src/styles.scss.
+:host { display: block; --tone: var(--tone-sky); --tone-soft: var(--tone-sky-soft); }
+.head-actions { display: flex; gap: 10px; }
+.appointments-grid { width: 100%; height: 620px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+em { color: var(--muted); font-size: 12px; font-style: normal; font-weight: 400; }
+@media (max-width: 700px) { .appointments-grid { height: 550px; } }
