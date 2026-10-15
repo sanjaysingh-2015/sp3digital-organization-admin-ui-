@@ -153,6 +153,18 @@ export class UserService {
   }
   
   /**
+   * Set a user's password (administrative reset) — PUT /users/:userId/password on
+   * sp3digital-identity-admin-service. The service enforces the tenant's password policy
+   * (length, complexity, no reuse of recent passwords) and signs the user out everywhere.
+   */
+  setUserPassword(userId: string | number, password: string): Observable<{ userId: number; passwordUpdated: boolean; passwordExpiresOn: string | null }> {
+    return this.http.put<{ userId: number; passwordUpdated: boolean; passwordExpiresOn: string | null }>(
+      `${this.identityApiBaseUrl}/users/${userId}/password`,
+      { password },
+    );
+  }
+
+  /**
    * Get User List — posts directly to sp3digital-identity-admin-service.
    */
   getUsers(request: UserListRequest): Observable<UserListResponse> {

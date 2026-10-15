@@ -17,3 +17,12 @@
     height: 550px;
   }
 }
+
+// ---- reset password dialog
+.pw-user { margin-left: 6px; color: var(--muted); font-size: 12px; }
+.pw-note { margin: 0 0 14px; color: #475467; font-size: 13px; }
+.pw-row { display: flex; gap: 8px; input { flex: 1; min-width: 0; } }
+.pw-generate { margin: 10px 0 0; }
+.pw-error { margin: 12px 0 0; padding: 10px 14px; border: 1px solid #fecaca; border-radius: 12px; background: var(--dangerbg); color: #991b1b; font-size: 13px; }
+.pw-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+

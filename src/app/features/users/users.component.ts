@@ -239,7 +239,7 @@ export class UsersComponent implements OnInit {
     {
       headerName: "Actions",
       flex: 1.7,
-      minWidth: 250,
+      minWidth: 320,
       sortable: false,
       filter: false,
 
@@ -297,6 +297,14 @@ export class UsersComponent implements OnInit {
 
             <button
               type="button"
+              class="ag-action-btn edit"
+              data-action="password"
+            >
+              Password
+            </button>
+
+            <button
+              type="button"
               class="ag-action-btn delete"
               data-action="delete"
             >
@@ -327,6 +335,10 @@ export class UsersComponent implements OnInit {
 
           case "roles":
             this.openAssignRoles(params.data);
+            break;
+
+          case "password":
+            this.openResetPassword(params.data);
             break;
 
           case "delete":
@@ -532,6 +544,117 @@ export class UsersComponent implements OnInit {
   // =========================================================
   // ASSIGN ROLES
   // =========================================================
+
+  // =========================================================
+  // RESET PASSWORD (administrator sets a user's password)
+  // =========================================================
+
+  passwordTarget: any = null;
+  newPassword = "";
+  confirmPassword = "";
+  showPassword = false;
+  savingPassword = false;
+  passwordError = "";
+
+  openResetPassword(user: any): void {
+    this.passwordTarget = user;
+    this.newPassword = "";
+    this.confirmPassword = "";
+    this.showPassword = false;
+    this.passwordError = "";
+  }
+
+  closeResetPassword(): void {
+    // don't leave a password sitting in memory after the dialog is gone
+    this.passwordTarget = null;
+    this.newPassword = "";
+    this.confirmPassword = "";
+    this.showPassword = false;
+    this.passwordError = "";
+  }
+
+  /** A random 16-character password with upper, lower, digit and special characters. */
+  generatePassword(): void {
+    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lower = "abcdefghijkmnopqrstuvwxyz";
+    const digits = "23456789";
+    const special = "!@#$%^&*-_=+";
+    const all = upper + lower + digits + special;
+    const pick = (chars: string) => chars[this.randomBelow(chars.length)];
+
+    const chars = [pick(upper), pick(lower), pick(digits), pick(special)];
+    while (chars.length < 16) chars.push(pick(all));
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = this.randomBelow(i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    this.newPassword = chars.join("");
+    this.confirmPassword = this.newPassword;
+    this.showPassword = true; // so the administrator can read it out / copy it
+    this.passwordError = "";
+  }
+
+  /** Uniform random integer in [0, max) from the browser's cryptographic generator. */
+  private randomBelow(max: number): number {
+    const limit = Math.floor(0x100000000 / max) * max; // rejection sampling: no modulo bias
+    const buffer = new Uint32Array(1);
+    do {
+      crypto.getRandomValues(buffer);
+    } while (buffer[0] >= limit);
+    return buffer[0] % max;
+  }
+
+  copyPassword(): void {
+    if (!this.newPassword) return;
+    navigator.clipboard?.writeText(this.newPassword).then(
+      () => this.ui.show("Password copied"),
+      () => this.ui.show("Could not copy — select it and copy by hand"),
+    );
+  }
+
+  submitResetPassword(): void {
+    const user = this.passwordTarget;
+    const userId = user?.user_id || user?.userId;
+    if (!userId) return;
+
+    if (this.newPassword.length < 8) {
+      this.passwordError = "The password must be at least 8 characters.";
+      return;
+    }
+    if (this.newPassword !== this.confirmPassword) {
+      this.passwordError = "The two passwords do not match.";
+      return;
+    }
+
+    this.savingPassword = true;
+    this.passwordError = "";
+    this.userApi.setUserPassword(userId, this.newPassword).subscribe({
+      next: () => {
+        this.savingPassword = false;
+        const name = user?.displayName || user?.username || "The user";
+        this.closeResetPassword();
+        this.notificationModal.open({
+          type: "SUCCESS",
+          title: "Password updated",
+          message: `${name} has been signed out of all devices and can sign in with the new password. Share it through a secure channel, not email or chat.`,
+          contentType: "TEXT",
+          autoCloseAfter: 7000,
+        });
+      },
+      error: (error) => {
+        this.savingPassword = false;
+        // Keep the dialog open: a policy message ("must contain a number", "recently used") is fixable here.
+        const status = error?.status;
+        const message = error?.error?.error?.message;
+        this.passwordError =
+          status === 403
+            ? "You do not have permission to reset passwords."
+            : status === 404
+              ? "This user could not be found."
+              : message || "The password could not be updated.";
+      },
+    });
+  }
 
   openAssignRoles(user: any): void {
     const userId = user?.user_id || user?.userId;

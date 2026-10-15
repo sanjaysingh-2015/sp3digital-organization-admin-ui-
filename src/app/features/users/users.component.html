@@ -209,6 +209,72 @@
 }
 
 <!-- =========================================================
+     RESET PASSWORD MODAL
+========================================================= -->
+@if (passwordTarget) {
+<div class="modal-backdrop" (click)="closeResetPassword()">
+  <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="reset-password-title">
+    <div class="modal-header">
+      <div>
+        <h3 id="reset-password-title">Reset password</h3>
+        <p>
+          {{ passwordTarget.displayName || passwordTarget.username }}
+          <span class="pw-user">{{ passwordTarget.username }}</span>
+        </p>
+      </div>
+      <button type="button" class="modal-close" (click)="closeResetPassword()" aria-label="Close">×</button>
+    </div>
+
+    <p class="pw-note">
+      Setting a new password signs this user out of every device. The new password must follow your
+      organization's password policy and cannot be one they used recently.
+    </p>
+
+    <div class="form-grid">
+      <label class="full-width">
+        <span>New password <b>*</b></span>
+        <div class="pw-row">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="newPassword"
+            autocomplete="new-password"
+            spellcheck="false"
+          />
+          <button type="button" class="secondary" (click)="showPassword = !showPassword">{{ showPassword ? 'Hide' : 'Show' }}</button>
+          <button type="button" class="secondary" (click)="copyPassword()" [disabled]="!newPassword">Copy</button>
+        </div>
+      </label>
+
+      <label class="full-width">
+        <span>Confirm password <b>*</b></span>
+        <input
+          [type]="showPassword ? 'text' : 'password'"
+          [(ngModel)]="confirmPassword"
+          autocomplete="new-password"
+          spellcheck="false"
+        />
+      </label>
+    </div>
+
+    <p class="pw-generate">
+      <button type="button" class="link" (click)="generatePassword()">Generate a strong password</button>
+    </p>
+
+    @if (passwordError) {
+      <p class="pw-error" role="alert">{{ passwordError }}</p>
+    }
+
+    <div class="pw-actions">
+      <button type="button" class="secondary" (click)="closeResetPassword()">Cancel</button>
+      <button type="button" class="primary" (click)="submitResetPassword()" [disabled]="savingPassword || !newPassword || !confirmPassword">
+        @if (savingPassword) { Saving... } @else { Set password }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- =========================================================
      USER DETAILS MODAL
 ========================================================= -->
 @if (selected) {
