@@ -542,10 +542,6 @@ export class UsersComponent implements OnInit {
   }
 
   // =========================================================
-  // ASSIGN ROLES
-  // =========================================================
-
-  // =========================================================
   // RESET PASSWORD (administrator sets a user's password)
   // =========================================================
 
@@ -655,6 +651,10 @@ export class UsersComponent implements OnInit {
       },
     });
   }
+
+  // =========================================================
+  // ASSIGN ROLES
+  // =========================================================
 
   openAssignRoles(user: any): void {
     const userId = user?.user_id || user?.userId;
