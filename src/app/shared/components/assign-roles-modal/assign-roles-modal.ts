@@ -117,7 +117,7 @@ export class AssignRolesModalComponent {
     this.loading = true;
 
     this.api
-      .get<any>("/authorization/roles", { page: 1, limit: 200 })
+      .get<any>("/authorization/roles", { page: 1, limit: 100 })
       .subscribe({
         next: (response) => {
           const rows =
